@@ -12,6 +12,19 @@ For instance, use channel 6 for b/g/n 2,4GHz or channel 36 for ac 5GHz. Usually 
 
 The host must have access to the Internet in order to share its connection to the Wireless clients. A reboot is needed to allow system services to restart in the correct order (system-resolved isc-dhcp-server hostapd).
 
+### Fixed IP address client
+Host Access Point's able to define a fixed IP for a specific host. To list the current leases in DHCP service, run dhcp-lease-list :
+ ```dhcp-lease-list 
+To get manufacturer names please download http://standards.ieee.org/regauth/oui/oui.txt to /usr/local/etc/oui.txt
+Reading leases from /var/lib/dhcp/dhcpd.leases
+MAC                IP              hostname       valid until         manufacturer        
+===============================================================================================
+b8:...:f2  10.0.1.37    clientmachine   2018-07-20 13:37:49 -NA-  
+```
+You can assign a fixed IP to any host with the following script :
+ ```scripts/init.d/init_dhcp_serv.sh --leases clientmachine 5```
+A few minutes later, *clientmachine* will be permanently fixed to the IP address 10.0.1.5 instead of 10.0.1.37.
+
 # Copyright 2018 www.b23prodtm.info
 
 Licensed under the Apache License, Version 2.0 (the "License");
