@@ -11,6 +11,10 @@ defnet = ip.ip_network('192.168.2.0/24')
 defnet6 = ip.ip_network('2a01:db8:0:1::0/64')
 defintnet = ip.ip_network('192.168.0.0/24')
 defintnet6 = ip.ip_network('2a01:e0a:16b:dc30::0/64')
+defdns1 = ip.ip_address('8.8.8.8')
+defdns2 = ip.ip_address('8.8.4.4')
+defdns61 = ip.ip_address('2001:4860:4860::8888')
+defdns62 = ip.ip_address('2001:4860:4860::8844')
 myenv = dict()
 def parse_args (argv):
     mb = "# BEGIN GENERATED hostapd"
@@ -31,12 +35,16 @@ def parse_args (argv):
         "MODE":"",
         "CTY_CODE":"",
         "CHANNEL":"",
+	"DNS1":"",
+	"DNS2":str(defdns2),
         "NET_start":"15",
         "NET_end":"100",
         "NET6":defnet6.with_prefixlen,
-        "INTNET6":defintnet6.with_prefixlen
+        "INTNET6":defintnet6.with_prefixlen,
+	"DNS61":str(defdns61),
+	"DNS62":str(defdns62)
      }
-    r_parse_argv(defaults, argv, 1, 'hc', "Usage: {} [-c,--client] <priv-network-x.x.x.0/len> <wan-network-x.x.x.0/len> <wan-interface> [ssid passphrase [mode] [country_code channel] [net-range-start net-range-end] [priv-network-ipv6/mask-length wan-network-ipv6/mask-length]]".format(argv[0]))
+    r_parse_argv(defaults, argv, 1, 'hc', "Usage: {} [-c,--client] <priv-network-x.x.x.0/len> <wan-network-x.x.x.0/len> <wan-interface> [ssid passphrase [mode] [country_code channel] [dns1 dns2] [dns1-ipv6 dns2-ipv6] [net-range-start net-range-end] [priv-network-ipv6/mask-length wan-network-ipv6/mask-length]]".format(argv[0]))
 
 def r_parse_argv(defaults, argv, i, options, usage):
     """Parse script arguments recursively
@@ -105,8 +113,14 @@ def main(argv):
         myenv["CTY_CODE"] = input("Please set the country code to use [%s]: " % cty_code)
         if myenv["CTY_CODE"] == "": myenv["CTY_CODE"] = cty_code
     while myenv["CHANNEL"] == "":
-        myenv["CHANNEL"] = input("Please set the WI-FI channel to use with %s mode [0 = automatic channel selection]: " % myenv['MODE'])
+        myenv["CHANNEL"] = input("Please set the WI-FI channel to use with %s mode (0 = automatic, 36-140 '4x bands' = 5GHz (US,EU), 149-165 '4x bands' = (US,CN) 1-13 '1x band' = 2,4Ghz) [0]: " % myenv['MODE'])
         if myenv["CHANNEL"] == "": myenv["CHANNEL"] = "0"
+    while myenv["DNS1"] == "":
+        dns1 = input("Please set at least one DNS server for the wan network [ENTER = %s]: " % str(defdns1))
+        try:
+            myenv["DNS1"] = str(defdns1) if dns1 == "" else str(ip.ip_address(dns1))
+        except ValueError as err:
+            print("Oops! Please set a valid IPv4 address".format(err))
     os.environ.update(myenv)
     write_exports(myenv)
     write_lib()
