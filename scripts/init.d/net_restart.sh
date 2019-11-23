@@ -3,12 +3,12 @@ export work_dir=$(echo $0 | awk -F'/' '{ print $1 }')'/'
 [ ! -f .hap-wiz-env.sh ] && python3 ${work_dir}../library/hap-wiz-env.py $*
 source .hap-wiz-env.sh
 logger -st reboot "to complete the Access Point installation, reboot the Raspberry PI"
-[ -z $REBOOT ] && read -p "Do you want to reboot now [y/N] ?" REBOOT
-[ -z $REBOOT ] && REBOOT=N
+[ -z $PROMPT ] && read -p "Do you want to reboot now [y/N] ?" PROMPT
+[ -z $PROMPT ] && PROMPT=N
 if [ -f /etc/init.d/networking ]; then
    sudo /etc/init.d/networking restart
 else
-   [[ $REBOOT != "N" ]] && sudo netplan try --timeout 12
+   [[ $PROMPT != "N" ]] && sudo netplan try --timeout 12
    logger -st 'rc.local' 'Work around fix netplan apply on reboot'
    if [ ! -f /etc/rc.local ]; then
       printf '%s\n' "#!/bin/bash" "exit 0" | sudo tee /etc/rc.local
@@ -46,7 +46,7 @@ sudo cp -f ${work_dir}init.d/auto-reboot.service /etc/systemd/system/auto-reboot
 sudo systemctl enable auto-reboot
 logger -st ufw  "enable ip forwarding (internet connectivity)"
 source ${work_dir}init.d/init_ufw.sh
-case $REBOOT in
+case $PROMPT in
   'y'|'Y'*) sudo reboot;;
   *)
 	[ -z $CLIENT ] && logger -st sysctl "restarting Access Point"
