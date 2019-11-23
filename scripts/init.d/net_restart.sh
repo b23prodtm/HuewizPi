@@ -3,11 +3,12 @@ export work_dir=$(echo $0 | awk -F'/' '{ print $1 }')'/'
 [ ! -f .hap-wiz-env.sh ] && python3 ${work_dir}../library/hap-wiz-env.py $*
 source .hap-wiz-env.sh
 logger -st reboot "to complete the Access Point installation, reboot the Raspberry PI"
-read -p "Do you want to reboot now [y/N] ?" REBOOT
+[ -z $REBOOT ] && read -p "Do you want to reboot now [y/N] ?" REBOOT
+[ -z $REBOOT ] && REBOOT=N
 if [ -f /etc/init.d/networking ]; then
    sudo /etc/init.d/networking restart
 else
-   sudo netplan try --timeout 12
+   [[ $REBOOT != "N" ]] && sudo netplan try --timeout 12
    logger -st 'rc.local' 'Work around fix netplan apply on reboot'
    if [ ! -f /etc/rc.local ]; then
       printf '%s\n' "#!/bin/bash" "exit 0" | sudo tee /etc/rc.local

@@ -52,4 +52,4 @@ sleep 1
 logger -st ufw "allow ${NET}.0"
 sudo ufw allow from ${NET}.0/${MASKb}
 sudo ufw allow from ${NET6}0/${MASKb6}
-sudo ufw enable
+sudo ufw --force enable
