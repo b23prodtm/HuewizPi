@@ -28,7 +28,7 @@ Then add them to your home wifi network:
 
 ### Fixed IP address client
 Host Access Point's able to define a fixed IP for a specific host. To list the current leases in DHCP service, run dhcp-lease-list :
- ```dhcp-lease-list 
+ ```dhcp-lease-list
 To get manufacturer names please download http://standards.ieee.org/regauth/oui/oui.txt to /usr/local/etc/oui.txt
 Reading leases from /var/lib/dhcp/dhcpd.leases
 MAC                IP              hostname       valid until         manufacturer        
@@ -38,6 +38,10 @@ b8:...:f2  10.0.1.37    clientmachine   2018-07-20 13:37:49 -NA-
 You can assign a fixed IP to any host with the following script :
  ```scripts/init.d/init_dhcp_serv.sh --leases clientmachine 5```
 A few minutes later, *clientmachine* will be permanently fixed to the IP address 10.0.1.5 instead of 10.0.1.37.
+
+### Troubleshooting
+  - If you cannot access the internet after the script returns from reboot
+  that maybe linked to an error in the DHCPd process. Either way if you can access the host machine with ssh or from host keyboard, restart the DHCPd service : ```sudo netplan apply && sudo service isc-dhcp-server restart```, check status then ```sudo service isc-dhcp-server status```from host machine (which runs hostapd).
 
 # Copyright 2018 www.b23prodtm.info
 
