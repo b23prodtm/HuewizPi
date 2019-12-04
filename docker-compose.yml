@@ -1,0 +1,33 @@
+version: '2'
+services:
+  hostapd:
+    network_mode: host
+    restart: always
+    build:
+      context: .
+      args:
+        DEBUG: 1
+        PRIV_NETWORK: 10.233.2.0/24
+        WAN_NETWORK: 10.233.1.0/24
+        WAN_INT: eth0
+        PRIV_SSID: MyHomeWifi
+        PRIV_PASSWD: 1passWoRd
+        PRIV_WIFI_MODE: a
+        PRIV_CTY: FR
+        PRIV_CHANNEL: 36
+        DNS1: 192.168.1.1
+        DNS2: 8.8.8.8
+        DNS1_IPV6: 2001:4860:4860::8888
+        DNS2_IPV6: 2001:4860:4860::8844
+        PRIV_RANGE_START: 2
+        PRIV_RANGE_END: 253
+        PRIV_NETWORK_IPV6: 2a01:e0a:16b:dc30::0/64
+        WAN_NETWORK_IPV6: 2a01:db8:0:1::0/64
+    privileged: true
+    labels:
+      io.balena.features.dbus: 1
+      io.balena.features.supervisor-api: 1
+    volumes:
+      - hostapcache:/var/cache/hostap
+volumes:
+  hostapcache:

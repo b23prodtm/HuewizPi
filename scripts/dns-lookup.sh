@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+function nameservers() {
+  ns=$1
+  sep=''
+  while [ "$#" -gt 1 ]; do case $2 in
+    "''"|'' );;
+      *)
+        [ $ns != '' ] && [ $ns != "''" ] && sep=','
+        ns="${ns}${sep}$2";;
+  esac; shift; done
+  [ $ns != '' ] && [ $ns != "''" ] && echo $ns | sed -e s/,,//g -e s/,$// -e s/^,//
+}
 dns1=""
 if [ -f /etc/os-release ]; then
 #linux_family
@@ -15,5 +26,5 @@ while [ "$#" -gt 0 ]; do case $1 in
   * );;
 esac; shift; done
 printf "Here follow DNS addresses entries:\n"
-printf "$s" $dns1
+nameservers $dns1
 printf "Let's run for it.\n"

@@ -42,25 +42,25 @@ fi
 echo $ARRGS
 #Usage: $0 <array_size> <description> <example_values> [array values]
 }
-logger -st wpa_passphrase "Add Wifi password access"
+slogger -st wpa_passphrase "Add Wifi password access"
 WPASS=$(prompt_arrgs 2 'your ESSID and your passphrase' 'e.g. MyWifiNetwork myWip+Swod')
 [ -z WPASS ] && exit 1
 wpa_passphrase $WPASS | sudo tee /etc/wpa_supplicant.conf
 iface=$(prompt_arrgs 1 "WLAN interface name" "e.g. wlp3s0" "wlan0")
 [ -z iface ] && exit 1
-logger -st wpa_supplicant "Start Wifi client"
+slogger -st wpa_supplicant "Start Wifi client"
 sudo wpa_supplicant -c /etc/wpa_supplicant.conf -i $iface
 iwconfig
 sudo wpa_supplicant -B -c /etc/wpa_supplicant.conf -i $iface
-logger -st dhclient "Obtain an IP address"
+slogger -st dhclient "Obtain an IP address"
 sudo dhclient $iface
 ifconfig $iface
-logger -st systemd "Setup Wifi client service"
+slogger -st systemd "Setup Wifi client service"
 [ ! $(sudo cp /lib/systemd/system/wpa_supplicant.service /etc/systemd/system/wpa_supplicant.service) ] && exit 1
 [ ! $(sudo sed -i -e "/ExecStart/s/-O \/run\/wpa_supplicant/-c \/etc\/wpa_supplicant.conf -i ${iface}/g" /etc/systemd/system/wpa_supplicant.service) ] && exit 1
 # cat /etc/systemd/system/wpa_supplicant.service
 sudo systemctl enable wpa_supplicant.service
-logger -st systemd "Setup DHCP client service"
+slogger -st systemd "Setup DHCP client service"
 echo -e "[Unit]
 Description= DHCP Client
 Before=network.target
@@ -74,4 +74,4 @@ WantedBy=multi-user.target
 " | sudo tee /etc/systemd/system/dhclient.service
 # cat /etc/systemd/system/dhclient.service
 sudo systemctl enable dhclient.service
-logger -st "$0" "Wifi configuration done."
+slogger -st "$0" "Wifi configuration done."

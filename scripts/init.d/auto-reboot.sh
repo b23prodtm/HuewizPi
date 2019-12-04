@@ -2,15 +2,15 @@
 # auto-reboot
 # description: Check if the system dpkg need a restart and send corresponding signal
 start() {
-# code to start app comes here 
+# code to start app comes here
 # example: bahs -c "program_name" &
     bash -c "while [ ! -f /var/run/reboot-required ]; do sleep 30; done; cat /var/run/reboot-required.dpkgs 2> /dev/null; reboot" &
-echo $! > /var/run/chkdpkgs.pid
+    echo $! > /var/run/chkdpkgs.pid
 }
 stop() {
-# code to stop app comes here 
+# code to stop app comes here
 # example: kill program_name.pid
-kill $(cat /var/run/chkdpkgs.pid) 
+kill $(cat /var/run/chkdpkgs.pid)
     rm /var/run/chkdpkgs.pid
 }
 status() {
@@ -21,7 +21,7 @@ echo auto-reboot is NOT running
 exit 1
 fi
 }
-case "$1" in 
+case "$1" in
     start)
        start
        ;;
@@ -33,11 +33,11 @@ case "$1" in
        start
        ;;
     status)
-# code to check status of app comes here 
+# code to check status of app comes here
 # example: status program_name
-       status 
+       status
       ;;
 *)
 echo "Usage: $0 {start|stop|status|restart}"
 esac
-exit 0 
+exit 0

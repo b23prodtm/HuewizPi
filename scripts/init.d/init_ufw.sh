@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-[ ! -f .hap-wiz-env.sh ] && python3 ${work_dir}../library/hap-wiz-env.py $*
+export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=0;i<NF;i++) print $i }' | awk -F// '{ print "/"$2 }'))
+[ ! -f .hap-wiz-env.sh ] && python3 ${scriptsd}../library/hap-wiz-env.py $*
 source .hap-wiz-env.sh
 while [ "$#" -gt 0 ]; do case $1 in
   -r*|-R*)
@@ -17,15 +18,15 @@ while [ "$#" -gt 0 ]; do case $1 in
   *);;
 esac; shift; done
 
-logger -st ipv4 "enable ip forwarding v4"
+slogger -st ipv4 "enable ip forwarding v4"
 sudo sed -i /net.ipv4.ip_forward/s/^\#// /etc/sysctl.conf /etc/ufw/sysctl.conf
-logger -st ipv4 "enable ip forwarding v6"
+slogger -st ipv4 "enable ip forwarding v6"
 sudo sed -i /net.ipv6.conf.default.forwarding/s/^\#// /etc/sysctl.conf /etc/ufw/sysctl.conf
 sudo sed -i /net.ipv6.conf.all.forwarding/s/^\#// /etc/sysctl.conf /etc/ufw/sysctl.conf
-logger -st ufw "configure firewall"
+slogger -st ufw "configure firewall"
 sudo sed -i /DEFAULT_FORWARD_POLICY/s/DROP/ACCEPT/g /etc/default/ufw
 sleep 1
-logger -st ufw "add ip masquerading rules"
+slogger -st ufw "add ip masquerading rules"
 bash -c "sudo sed -i -e ${MARKERS}d /etc/ufw/before.rules"
 echo -e "${MARKER_BEGIN}\\n\
 # nat Table rules\\n\
@@ -41,7 +42,7 @@ COMMIT\\n\
 ${MARKER_END}" | sudo tee /tmp/input.rules
 sudo sed -i -e 1r/tmp/input.rules /etc/ufw/before.rules
 sleep 1
-logger -st ufw "add packet ip forwarding"
+slogger -st ufw "add packet ip forwarding"
 echo -e "${MARKER_BEGIN}\\n\
 -A ufw-before-forward -m state --state RELATED,ESTABLISHED -j ACCEPT\\n\
 -A ufw-before-forward -i wlan0 -s ${NET}.0/${MASKb} -o ${INT} -m state --state NEW -j ACCEPT\\n\
@@ -49,7 +50,7 @@ echo -e "${MARKER_BEGIN}\\n\
 ${MARKER_END}" | sudo tee /tmp/input.rules
 sudo sed -i -e /'^\# End required lines'/r/tmp/input.rules /etc/ufw/before.rules
 sleep 1
-logger -st ufw "allow ${NET}.0"
+slogger -st ufw "allow ${NET}.0"
 sudo ufw allow from ${NET}.0/${MASKb}
 sudo ufw allow from ${NET6}0/${MASKb6}
 sudo ufw --force enable

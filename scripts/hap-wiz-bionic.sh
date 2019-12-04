@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-if [ $USER != "root" ]
+if [ "$EUID" -ne 0 ]
 then
     echo -e "You need to run this script as root."
     exit 1
@@ -10,11 +10,20 @@ then
     [ $(which sw_vers) > /dev/null ] && sw_vers
     exit 1
 fi
-export work_dir=$(echo $0 | awk -F'/' '{ print $1 }')'/'
-[ "$#" -lt 2 ] && python3 ${work_dir}../library/hap-wiz-env.py --help && exit 1
-#This script arguments were edited in python file. To add more, modify there.
-python3 ${work_dir}../library/hap-wiz-env.py $*
-source .hap-wiz-env.sh
+export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=0;i<NF;i++) print $i }' | awk -F// '{ print "/"$2 }')
+function slogger() {
+  [ -f /dev/log ] && logger $@ && return
+  [ "$#" -gt 1 ] && shift
+  echo -e "$@"
+}
+export -f slogger
+if [ ! -f ${scriptsd}../.hap-wiz-env.sh ]; then
+  #This script arguments were edited in python file. To add more, modify there.
+  slogger -st RUN "($#) python3 ${scriptsd}../library/hap-wiz-env.py $*"
+  [ "$#" -lt 2 ] && python3 ${scriptsd}../library/hap-wiz-env.py --help && exit 1
+  DEBUG=1 python3 ${scriptsd}../library/hap-wiz-env.py "$@"
+fi
+source ${scriptsd}../.hap-wiz-env.sh
 echo "Set Private Network $NET.0/$MASK"
 echo "Set Private Network IPv6 ${NET6}0/$MASKb6"
 echo "Set WAN Network $INTNET.0/$INTMASK"
@@ -26,14 +35,14 @@ echo "Set DNS Global IPv6 ${DNS61}, ${DNS62}"
 [ -z $CLIENT ] && [ -z $(which hostapd) ] && sudo apt-get -y install hostapd
 [ -z $CLIENT ] && [ -z $(which brctl) ] && sudo apt-get -y install bridge-utils
 [ -z $CLIENT ] && [ -z $(which dhcpd) ] && sudo apt-get -y install isc-dhcp-server
-logger -st hostapd "remove bridge (br0) to wlan0"
-source ${work_dir}init.d/init_net_if.sh -r
-logger -st service "shutdown services"
+slogger -st hostapd "remove bridge (br0) to wlan0"
+source ${scriptsd}init.d/init_net_if.sh -r
+slogger -st service "shutdown services"
 sudo service wpa_supplicant stop
 sudo service hostapd stop
 sudo systemctl disable wpa_supplicant.service
-source ${work_dir}init.d/init_dhcp_serv.sh -r
-source ${work_dir}init.d/init_ufw.sh -r
+source ${scriptsd}init.d/init_dhcp_serv.sh -r
+source ${scriptsd}init.d/init_ufw.sh -r
 [ -z $CLIENT ] && echo -e "### HostAPd will configure a public wireless network
 IPv4 ${NET}.0/${MASKb} - ${SSID}
 Example SSH'ed through bastion 'jump' host:
@@ -41,7 +50,7 @@ ssh -J $USER@$(ifconfig ${INT} | grep 'inet ' | awk '{ print $2 }') $USER@${NET}
 -------------------------------
 "
 [ -z $CLIENT ] && sleep 3
-[ -z $CLIENT ] && logger -t hostapd "Configure Access Point $SSID"
+[ -z $CLIENT ] && slogger -t hostapd "Configure Access Point $SSID"
 PSK_FILE=/etc/hostapd-psk
 [ -z $CLIENT ] && echo -e "interface=wlan0       # the interface used by the AP
 driver=nl80211
@@ -100,7 +109,7 @@ fragm_threshold=2346
 " | sudo tee /etc/hostapd/hostapd.conf
 [ -z $CLIENT ] && sudo touch /etc/hostapd/hostapd.deny
 [ -z $CLIENT ] && echo -e "00:00:00:00:00:00 $(wpa_passphrase ${SSID} ${PAWD} | grep 'psk' | awk -F= 'FNR == 2 { print $2 }')" | sudo tee ${PSK_FILE}
-[ -z $CLIENT ] && logger -st hostapd "configure Access Point as a Service"
+[ -z $CLIENT ] && slogger -st hostapd "configure Access Point as a Service"
 [ -z $CLIENT ] && sudo sed -i -e /DAEMON_CONF=/s/^\#// -e /DAEMON_CONF=/s/=\".*\"/=\"\\/etc\\/hostapd\\/hostapd.conf\"/ /etc/default/hostapd 2> hostapd.log
 [ -z $CLIENT ] && [ $(cat hostapd.log > /dev/null) ] && exit 1
 [ -z $CLIENT ] && sudo sed -i -e /DAEMON_OPTS=/s/^\#// -e "/DAEMON_OPTS=/s/=\".*\"/=\"-i wlan0\"/" /etc/default/hostapd 2> hostapd.log
@@ -113,13 +122,13 @@ if [ -z $CLIENT ]; then case $SHARE in
 # Bridge Mode
 #
    'y'*|'Y'*)
-      logger -st brctl "share internet connection from ${INT} to wlan0 over bridge"
+      slogger -st brctl "share internet connection from ${INT} to wlan0 over bridge"
       sudo sed -i /bridge=br0/s/^\#// /etc/hostapd/hostapd.conf
-      source ${work_dir}init.d/init_net_if.sh --wifi '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS61} --dns6 ${DNS62} --bridge
+      source ${scriptsd}init.d/init_net_if.sh --wifi '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS61} --dns6 ${DNS62} --bridge
       ;;
   'n'*|'N'*)
     [ -z $(which dnsmasq) ] && sudo apt-get -y install dnsmasq
-    logger -st dnsmasq "configure a DNS server as a Service"
+    slogger -st dnsmasq "configure a DNS server as a Service"
     echo -e "bogus-priv
 filterwin2k
 # no-resolv
@@ -127,26 +136,26 @@ interface=wlan0    # Use the require wireless interface - usually wlan0
 #no-dhcp-interface=wlan0
 dhcp-range=${NET}.15,${NET}.100,${MASK},${MASKb}h
   # " | sudo tee /etc/dnsmasq.conf
-    logger -st dnsmasq "start DNS server"
+    slogger -st dnsmasq "start DNS server"
     sudo dnsmasq -x /var/run/dnsmasq.pid -C /etc/dnsmasq.conf
     sleep 3
-    logger -st modprobe "enable IP Masquerade"
+    slogger -st modprobe "enable IP Masquerade"
     sudo modprobe ipt_MASQUERADE
     sleep 1
-    logger -st network "rendering configuration for dnsmasq mode"
-    source ${work_dir}init.d/init_net_if.sh --wifi '' ''}
+    slogger -st network "rendering configuration for dnsmasq mode"
+    source ${scriptsd}init.d/init_net_if.sh --wifi '' ''}
     sudo systemctl unmask dnsmasq.service
     sudo systemctl enable dnsmasq.service
     sudo service dnsmasq start
     ;;
   *)
-    logger -st network "rendering configuration for router mode"
-    source ${work_dir}init.d/init_net_if.sh --wifi '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS61} --dns6 ${DNS62}
+    slogger -st network "rendering configuration for router mode"
+    source ${scriptsd}init.d/init_net_if.sh --wifi '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS61} --dns6 ${DNS62}
   ;;
 esac;
-    logger -st dhcpd  "configure dynamic dhcp addresses ${NET}.${NET_start}-${NET_end}"
-    source ${work_dir}init.d/init_dhcp_serv.sh --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS61} --dns6 ${DNS62} --router ${NET}.1
+    slogger -st dhcpd  "configure dynamic dhcp addresses ${NET}.${NET_start}-${NET_end}"
+    source ${scriptsd}init.d/init_dhcp_serv.sh --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS61} --dns6 ${DNS62} --router ${NET}.1
 else
-  source ${work_dir}init.d/init_net_if.sh --wifi $SSID $PAWD
+  source ${scriptsd}init.d/init_net_if.sh --wifi $SSID $PAWD
 fi
-source ${work_dir}init.d/net_restart.sh $CLIENT
+source ${scriptsd}init.d/net_restart.sh $CLIENT

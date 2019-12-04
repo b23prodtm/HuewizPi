@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 import sys
 if int(sys.version.partition('.')[0]) < 3:
     print("This script needs python 3 or later. Try python3.")
@@ -11,8 +11,8 @@ defnet = ip.ip_network('192.168.2.0/24')
 defnet6 = ip.ip_network('2a01:db8:0:1::0/64')
 defintnet = ip.ip_network('192.168.0.0/24')
 defintnet6 = ip.ip_network('2a01:e0a:16b:dc30::0/64')
-defdns1 = ip.ip_address('192.168.0.254')
-defdns2 = ip.ip_address('8.8.8.8')
+defdns1 = ip.ip_address('8.8.8.8')
+defdns2 = ip.ip_address('8.8.4.4')
 defdns61 = ip.ip_address('2001:4860:4860::8888')
 defdns62 = ip.ip_address('2001:4860:4860::8844')
 myenv = dict()
@@ -35,14 +35,14 @@ def parse_args (argv):
         "MODE":"",
         "CTY_CODE":"",
         "CHANNEL":"",
-	"DNS1":"",
-	"DNS2":str(defdns2),
+	    "DNS1":"",
+	    "DNS2":str(defdns2),
+	    "DNS61":str(defdns61),
+	    "DNS62":str(defdns62),
         "NET_start":"15",
         "NET_end":"100",
         "NET6":defnet6.with_prefixlen,
-        "INTNET6":defintnet6.with_prefixlen,
-	"DNS61":str(defdns61),
-	"DNS62":str(defdns62)
+        "INTNET6":defintnet6.with_prefixlen
      }
     r_parse_argv(defaults, argv, 1, 'hc', "Usage: {} [-c,--client] <priv-network-x.x.x.0/len> <wan-network-x.x.x.0/len> <wan-interface> [ssid passphrase [mode] [country_code channel] [dns1 dns2] [dns1-ipv6 dns2-ipv6] [net-range-start net-range-end] [priv-network-ipv6/mask-length wan-network-ipv6/mask-length]]".format(argv[0]))
 
@@ -52,6 +52,9 @@ def r_parse_argv(defaults, argv, i, options, usage):
     options -- Literals set of options, e.g. afh where -a, -f, -h are valid options as for -afh
     """
     if i >= len(defaults) : return
+    if len(argv) < 4:
+         print(usage)
+         return
     pf = "-+[" + options + "]*"
     client = re.compile(pf + "c(lient)?.*")
     help = re.compile(pf + "h(elp)?.*")
@@ -99,6 +102,11 @@ def format_argv(var):
     return var
 
 def main(argv):
+    if "DEBUG" in os.environ and os.environ['DEBUG']:
+        for a in argv:
+            print("%s " % a)
+        print("\n")
+        print("WORKDIR %s" % os.getcwd())
     parse_args(argv)
     while myenv["SSID"] == "":
         myenv["SSID"] = input("Please set a name for the Wifi Network: ")
@@ -123,7 +131,6 @@ def main(argv):
             print("Oops! Please set a valid IPv4 address".format(err))
     os.environ.update(myenv)
     write_exports(myenv)
-    write_lib()
 
 def write_exports(envdict):
     path=".hap-wiz-env.sh"
@@ -131,25 +138,6 @@ def write_exports(envdict):
     f.write("#!/usr/bin/env bash\nexport")
     for k,v in myenv.items():
         f.write(" '{}'=\"{}\"".format(k,v))
-    f.close()
-    os.chmod(path, 0o755)
-
-def write_lib():
-    path=".hap-wiz-lib.sh"
-    f = open(path, "w")
-    f.write("#!/usr/bin/env bash\n")
-    f.write("function nameservers() {\n\
-      ns=$1\n\
-      sep=''\n\
-      while [ \"$#\" -gt 1 ]; do case $2 in\n\
-        \"''\"|'' );;\n\
-          *)\n\
-            [ $ns != '' ] && [ $ns != \"''\" ] && sep=','\n\
-            ns=\"${ns}${sep}$2\";;\n\
-      esac; shift; done\n\
-      [ $ns != '' ] && [ $ns != \"''\" ] && echo $ns | sed -e s/,,//g -e s/,$// -e s/^,//\n\
-    }\n\
-")
     f.close()
     os.chmod(path, 0o755)
 

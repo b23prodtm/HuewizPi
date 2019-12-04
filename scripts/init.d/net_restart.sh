@@ -1,15 +1,15 @@
 #!/bin/bash
-export work_dir=$(echo $0 | awk -F'/' '{ print $1 }')'/'
-[ ! -f .hap-wiz-env.sh ] && python3 ${work_dir}../library/hap-wiz-env.py $*
+export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=0;i<NF;i++) print $i }' | awk -F// '{ print "/"$2 }'))
+[ ! -f .hap-wiz-env.sh ] && python3 ${scriptsd}../library/hap-wiz-env.py $*
 source .hap-wiz-env.sh
-logger -st reboot "to complete the Access Point installation, reboot the Raspberry PI"
+slogger -st reboot "to complete the Access Point installation, reboot the Raspberry PI"
 [ -z $PROMPT ] && read -p "Do you want to reboot now [y/N] ?" PROMPT
 [ -z $PROMPT ] && PROMPT=N
 if [ -f /etc/init.d/networking ]; then
    sudo /etc/init.d/networking restart
 else
    [[ $PROMPT != "N" ]] && sudo netplan try --timeout 12
-   logger -st 'rc.local' 'Work around fix netplan apply on reboot'
+   slogger -st 'rc.local' 'Work around fix netplan apply on reboot'
    if [ ! -f /etc/rc.local ]; then
       printf '%s\n' "#!/bin/bash" "exit 0" | sudo tee /etc/rc.local
       sudo chmod +x /etc/rc.local
@@ -36,26 +36,26 @@ sleep 2\\n\
 dhclient wlan0\\n\
 ${MARKER_END}\\n'/ /etc/rc.local"
   fi
-logger -st sed "/etc/rc.local added command lines"
+slogger -st sed "/etc/rc.local added command lines"
    cat /etc/rc.local
 fi
-logger -st dpkg "installing dpkg auto-reboot.service"
-sudo cp -f ${work_dir}init.d/auto-reboot.sh /usr/local/bin/auto-reboot.sh
+slogger -st dpkg "installing dpkg auto-reboot.service"
+sudo cp -f ${scriptsd}init.d/auto-reboot.sh /usr/local/bin/auto-reboot.sh
 sudo chmod +x /usr/local/bin/auto-reboot.sh
-sudo cp -f ${work_dir}init.d/auto-reboot.service /etc/systemd/system/auto-reboot.service
+sudo cp -f ${scriptsd}init.d/auto-reboot.service /etc/systemd/system/auto-reboot.service
 sudo systemctl enable auto-reboot
-logger -st ufw  "enable ip forwarding (internet connectivity)"
-source ${work_dir}init.d/init_ufw.sh
+slogger -st ufw  "enable ip forwarding (internet connectivity)"
+source ${scriptsd}init.d/init_ufw.sh
 case $PROMPT in
   'y'|'Y'*) sudo reboot;;
   *)
-	[ -z $CLIENT ] && logger -st sysctl "restarting Access Point"
+	[ -z $CLIENT ] && slogger -st sysctl "restarting Access Point"
 	[ -z $CLIENT ] && sudo systemctl unmask hostapd.service
 	[ -z $CLIENT ] && sudo systemctl enable hostapd.service
 	# FIX driver AP_DISABLED error : first start up interface
 	sudo netplan apply
 	[ -z $CLIENT ] && sudo service hostapd start
-	[ -z $CLIENT ] && logger -st dhcpd "restart DHCP server"
+	[ -z $CLIENT ] && slogger -st dhcpd "restart DHCP server"
 	# Restart up interface
 	sudo ip link set dev wlan0 up
 	[ -z $CLIENT ] && sudo service isc-dhcp-server restart

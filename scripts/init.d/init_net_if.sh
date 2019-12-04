@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-export work_dir=$(echo $0 | awk -F'/' '{ print $1 }')'/'
-[ ! -f .hap-wiz-env.sh ] && python3 ${work_dir}../library/hap-wiz-env.py $*
+export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=0;i<NF;i++) print $i }' | awk -F// '{ print "/"$2 }'))
+[ ! -f .hap-wiz-env.sh ] && python3 ${scriptsd}../library/hap-wiz-env.py $*
 source .hap-wiz-env.sh
-source .hap-wiz-lib.sh
+source scripts/dns-lookup.sh
 yaml='02-hostap.yaml'
 clientyaml='01-cliwpa.yaml'
 nameservers_def="${NET}.1"
 nameservers6_def="${NET6}1"
 nameservers=''
 nameservers6=''
-NP_ORIG=${work_dir}../../.netplan-store && sudo mkdir -p $NP_ORIG
-logger -st netplan "disable cloud-init"
+NP_ORIG=/usr/share/netplan && sudo mkdir -p $NP_ORIG
+slogger -st netplan "disable cloud-init"
 sudo mv -fv /etc/netplan/50-cloud-init.yaml $NP_ORIG
 echo -e "network: { config: disabled }" | sudo tee /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
 if [ -f /etc/init.d/networking ]; then
@@ -39,9 +39,9 @@ while [ "$#" -gt 0 ]; do case $1 in
       sudo sed -i ${MARKERS}d /etc/network/interfaces
     else
       # ubuntu server
-      logger -st netplan "move configuration to $NP_ORIG"
+      slogger -st netplan "move configuration to $NP_ORIG"
       sudo mv -fv /etc/netplan/* $NP_ORIG
-      logger -st netplan "reset configuration to cloud-init"
+      slogger -st netplan "reset configuration to cloud-init"
       sudo mv -fv $NP_ORIG/50-cloud-init.yaml /etc/netplan
       sudo rm -fv /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
     fi
@@ -61,9 +61,9 @@ allow-hotplug wlan0
 iface wlan0 inet dhcp
 ${MARKER_END}" | sudo tee -a /etc/network/interfaces
       sudo /etc/init.d/networking restart
-      sudo ${work_dir}init.d/init_wpa_ctl.sh
+      sudo ${scriptsd}init.d/init_wpa_ctl.sh
     else
-      logger -st netplan "/etc/netplan/$clientyaml was created"
+      slogger -st netplan "/etc/netplan/$clientyaml was created"
         echo -e "${MARKER_BEGIN}
 network:
   version: 2
@@ -106,12 +106,12 @@ iface br0 inet dhcp
  nameservers $nameservers
 bridge_ports wlan0 ${INT}
 ${MARKER_END}" | sudo tee -a /etc/network/interfaces
-     logger -st brctl "share the internet wireless over bridge"
+     slogger -st brctl "share the internet wireless over bridge"
      sudo brctl addbr br0
      sudo brctl addif br0 eth0 wlan0
    else
      # new 18.04 netplan server (DHCPd set to bridge)
-     logger -st netplan "/etc/netplan/$yaml was created"
+     slogger -st netplan "/etc/netplan/$yaml was created"
      echo -e "${MARKER_BEGIN}
   bridges:
     br0:
@@ -129,7 +129,7 @@ ${MARKER_END}" | sudo tee -a /etc/netplan/$yaml
 esac; shift; done
 nameservers=$(nameservers $nameservers $nameservers_def)
 nameservers6=$(nameservers $nameservers6 "'${nameservers6_def}'")
-logger -st network "add wifi network"
+slogger -st network "add wifi network"
 if [ -f /etc/init.d/networking ]; then
     sudo sed -i s/"iface wlan0 inet dhcp"/"\\n\
 iface wlan0 inet manual\\n\

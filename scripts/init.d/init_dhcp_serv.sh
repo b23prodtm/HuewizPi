@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-export work_dir=$(echo $0 | awk -F'/' '{ print $1 }')'/'
-[ ! -f .hap-wiz-env.sh ] && python3 ${work_dir}../library/hap-wiz-env.py $*
+export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=0;i<NF;i++) print $i }' | awk -F// '{ print "/"$2 }'))
+[ ! -f .hap-wiz-env.sh ] && python3 ${scriptsd}../library/hap-wiz-env.py $*
 source .hap-wiz-env.sh
-source .hap-wiz-lib.sh
+source scripts/dns-lookup.sh
 routers="option routers ${NET}.1; #hostapd wlan0"
 nameservers=$(systemd-resolve --status | grep 'DNS Servers:' | awk '/(\w*\.){3}/{print $3}' | head -n 1)
 nameservers6="'$(systemd-resolve -6 --status | grep 'DNS Servers:' | awk '/(\w*:){2}/{print $3}' | head -n 1)'"
@@ -76,7 +76,7 @@ authoritative;
 
 log-facility local7;
 
-subnet ${INTNET}.0 netmask ${INTMASK} {}
+#subnet ${INTNET}.0 netmask ${INTMASK} {}
 subnet ${NET}.0 netmask ${MASK} {
 #option domain-name "wifi.localhost";
 ${routers}
@@ -93,7 +93,7 @@ authoritative;
 
 log-facility local7;
 
-subnet6 ${INTNET6}0/${INTMASKb6} {}
+#subnet6 ${INTNET6}0/${INTMASKb6} {}
 subnet6 ${NET6}0/${MASKb6} {
 #option dhcp6.domain-name "wifi.localhost";
 range6 ${NET6}${NET_start} ${NET6}${NET_end};
@@ -104,7 +104,7 @@ sudo sed -i -e "s/INTERFACESv6=\".*\"/INTERFACESv6=\"wlan0\"/" /etc/default/isc-
 sudo sed -i -e s/\'\',//g -e s/\'\'//g /etc/dhcp/dhcpd6.conf
 sudo cat /etc/default/isc-dhcp-server
 sleep 1
-logger -st dhcpd "start DHCP server"
+slogger -st dhcpd "start DHCP server"
 sudo systemctl unmask isc-dhcp-server.service
 sudo systemctl enable isc-dhcp-server.service
 sudo service isc-dhcp-server start
