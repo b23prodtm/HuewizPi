@@ -39,10 +39,7 @@ logger -st sed "/etc/rc.local added command lines"
    cat /etc/rc.local
 fi
 logger -st dpkg "installing dpkg auto-reboot.service"
-sudo cp -f ${work_dir}init.d/auto-reboot.sh /usr/local/bin/auto-reboot.sh
-sudo chmod +x /usr/local/bin/auto-reboot.sh
-sudo cp -f ${work_dir}init.d/auto-reboot.service /etc/systemd/system/auto-reboot.service
-sudo systemctl enable auto-reboot
+source ${work_dir}init.d/auto-rebooot.sh install
 logger -st ufw  "enable ip forwarding (internet connectivity)"
 source ${work_dir}init.d/init_ufw.sh
 case $REBOOT in

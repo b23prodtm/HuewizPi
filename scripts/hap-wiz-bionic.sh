@@ -128,7 +128,7 @@ interface=wlan0    # Use the require wireless interface - usually wlan0
 dhcp-range=${NET}.15,${NET}.100,${MASK},${MASKb}h
   # " | sudo tee /etc/dnsmasq.conf
     logger -st dnsmasq "start DNS server"
-    sudo dnsmasq -x /var/run/dnsmasq.pid -C /etc/dnsmasq.conf
+    sudo dnsmasq -x /run/dnsmasq.pid -C /etc/dnsmasq.conf
     sleep 3
     logger -st modprobe "enable IP Masquerade"
     sudo modprobe ipt_MASQUERADE

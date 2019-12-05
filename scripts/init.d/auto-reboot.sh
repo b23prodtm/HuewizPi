@@ -1,27 +1,39 @@
 #!/bin/bash
 # auto-reboot
 # description: Check if the system dpkg need a restart and send corresponding signal
+export work_dir=$(echo $0 | awk -F'/' '{ print $1 }')'/'
+install() {
+  sudo cp -f ${work_dir}init.d/auto-reboot.sh /usr/local/bin/auto-reboot.sh
+  sudo chmod +x /usr/local/bin/auto-reboot.sh
+  sudo cp -f ${work_dir}init.d/auto-reboot.service /etc/systemd/system/auto-reboot.service
+  sudo systemctl enable auto-reboot
+}
+uninstall() {
+  sudo systemctl disable auto-reboot
+  sudo rm -f /usr/local/bin/auto-reboot.sh
+  sudo rm -f /etc/systemd/system/auto-reboot.service
+}
 start() {
-# code to start app comes here 
+# code to start app comes here
 # example: bahs -c "program_name" &
-    bash -c "while [ ! -f /var/run/reboot-required ]; do sleep 30; done; cat /var/run/reboot-required.dpkgs 2> /dev/null; reboot" &
-echo $! > /var/run/chkdpkgs.pid
+    bash -c "while [ ! -f /run/reboot-required ]; do sleep 30; done; cat /run/reboot-required.dpkgs 2> /dev/null; reboot" &
+    echo $! > /run/chkdpkgs.pid
 }
 stop() {
-# code to stop app comes here 
+# code to stop app comes here
 # example: kill program_name.pid
-kill $(cat /var/run/chkdpkgs.pid) 
-    rm /var/run/chkdpkgs.pid
+  kill $(cat /run/chkdpkgs.pid)
+  rm /run/chkdpkgs.pid
 }
 status() {
-if [ -e /var/run/chkdpkgs.pid ]; then
-echo auto-reboot is running, pid=$(cat /var/run/chkdpkgs.pid)
+if [ -e /run/chkdpkgs.pid ]; then
+  echo auto-reboot is running, pid=$(cat /run/chkdpkgs.pid)
 else
-echo auto-reboot is NOT running
-exit 1
+  echo auto-reboot is NOT running
+  exit 1
 fi
 }
-case "$1" in 
+case "$1" in
     start)
        start
        ;;
@@ -33,11 +45,17 @@ case "$1" in
        start
        ;;
     status)
-# code to check status of app comes here 
+# code to check status of app comes here
 # example: status program_name
-       status 
-      ;;
+       status
+       ;;
+    install)
+       install
+       ;;
+    uninstall)
+       uninstall
+       ;;
 *)
-echo "Usage: $0 {start|stop|status|restart}"
+echo "Usage: $0 {start|stop|status|restart|install|uninstall}"
 esac
-exit 0 
+exit 0
