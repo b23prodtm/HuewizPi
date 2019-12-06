@@ -10,7 +10,7 @@ then
     [ $(which sw_vers) > /dev/null ] && sw_vers
     exit 1
 fi
-export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=0;i<NF;i++) print $i }' | awk -F// '{ print "/"$2 }')
+export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')
 function slogger() {
   [ -f /dev/log ] && logger $@ && return
   [ "$#" -gt 1 ] && shift
@@ -19,9 +19,8 @@ function slogger() {
 export -f slogger
 if [ ! -f ${scriptsd}../.hap-wiz-env.sh ]; then
   #This script arguments were edited in python file. To add more, modify there.
-  slogger -st RUN "($#) python3 ${scriptsd}../library/hap-wiz-env.py $*"
-  [ "$#" -lt 2 ] && python3 ${scriptsd}../library/hap-wiz-env.py --help && exit 1
-  DEBUG=1 python3 ${scriptsd}../library/hap-wiz-env.py "$@"
+  slogger -st RUN "(+$# arguments) python ${scriptsd}../library/hap-wiz-env.py $*"
+  bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
 fi
 source ${scriptsd}../.hap-wiz-env.sh
 echo "Set Private Network $NET.0/$MASK"
@@ -136,8 +135,8 @@ interface=wlan0    # Use the require wireless interface - usually wlan0
 #no-dhcp-interface=wlan0
 dhcp-range=${NET}.15,${NET}.100,${MASK},${MASKb}h
   # " | sudo tee /etc/dnsmasq.conf
-    slogger -st dnsmasq "start DNS server"
-    sudo dnsmasq -x /var/run/dnsmasq.pid -C /etc/dnsmasq.conf
+    logger -st dnsmasq "start DNS server"
+    sudo dnsmasq -x /run/dnsmasq.pid -C /etc/dnsmasq.conf
     sleep 3
     slogger -st modprobe "enable IP Masquerade"
     sudo modprobe ipt_MASQUERADE

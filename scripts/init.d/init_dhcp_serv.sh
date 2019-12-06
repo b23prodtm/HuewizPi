@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=0;i<NF;i++) print $i }' | awk -F// '{ print "/"$2 }'))
-[ ! -f .hap-wiz-env.sh ] && python3 ${scriptsd}../library/hap-wiz-env.py $*
-source .hap-wiz-env.sh
-source scripts/dns-lookup.sh
+[ -z ${scriptsd} ] && export scriptsd=../export scriptsd=../$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')
+[ ! -f ${scriptsd}../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
+source ${scriptsd}../.hap-wiz-env.sh
+source ${scriptsd}dns-lookup.sh
 routers="option routers ${NET}.1; #hostapd wlan0"
 nameservers=$(systemd-resolve --status | grep 'DNS Servers:' | awk '/(\w*\.){3}/{print $3}' | head -n 1)
 nameservers6="'$(systemd-resolve -6 --status | grep 'DNS Servers:' | awk '/(\w*:){2}/{print $3}' | head -n 1)'"

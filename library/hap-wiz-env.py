@@ -43,7 +43,8 @@ def parse_args (argv):
         "NET_end":"100",
         "NET6":defnet6.with_prefixlen,
         "INTNET6":defintnet6.with_prefixlen
-     }
+        }
+    myenv.update(defaults)
     r_parse_argv(defaults, argv, 1, 'hc', "Usage: {} [-c,--client] <priv-network-x.x.x.0/len> <wan-network-x.x.x.0/len> <wan-interface> [ssid passphrase [mode] [country_code channel] [dns1 dns2] [dns1-ipv6 dns2-ipv6] [net-range-start net-range-end] [priv-network-ipv6/mask-length wan-network-ipv6/mask-length]]".format(argv[0]))
 
 def r_parse_argv(defaults, argv, i, options, usage):
@@ -63,7 +64,7 @@ def r_parse_argv(defaults, argv, i, options, usage):
         if client.match(argv[i]):
             myenv['CLIENT'] = argv[i]
             del argv[i]
-        elif help.match(argv[1]):
+        elif help.match(argv[i]):
             print(usage)
             sys.exit(0)
         elif any.match(argv[i]):
@@ -102,11 +103,6 @@ def format_argv(var):
     return var
 
 def main(argv):
-    if "DEBUG" in os.environ and os.environ['DEBUG']:
-        for a in argv:
-            print("%s " % a)
-        print("\n")
-        print("WORKDIR %s" % os.getcwd())
     parse_args(argv)
     while myenv["SSID"] == "":
         myenv["SSID"] = input("Please set a name for the Wifi Network: ")
@@ -133,7 +129,8 @@ def main(argv):
     write_exports(myenv)
 
 def write_exports(envdict):
-    path=".hap-wiz-env.sh"
+    print("Current working dir : %s" % os.getcwd())
+    path="%s.hap-wiz-env.sh" % os.getcwd()
     f = open(path, "w")
     f.write("#!/usr/bin/env bash\nexport")
     for k,v in myenv.items():

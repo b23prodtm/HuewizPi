@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=0;i<NF;i++) print $i }' | awk -F// '{ print "/"$2 }'))
-[ ! -f .hap-wiz-env.sh ] && python3 ${scriptsd}../library/hap-wiz-env.py $*
-source .hap-wiz-env.sh
-source scripts/dns-lookup.sh
+[ -z ${scriptsd} ] && export scriptsd=../$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')
+[ ! -f ${scriptsd}../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
+source ${scriptsd}../.hap-wiz-env.sh
+source ${scriptsd}dns-lookup.sh
 yaml='02-hostap.yaml'
 clientyaml='01-cliwpa.yaml'
 nameservers_def="${NET}.1"

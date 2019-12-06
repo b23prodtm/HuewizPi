@@ -5,7 +5,7 @@ Description=Auto-Check system reboot-required status and reboot
 Type=forking
 ExecStart=/usr/local/bin/auto-reboot.sh start
 ExecStop=/usr/local/bin/auto-reboot.sh stop
-PIDFile=/var/run/chkdpkgs.pid
+PIDFile=/run/chkdpkgs.pid
 
 [Install]
 WantedBy=multi-user.target

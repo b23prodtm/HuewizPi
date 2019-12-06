@@ -1,7 +1,7 @@
-#!/bin/bash
-export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=0;i<NF;i++) print $i }' | awk -F// '{ print "/"$2 }'))
-[ ! -f .hap-wiz-env.sh ] && python3 ${scriptsd}../library/hap-wiz-env.py $*
-source .hap-wiz-env.sh
+#!/usr/bin/env bash
+[ -z ${scriptsd} ] && export scriptsd=../$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')
+[ ! -f ${scriptsd}../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
+source ${scriptsd}../.hap-wiz-env.sh
 slogger -st reboot "to complete the Access Point installation, reboot the Raspberry PI"
 [ -z $PROMPT ] && read -p "Do you want to reboot now [y/N] ?" PROMPT
 [ -z $PROMPT ] && PROMPT=N
@@ -39,14 +39,11 @@ ${MARKER_END}\\n'/ /etc/rc.local"
 slogger -st sed "/etc/rc.local added command lines"
    cat /etc/rc.local
 fi
-slogger -st dpkg "installing dpkg auto-reboot.service"
-sudo cp -f ${scriptsd}init.d/auto-reboot.sh /usr/local/bin/auto-reboot.sh
-sudo chmod +x /usr/local/bin/auto-reboot.sh
-sudo cp -f ${scriptsd}init.d/auto-reboot.service /etc/systemd/system/auto-reboot.service
-sudo systemctl enable auto-reboot
-slogger -st ufw  "enable ip forwarding (internet connectivity)"
+logger -st dpkg "installing dpkg auto-reboot.service"
+source ${scriptsd}init.d/auto-rebooot.sh install
+logger -st ufw  "enable ip forwarding (internet connectivity)"
 source ${scriptsd}init.d/init_ufw.sh
-case $PROMPT in
+case $REBOOT in
   'y'|'Y'*) sudo reboot;;
   *)
 	[ -z $CLIENT ] && slogger -st sysctl "restarting Access Point"

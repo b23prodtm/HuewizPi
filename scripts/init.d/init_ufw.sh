@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=0;i<NF;i++) print $i }' | awk -F// '{ print "/"$2 }'))
-[ ! -f .hap-wiz-env.sh ] && python3 ${scriptsd}../library/hap-wiz-env.py $*
-source .hap-wiz-env.sh
+[ -z ${scriptsd} ] && export scriptsd=../$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')
+[ ! -f ${scriptsd}../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
+source ${scriptsd}../.hap-wiz-env.sh
 while [ "$#" -gt 0 ]; do case $1 in
   -r*|-R*)
     bash -c "sudo sed -i -e ${MARKERS}d /etc/ufw/before.rules"

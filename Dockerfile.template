@@ -4,22 +4,24 @@ ENV INITSYSTEM on
 ENV UDEV on
 ENV PROMPT N
 
-ARG PRIV_NETWORK
-ARG WAN_NETWORK
-ARG WAN_INT
-ARG PRIV_SSID
-ARG PRIV_PASSWD
-ARG PRIV_WIFI_MODE
-ARG PRIV_CTY
-ARG PRIV_CHANNEL
-ARG DNS1
-ARG DNS2
-ARG DNS1_IPV6
-ARG DNS2_IPV6
-ARG PRIV_RANGE_START
-ARG PRIV_RANGE_END
-ARG PRIV_NETWORK_IPV6
-ARG WAN_NETWORK_IPV6
+ARG DEBUG
+ENV DEBUG ${DEBUG:-0}
+ENV PRIV_NETWORK 10.233.2.0/24
+ENV WAN_NETWORK 10.233.1.0/24
+ENV WAN_INT eth0
+ENV PRIV_SSID MyHomeWifi
+ENV PRIV_PASSWD 1passWoRd
+ENV PRIV_WIFI_MODE a
+ENV PRIV_CTY FR
+ENV PRIV_CHANNEL 36
+ENV DNS1 192.168.1.1
+ENV DNS2 8.8.8.8
+ENV DNS1_IPV6 2001:4860:4860::8888
+ENV DNS2_IPV6 2001:4860:4860::8844
+ENV PRIV_RANGE_START 2
+ENV PRIV_RANGE_END 253
+ENV PRIV_NETWORK_IPV6 2a01:e0a:16b:dc30::0/64
+ENV WAN_NETWORK_IPV6 2a01:db8:0:1::0/64
 
 RUN install_packages \
   hostapd \
@@ -28,15 +30,21 @@ RUN install_packages \
   ufw \
   systemd
 
+COPY scripts/ /usr/src/scripts/
+COPY library/ /usr/src/library/
+RUN ls /usr/src/library
+RUN chmod +x /usr/src/scripts/*
+RUN chmod +x /usr/src/scripts/init.d/*
+
 WORKDIR /usr/src/
 
-COPY . ./
-
-RUN chmod +x ./scripts/*
-RUN chmod +x ./scripts/init.d/*
-
-RUN [ "bash", "-c", "/usr/src/scripts/hap-wiz-bionic.sh $PRIV_NETWORK $WAN_NETWORK $WAN_INT \
-$PRIV_SSID $PRIV_PASSWD $PRIV_WIFI_MODE $PRIV_CTY $PRIV_CHANNEL \
-$DNS1 $DNS2 $DNS1_IPV6 $DNS2_IPV6" ]
-#$PRIV_RANGE_START $PRIV_RANGE_END \
-#$PRIV_NETWORK_IPV6 $WAN_NETWORK_IPV6" ]
+RUN [ "bash", "-c", "python", "library/hap-wiz-env.py", "$PRIV_NETWORK", "$WAN_NETWORK", "$WAN_INT", \
+"$PRIV_SSID", "$PRIV_PASSWD", "$PRIV_WIFI_MODE", "$PRIV_CTY", "$PRIV_CHANNEL", \
+"$DNS1", "$DNS2", "$DNS1_IPV6", "$DNS2_IPV6" ]
+RUN [ "bash", "-c", "echo", "\n/usr/src/\n" ]
+RUN [ "bash", "-c", "ls", "-al", "/usr/src/library" ]
+RUN [ "bash", "-c", "scripts/hap-wiz-bionic.sh", "$PRIV_NETWORK", "$WAN_NETWORK", "$WAN_INT", \
+"$PRIV_SSID", "$PRIV_PASSWD", "$PRIV_WIFI_MODE", "$PRIV_CTY", "$PRIV_CHANNEL", \
+"$DNS1", "$DNS2", "$DNS1_IPV6", "$DNS2_IPV6" ]
+#"$PRIV_RANGE_START", "$PRIV_RANGE_END", \
+#"$PRIV_NETWORK_IPV6", "$WAN_NETWORK_IPV6" ]
