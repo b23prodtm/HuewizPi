@@ -34,8 +34,8 @@ echo -e "${MARKER_BEGIN}\\n\
 :POSTROUTING ACCEPT [0:0]\\n\
 \\n\
 # Forward traffic from wlan0 through eth0.\\n\
--A POSTROUTING -s ${NET}.0/${MASKb} -o ${INT} -j MASQUERADE\\n\
-#-A POSTROUTING -s ${NET6}0/${MASKb6} -o ${INT} -j MASQUERADE\\n\
+-A POSTROUTING -s ${NET}.0/${MASKb} -o ${WAN_INT} -j MASQUERADE\\n\
+#-A POSTROUTING -s ${PRIV_NETWORK_IPV6}0/${MASKb6} -o ${WAN_INT} -j MASQUERADE\\n\
 \\n\
 # dont delete the COMMIT line or these nat table rules wont be processed\\n\
 COMMIT\\n\
@@ -45,12 +45,12 @@ sleep 1
 slogger -st ufw "add packet ip forwarding"
 echo -e "${MARKER_BEGIN}\\n\
 -A ufw-before-forward -m state --state RELATED,ESTABLISHED -j ACCEPT\\n\
--A ufw-before-forward -i wlan0 -s ${NET}.0/${MASKb} -o ${INT} -m state --state NEW -j ACCEPT\\n\
-#-A ufw-before-forward -i wlan0 -s ${NET6}0/${MASKb6} -o ${INT} -m state --state NEW -j ACCEPT\\n\
+-A ufw-before-forward -i wlan0 -s ${NET}.0/${MASKb} -o ${WAN_INT} -m state --state NEW -j ACCEPT\\n\
+#-A ufw-before-forward -i wlan0 -s ${PRIV_NETWORK_IPV6}0/${MASKb6} -o ${WAN_INT} -m state --state NEW -j ACCEPT\\n\
 ${MARKER_END}" | sudo tee /tmp/input.rules
 sudo sed -i -e /'^\# End required lines'/r/tmp/input.rules /etc/ufw/before.rules
 sleep 1
 slogger -st ufw "allow ${NET}.0"
 sudo ufw allow from ${NET}.0/${MASKb}
-sudo ufw allow from ${NET6}0/${MASKb6}
+sudo ufw allow from ${PRIV_NETWORK_IPV6}0/${MASKb6}
 sudo ufw --force enable

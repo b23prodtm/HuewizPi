@@ -2,18 +2,18 @@ FROM balenalib/%%BALENA_MACHINE_NAME%%-ubuntu-python:3
 
 ENV INITSYSTEM on
 ENV UDEV on
-ENV PROMPT N
-
 ARG DEBUG
 ENV DEBUG ${DEBUG:-0}
+
+ENV PROMPT N
 ENV PRIV_NETWORK 10.233.2.0/24
 ENV WAN_NETWORK 10.233.1.0/24
 ENV WAN_INT eth0
 ENV PRIV_SSID MyHomeWifi
 ENV PRIV_PASSWD 1passWoRd
 ENV PRIV_WIFI_MODE a
-ENV PRIV_CTY FR
-ENV PRIV_CHANNEL 36
+ENV PRIV_WIFI_CTY FR
+ENV PRIV_WIFI_CHANNEL 36
 ENV DNS1 192.168.1.1
 ENV DNS2 8.8.8.8
 ENV DNS1_IPV6 2001:4860:4860::8888
@@ -38,13 +38,7 @@ RUN chmod +x /usr/src/scripts/init.d/*
 
 WORKDIR /usr/src/
 
-RUN [ "bash", "-c", "python", "library/hap-wiz-env.py", "$PRIV_NETWORK", "$WAN_NETWORK", "$WAN_INT", \
-"$PRIV_SSID", "$PRIV_PASSWD", "$PRIV_WIFI_MODE", "$PRIV_CTY", "$PRIV_CHANNEL", \
-"$DNS1", "$DNS2", "$DNS1_IPV6", "$DNS2_IPV6" ]
-RUN [ "bash", "-c", "echo", "\n/usr/src/\n" ]
+RUN [ "bash", "-c", "python", "library/hap-wiz-env.py", "10.233.2.0/24", "10.233.1.0/24", "eth0" ]
 RUN [ "bash", "-c", "ls", "-al", "/usr/src/library" ]
-RUN [ "bash", "-c", "scripts/hap-wiz-bionic.sh", "$PRIV_NETWORK", "$WAN_NETWORK", "$WAN_INT", \
-"$PRIV_SSID", "$PRIV_PASSWD", "$PRIV_WIFI_MODE", "$PRIV_CTY", "$PRIV_CHANNEL", \
-"$DNS1", "$DNS2", "$DNS1_IPV6", "$DNS2_IPV6" ]
-#"$PRIV_RANGE_START", "$PRIV_RANGE_END", \
-#"$PRIV_NETWORK_IPV6", "$WAN_NETWORK_IPV6" ]
+RUN [ "bash", "-c", "scripts/hap-wiz-bionic.sh", "10.233.2.0/24", "10.233.1.0/24", "eth0" ]
+CMD [ "bash", "-c", "scripts/dns-lookup.sh"]

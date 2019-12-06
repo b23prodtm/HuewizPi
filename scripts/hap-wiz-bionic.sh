@@ -24,11 +24,11 @@ if [ ! -f ${scriptsd}../.hap-wiz-env.sh ]; then
 fi
 source ${scriptsd}../.hap-wiz-env.sh
 echo "Set Private Network $NET.0/$MASK"
-echo "Set Private Network IPv6 ${NET6}0/$MASKb6"
-echo "Set WAN Network $INTNET.0/$INTMASK"
-echo "Set WAN Network IPv6 ${INTNET6}0/$INTMASKb6"
+echo "Set Private Network IPv6 ${PRIV_NETWORK_IPV6}0/$MASKb6"
+echo "Set WAN Network $WAN_NETWORK.0/$WAN_INTMASK"
+echo "Set WAN Network IPv6 ${WAN_NETWORK_IPV6}0/$WAN_INTMASKb6"
 echo "Set DNS Global IPv4 ${DNS1}, ${DNS2}"
-echo "Set DNS Global IPv6 ${DNS61}, ${DNS62}"
+echo "Set DNS Global IPv6 ${DNS1_IPV6}, ${DNS2_IPV6}"
 [ -z $CLIENT ] && rm -f hostapd.log
 [ -z $CLIENT ] && touch hostapd.log
 [ -z $CLIENT ] && [ -z $(which hostapd) ] && sudo apt-get -y install hostapd
@@ -43,17 +43,17 @@ sudo systemctl disable wpa_supplicant.service
 source ${scriptsd}init.d/init_dhcp_serv.sh -r
 source ${scriptsd}init.d/init_ufw.sh -r
 [ -z $CLIENT ] && echo -e "### HostAPd will configure a public wireless network
-IPv4 ${NET}.0/${MASKb} - ${SSID}
+IPv4 ${NET}.0/${MASKb} - ${PRIV_SSID}
 Example SSH'ed through bastion 'jump' host:
-ssh -J $USER@$(ifconfig ${INT} | grep 'inet ' | awk '{ print $2 }') $USER@${NET}.15
+ssh -J $USER@$(ifconfig ${WAN_INT} | grep 'inet ' | awk '{ print $2 }') $USER@${NET}.15
 -------------------------------
 "
 [ -z $CLIENT ] && sleep 3
-[ -z $CLIENT ] && slogger -t hostapd "Configure Access Point $SSID"
+[ -z $CLIENT ] && slogger -t hostapd "Configure Access Point $PRIV_SSID"
 PSK_FILE=/etc/hostapd-psk
 [ -z $CLIENT ] && echo -e "interface=wlan0       # the interface used by the AP
 driver=nl80211
-ssid=${SSID}
+ssid=${PRIV_SSID}
 
 #ieee80211ac=1         # 5Ghz support
 #hw_mode=a
@@ -64,11 +64,11 @@ ssid=${SSID}
 #ieee80211n=1          # 802.11n (HT 40 MHz) support
 #hw_mode=g # 2,4-2,5Ghz (HT 40MHz band)
 #channel=6
-hw_mode=${MODE}
-channel=${CHANNEL}  # 0 means the AP will search for the channel with the least interferences
+hw_mode=${PRIV_WIFI_MODE}
+channel=${PRIV_WIFI_CHANNEL}  # 0 means the AP will search for the channel with the least interferences
 #bridge=br0
 ieee80211d=1          # limit the frequencies used to those allowed in the country
-country_code=${CTY_CODE}       # the country code
+country_code=${PRIV_WIFI_CTY}       # the country code
 wmm_enabled=1         # QoS support
 
 #source: IBM https://www.ibm.com/developerworks/library/l-wifiencrypthostapd/index.html
@@ -107,7 +107,7 @@ rts_threshold=2347
 fragm_threshold=2346
 " | sudo tee /etc/hostapd/hostapd.conf
 [ -z $CLIENT ] && sudo touch /etc/hostapd/hostapd.deny
-[ -z $CLIENT ] && echo -e "00:00:00:00:00:00 $(wpa_passphrase ${SSID} ${PAWD} | grep 'psk' | awk -F= 'FNR == 2 { print $2 }')" | sudo tee ${PSK_FILE}
+[ -z $CLIENT ] && echo -e "00:00:00:00:00:00 $(wpa_passphrase ${PRIV_SSID} ${PRIV_PASSWD} | grep 'psk' | awk -F= 'FNR == 2 { print $2 }')" | sudo tee ${PSK_FILE}
 [ -z $CLIENT ] && slogger -st hostapd "configure Access Point as a Service"
 [ -z $CLIENT ] && sudo sed -i -e /DAEMON_CONF=/s/^\#// -e /DAEMON_CONF=/s/=\".*\"/=\"\\/etc\\/hostapd\\/hostapd.conf\"/ /etc/default/hostapd 2> hostapd.log
 [ -z $CLIENT ] && [ $(cat hostapd.log > /dev/null) ] && exit 1
@@ -121,9 +121,9 @@ if [ -z $CLIENT ]; then case $SHARE in
 # Bridge Mode
 #
    'y'*|'Y'*)
-      slogger -st brctl "share internet connection from ${INT} to wlan0 over bridge"
+      slogger -st brctl "share internet connection from ${WAN_INT} to wlan0 over bridge"
       sudo sed -i /bridge=br0/s/^\#// /etc/hostapd/hostapd.conf
-      source ${scriptsd}init.d/init_net_if.sh --wifi '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS61} --dns6 ${DNS62} --bridge
+      source ${scriptsd}init.d/init_net_if.sh --wifi '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6} --bridge
       ;;
   'n'*|'N'*)
     [ -z $(which dnsmasq) ] && sudo apt-get -y install dnsmasq
@@ -149,12 +149,12 @@ dhcp-range=${NET}.15,${NET}.100,${MASK},${MASKb}h
     ;;
   *)
     slogger -st network "rendering configuration for router mode"
-    source ${scriptsd}init.d/init_net_if.sh --wifi '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS61} --dns6 ${DNS62}
+    source ${scriptsd}init.d/init_net_if.sh --wifi '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6}
   ;;
 esac;
-    slogger -st dhcpd  "configure dynamic dhcp addresses ${NET}.${NET_start}-${NET_end}"
-    source ${scriptsd}init.d/init_dhcp_serv.sh --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS61} --dns6 ${DNS62} --router ${NET}.1
+    slogger -st dhcpd  "configure dynamic dhcp addresses ${NET}.${PRIV_RANGE_START}-${PRIV_RANGE_END}"
+    source ${scriptsd}init.d/init_dhcp_serv.sh --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6} --router ${NET}.1
 else
-  source ${scriptsd}init.d/init_net_if.sh --wifi $SSID $PAWD
+  source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_SSID $PRIV_PASSWD
 fi
 source ${scriptsd}init.d/net_restart.sh $CLIENT

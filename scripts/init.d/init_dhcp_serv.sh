@@ -45,12 +45,12 @@ Usage: $0 [-r] [--router <ipv4>] [--dns <ipv4>] [--dns6 <ipv6>]
     exit 1;;
   -l*|--leases*)
     lease_host=$2; lease_add=$3; lease=$(cat /var/lib/dhcp/dhcpd.leases | grep -C4 $2 | grep -m1 "hardware ethernet" | awk -F' ' '{print $3}')
-    [ -z $3 ] && lease_add=${NET_start}
+    [ -z $3 ] && lease_add=${PRIV_RANGE_START}
    [ ! -z ${lease} ] && lease_blk ${NET}.${lease_add} | sudo tee /tmp/input.dhcp.lease && sudo sed -i \
 -e \$s/\}// -e \$r/tmp/input.dhcp.lease -e \$a\} \
 /etc/dhcp/dhcpd.conf && cat /etc/dhcp/dhcpd.conf | grep -B4 "fixed-address"
    sudo service isc-dhcp-server restart
-   [ ! -z ${lease} ] && lease_blk ${NET6}${lease_add} | sudo tee /tmp/input.dhcp.lease && sudo sed -i \
+   [ ! -z ${lease} ] && lease_blk ${PRIV_NETWORK_IPV6}${lease_add} | sudo tee /tmp/input.dhcp.lease && sudo sed -i \
 -e \$s/\}// -e \$r/tmp/input.dhcp.lease -e \$a\} \
 /etc/dhcp/dhcpd6.conf && cat /etc/dhcp/dhcpd6.conf | grep -B4 "fixed-address"
     sudo service isc-dhcp-server6 restart
@@ -76,13 +76,13 @@ authoritative;
 
 log-facility local7;
 
-#subnet ${INTNET}.0 netmask ${INTMASK} {}
+#subnet ${WAN_NETWORK}.0 netmask ${WAN_INTMASK} {}
 subnet ${NET}.0 netmask ${MASK} {
 #option domain-name "wifi.localhost";
 ${routers}
 option subnet-mask ${MASK};
 option broadcast-address ${NET}.0; # dhcpd
-range ${NET}.${NET_start} ${NET}.${NET_end};
+range ${NET}.${PRIV_RANGE_START} ${NET}.${PRIV_RANGE_END};
 }" | sudo tee /etc/dhcp/dhcpd.conf
 echo -e "option dhcp6.name-servers ${nameservers6};
 
@@ -93,10 +93,10 @@ authoritative;
 
 log-facility local7;
 
-#subnet6 ${INTNET6}0/${INTMASKb6} {}
-subnet6 ${NET6}0/${MASKb6} {
+#subnet6 ${WAN_NETWORK_IPV6}0/${WAN_INTMASKb6} {}
+subnet6 ${PRIV_NETWORK_IPV6}0/${MASKb6} {
 #option dhcp6.domain-name "wifi.localhost";
-range6 ${NET6}${NET_start} ${NET6}${NET_end};
+range6 ${PRIV_NETWORK_IPV6}${PRIV_RANGE_START} ${PRIV_NETWORK_IPV6}${PRIV_RANGE_END};
 }" | sudo tee /etc/dhcp/dhcpd6.conf
 sudo sed -i -e "s/INTERFACESv4=\".*\"/INTERFACESv4=\"wlan0\"/" /etc/default/isc-dhcp-server
 sudo sed -i -e "s/INTERFACESv6=\".*\"/INTERFACESv6=\"wlan0\"/" /etc/default/isc-dhcp-server

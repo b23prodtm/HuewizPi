@@ -16,6 +16,7 @@ defdns2 = ip.ip_address('8.8.4.4')
 defdns61 = ip.ip_address('2001:4860:4860::8888')
 defdns62 = ip.ip_address('2001:4860:4860::8844')
 myenv = dict()
+myenv.update(os.environ)
 def parse_args (argv):
     mb = "# BEGIN GENERATED hostapd"
     me = "# END GENERATED hostapd"
@@ -28,23 +29,22 @@ def parse_args (argv):
     defaults = {
         "file":argv[0],
         "NET":"",
-        "INTNET":defintnet.with_prefixlen,
-        "INT":"eth0",
-        "SSID":"",
-        "PAWD":"",
-        "MODE":"",
-        "CTY_CODE":"",
-        "CHANNEL":"",
+        "WAN_NETWORK":defintnet.with_prefixlen,
+        "WAN_INT":"eth0",
+        "PRIV_SSID":"",
+        "PRIV_PASSWD":"",
+        "PRIV_WIFI_MODE":"",
+        "PRIV_WIFI_CTY":"",
+        "PRIV_WIFI_CHANNEL":"",
 	    "DNS1":"",
 	    "DNS2":str(defdns2),
-	    "DNS61":str(defdns61),
-	    "DNS62":str(defdns62),
-        "NET_start":"15",
-        "NET_end":"100",
-        "NET6":defnet6.with_prefixlen,
-        "INTNET6":defintnet6.with_prefixlen
+	    "DNS1_IPV6":str(defdns61),
+	    "DNS2_IPV6":str(defdns62),
+        "PRIV_RANGE_START":"15",
+        "PRIV_RANGE_END":"100",
+        "PRIV_NETWORK_IPV6":defnet6.with_prefixlen,
+        "WAN_NETWORK_IPV6":defintnet6.with_prefixlen
         }
-    myenv.update(defaults)
     r_parse_argv(defaults, argv, 1, 'hc', "Usage: {} [-c,--client] <priv-network-x.x.x.0/len> <wan-network-x.x.x.0/len> <wan-interface> [ssid passphrase [mode] [country_code channel] [dns1 dns2] [dns1-ipv6 dns2-ipv6] [net-range-start net-range-end] [priv-network-ipv6/mask-length wan-network-ipv6/mask-length]]".format(argv[0]))
 
 def r_parse_argv(defaults, argv, i, options, usage):
@@ -80,45 +80,45 @@ def r_parse_argv(defaults, argv, i, options, usage):
     return r_parse_argv(defaults, argv, i+1, options, usage)
 
 def format_argv(var):
-    if var[0] == "NET" or var[0] == "INTNET":
+    if var[0] == "NET" or var[0] == "WAN_NETWORK":
         net = ip.ip_network(var[1]) if var[1] != "" else defnet
         m = re.match('(\d*\.){2}(\d*)', str(net.network_address)) # trim last .0
         if m: var[1] = m.group()
         if var[0] == "NET":
             myenv["MASK"] = str(net.netmask)
             myenv["MASKb"] = "%s" % net.prefixlen
-        if var[0] == "INTNET":
-            myenv["INTMASK"] = str(net.netmask)
-            myenv["INTMASKb"] = "%s" % net.prefixlen
-    if var[0] == "NET6" or var[0] == "INTNET6":
+        if var[0] == "WAN_NETWORK":
+            myenv["WAN_INTMASK"] = str(net.netmask)
+            myenv["WAN_INTMASKb"] = "%s" % net.prefixlen
+    if var[0] == "PRIV_NETWORK_IPV6" or var[0] == "WAN_NETWORK_IPV6":
         net6 = ip.ip_network(var[1]) if var[1] != "" else defnet6
         m = re.match('(\w*:){1,7}', str(net6.network_address)) # trim last :0
         if m: var[1] = m.group()
-        if var[0] == "NET6":
+        if var[0] == "PRIV_NETWORK_IPV6":
             myenv["MASK6"] = str(net6.netmask)
             myenv["MASKb6"] = "%s" % net6.prefixlen
-        if var[0] == "INTNET6":
-            myenv["INTMASK6"] = str(net6.netmask)
-            myenv["INTMASKb6"] = "%s" % net6.prefixlen
+        if var[0] == "WAN_NETWORK_IPV6":
+            myenv["WAN_INTMASK6"] = str(net6.netmask)
+            myenv["WAN_INTMASKb6"] = "%s" % net6.prefixlen
     return var
 
 def main(argv):
     parse_args(argv)
-    while myenv["SSID"] == "":
-        myenv["SSID"] = input("Please set a name for the Wifi Network: ")
-    while len(myenv["PAWD"]) < 8 or len(myenv["PAWD"]) > 63:
-        myenv["PAWD"] = input("Please set a passphrase (8..63 characters) for the SSID " + myenv['SSID'] + ": ")
-    while myenv["MODE"] not in ['a','b','g']:
-        myenv["MODE"] = input("Please set a WIFI mode (a = IEEE 802.11ac, g = IEEE 802.11n; b = IEEE 802.11b) [a]: ")
-        if myenv["MODE"] == "": myenv["MODE"] = 'a'
-    while myenv["CTY_CODE"] == "":
+    while myenv["PRIV_SSID"] == "":
+        myenv["PRIV_SSID"] = input("Please set a name for the Wifi Network: ")
+    while len(myenv["PRIV_PASSWD"]) < 8 or len(myenv["PRIV_PASSWD"]) > 63:
+        myenv["PRIV_PASSWD"] = input("Please set a passphrase (8..63 characters) for the PRIV_SSID " + myenv['PRIV_SSID'] + ": ")
+    while myenv["PRIV_WIFI_MODE"] not in ['a','b','g']:
+        myenv["PRIV_WIFI_MODE"] = input("Please set a WIFI mode (a = IEEE 802.11ac, g = IEEE 802.11n; b = IEEE 802.11b) [a]: ")
+        if myenv["PRIV_WIFI_MODE"] == "": myenv["PRIV_WIFI_MODE"] = 'a'
+    while myenv["PRIV_WIFI_CTY"] == "":
         cty_code = re.match(".*_([A-Z]*)", lc.getlocale()[0]).group(1)
         if not cty_code: cty_code = re.match("[A-Z]*", lc.getlocale()).group()
-        myenv["CTY_CODE"] = input("Please set the country code to use [%s]: " % cty_code)
-        if myenv["CTY_CODE"] == "": myenv["CTY_CODE"] = cty_code
-    while myenv["CHANNEL"] == "":
-        myenv["CHANNEL"] = input("Please set the WI-FI channel to use with %s mode (0 = automatic, 36-140 '4x bands' = 5GHz (US,EU), 149-165 '4x bands' = (US,CN) 1-13 '1x band' = 2,4Ghz) [0]: " % myenv['MODE'])
-        if myenv["CHANNEL"] == "": myenv["CHANNEL"] = "0"
+        myenv["PRIV_WIFI_CTY"] = input("Please set the country code to use [%s]: " % cty_code)
+        if myenv["PRIV_WIFI_CTY"] == "": myenv["PRIV_WIFI_CTY"] = cty_code
+    while myenv["PRIV_WIFI_CHANNEL"] == "":
+        myenv["PRIV_WIFI_CHANNEL"] = input("Please set the WI-FI channel to use with %s mode (0 = automatic, 36-140 '4x bands' = 5GHz (US,EU), 149-165 '4x bands' = (US,CN) 1-13 '1x band' = 2,4Ghz) [0]: " % myenv['PRIV_WIFI_MODE'])
+        if myenv["PRIV_WIFI_CHANNEL"] == "": myenv["PRIV_WIFI_CHANNEL"] = "0"
     while myenv["DNS1"] == "":
         dns1 = input("Please set at least one DNS server for the wan network [ENTER = %s]: " % str(defdns1))
         try:
