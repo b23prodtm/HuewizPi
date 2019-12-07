@@ -11,9 +11,11 @@ function nameservers() {
   [ $ns != '' ] && [ $ns != "''" ] && echo $ns | sed -e s/,,//g -e s/,$// -e s/^,//
 }
 dns1=""
+dns16=""
 if [ -f /etc/os-release ]; then
 #linux_family
   dns1=$(systemd-resolve --status | grep 'DNS Servers:' | awk '/([0-9]*\.){3}/{print $3}')
+  dns16="$(systemd-resolve -6 --status | grep 'DNS Servers:' | awk '/(\w*:){2}/{print $3}' | head -n 1)"
   # | head -n 1)
 else # mac_os
   dns1=$(scutil --dns | grep "nameserver\[.\] :" | awk '/([0-9]*\.){3}/{print $3}')
@@ -27,4 +29,5 @@ while [ "$#" -gt 0 ]; do case $1 in
 esac; shift; done
 printf "Here follow DNS addresses entries:\n"
 nameservers $dns1
+nameservers $dns16
 printf "Let's run for it.\n"
