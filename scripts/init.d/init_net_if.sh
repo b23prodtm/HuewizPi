@@ -5,8 +5,8 @@ source ${scriptsd}../.hap-wiz-env.sh
 source ${scriptsd}dns-lookup.sh
 yaml='02-hostap.yaml'
 clientyaml='01-cliwpa.yaml'
-nameservers_def="${NET}.1"
-nameservers6_def="${NET6}1"
+nameservers_def="${PRIV_NETWORK}.1"
+nameservers6_def="${PRIV_NETWORK_IPV6}1"
 nameservers=''
 nameservers6=''
 NP_ORIG=/usr/share/netplan && sudo mkdir -p $NP_ORIG
@@ -19,8 +19,8 @@ auto lo
 face lo inet loopback
 
 allow-hotplug eth0
-iface ${INT} inet dhcp
- network ${INTNET}.0
+iface ${WAN_INT} inet dhcp
+ network ${WAN_NETWORK}.0
 ${MARKER_END}" | sudo tee /etc/network/interfaces
 else
   echo -e "${MARKER_BEGIN}
@@ -28,7 +28,7 @@ network:
   version: 2
   renderer: networkd
   ethernets:
-    ${INT}:
+    ${WAN_INT}:
       dhcp4: yes
       dhcp6: yes
 ${MARKER_END}" | sudo tee /etc/netplan/$yaml
@@ -80,14 +80,14 @@ ${MARKER_END}" | sudo tee /etc/netplan/$clientyaml
     shift;shift
     ;;
   -h*|--help)
-    echo -e "Usage: $0 [-r] [[--wifi <SSID> <passphrase>] [-b, --bridge]] [--dns <ipv4> [--dns6 '<ipv6>']
+    echo -e "Usage: $0 [-r] [[--wifi <PRIV_SSID> <passphrase>] [-b, --bridge]] [--dns <ipv4> [--dns6 '<ipv6>']
     Initializes netplan.io networks plans and eventually restart them.
     -r
       Removes bridge interface
     --wifi
       Render a Wifi interface wlan0
     --bridge
-      Render a bridge connection between ${INT} and wlan0, skipping private network ${NET}.0 (should be used with --wifi)
+      Render a bridge connection between ${WAN_INT} and wlan0, skipping private network ${PRIV_NETWORK}.0 (should be used with --wifi)
     --dns
       Add a public custom DNS address (e.g. --dns 8.8.8.8 --dns 9.9.9.9)
     --dns6
@@ -104,7 +104,7 @@ iface br0 inet dhcp
  network 10.33.0.0
  netmask 255.255.255.0
  nameservers $nameservers
-bridge_ports wlan0 ${INT}
+bridge_ports wlan0 ${WAN_INT}
 ${MARKER_END}" | sudo tee -a /etc/network/interfaces
      slogger -st brctl "share the internet wireless over bridge"
      sudo brctl addbr br0
@@ -133,14 +133,14 @@ slogger -st network "add wifi network"
 if [ -f /etc/init.d/networking ]; then
     sudo sed -i s/"iface wlan0 inet dhcp"/"\\n\
 iface wlan0 inet manual\\n\
- address ${NET}.1\\n\
- network ${NET}.0\\n\
- netmask ${MASK}\\n\
+ address ${PRIV_NETWORK}.1\\n\
+ network ${PRIV_NETWORK}.0\\n\
+ netmask ${PRIV_NETWORK_MASK}\\n\
  nameservers ${nameservers}"/ /etc/network/interfaces
     cat /etc/network/interfaces | grep -A4 "iface wlan0"
 else
     sudo sed -i /"password:"/a"\\
-      addresses: [${NET}.1/24, '${NET6}1/64']\\n\
+      addresses: [${PRIV_NETWORK}.1/24, '${PRIV_NETWORK_IPV6}1/64']\\n\
       nameservers:\\n\
         addresses: [${nameservers},${nameservers6}]" /etc/netplan/$clientyaml
     sudo sed -i /"wlan0:"/,/"${MARKER_END}"/s/yes/no/g /etc/netplan/$clientyaml
