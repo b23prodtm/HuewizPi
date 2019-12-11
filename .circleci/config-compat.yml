@@ -64,7 +64,7 @@ jobs:
         command: |
           set -u
           TAG=0.1.$CIRCLE_BUILD_NUM
-          sudo docker-compose -v up -d --build
+          sudo docker-compose up --build
           docker login -u $DOCKER_USER -p $DOCKER_PASS
 workflows:
   build-and-compose:
@@ -187,7 +187,7 @@ workflows:
 #       - run: |
 #           set -u
 #           TAG=0.1.$CIRCLE_BUILD_NUM
-#           sudo docker-compose -v up -d --build
+#           sudo docker-compose up --build
 #           docker login -u $DOCKER_USER -p $DOCKER_PASS
 #       # docker push $DOCKER_USER/balena-sound:$TAG
 # workflows:

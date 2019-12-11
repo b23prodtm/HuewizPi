@@ -4,7 +4,7 @@ MARK_END_ARM="#END\sARM"
 MARKERS_ARM="/${MARK_BEGIN_ARM}/,/${MARK_END_ARM}/"
 comment_ARM() {
   [ "$#" -eq 0 ] && echo "comment had with no file input" && exit 0
-  sed -i:old -E ${MARKERS_ARM}s/^/#/g $1
+  sed -i.old -E ${MARKERS_ARM}s/^/#/g $1
 }
 uncomment_ARM() {
   [ "$#" -eq 0 ] && echo "comment had with no file input" && exit 0
@@ -35,14 +35,10 @@ done
 ln -vsf ${arch}.env .env
 eval $(cat ${arch}.env)
 function setArch() {
-  d=`pwd`;
   while [ "$#" -gt 0 ]; do
-    chd=$1
-    cd $chd
-    sed -E -e s/"%%BALENA_MACHINE_NAME%%"/"${BALENA_MACHINE_NAME}"/ \
-Dockerfile.template > Dockerfile.${DKR_ARCH}
-    cd $d
+    sed -i.old -E -e s/"%%BALENA_MACHINE_NAME%%"/"${BALENA_MACHINE_NAME}"/ \
+-e "s/\\\$DKR_ARCH/${DKR_ARCH}/g" $1
   shift; done
 }
-setArch .
+setArch Dockerfile.${DKR_ARCH} docker-compose.yml
 eval $(cat ${arch}.env | grep BALENA_MACHINE_NAME)

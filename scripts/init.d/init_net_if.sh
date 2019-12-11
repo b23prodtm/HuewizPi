@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-[ -z ${scriptsd} ] && export scriptsd=../$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')
+[ -z ${scriptsd} ] && export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')../
 [ ! -f ${scriptsd}../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
 source ${scriptsd}../.hap-wiz-env.sh
 source ${scriptsd}dns-lookup.sh
@@ -61,7 +61,7 @@ allow-hotplug wlan0
 iface wlan0 inet dhcp
 ${MARKER_END}" | sudo tee -a /etc/network/interfaces
       sudo /etc/init.d/networking restart
-      sudo ${scriptsd}init.d/init_wpa_ctl.sh
+      sudo ${scriptsd}init.d/init_wpa_ctl.sh "wlan0" "$2" "$3"
     else
       slogger -st netplan "/etc/netplan/$clientyaml was created"
         echo -e "${MARKER_BEGIN}

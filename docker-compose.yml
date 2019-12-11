@@ -3,7 +3,9 @@ services:
   hostapd:
     network_mode: host
     restart: always
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.aarch64
     env_file: common.env
     privileged: true
     labels:

@@ -11,15 +11,9 @@ then
     exit 1
 fi
 export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')
-function slogger() {
-  [ -f /dev/log ] && logger $@ && return
-  [ "$#" -gt 1 ] && shift
-  echo -e "$@"
-}
-export -f slogger
 if [ ! -f ${scriptsd}../.hap-wiz-env.sh ]; then
   #This script arguments were edited in python file. To add more, modify there.
-  slogger -st RUN "(+$# arguments) python ${scriptsd}../library/hap-wiz-env.py $*"
+  echo "(+$# arguments) python ${scriptsd}../library/hap-wiz-env.py $*"
   bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
 fi
 source ${scriptsd}../.hap-wiz-env.sh

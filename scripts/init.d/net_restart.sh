@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-[ -z ${scriptsd} ] && export scriptsd=../$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')
+[ -z ${scriptsd} ] && export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')../
 [ ! -f ${scriptsd}../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
 source ${scriptsd}../.hap-wiz-env.sh
 slogger -st reboot "to complete the Access Point installation, reboot the Raspberry PI"
@@ -38,6 +38,7 @@ ${MARKER_END}\\n'/ /etc/rc.local"
 slogger -st sed "/etc/rc.local added command lines"
    cat /etc/rc.local
 fi
+sudo systemctl enable rc-local
 logger -st dpkg "installing dpkg auto-reboot.service"
 source ${scriptsd}init.d/auto-rebooot.sh install
 logger -st ufw  "enable ip forwarding (internet connectivity)"
@@ -62,6 +63,5 @@ case $REBOOT in
 	[ -z $CLIENT ] && sudo systemctl status hostapd
 	[ -z $CLIENT ] && sudo systemctl status isc-dhcp-server
 	[ -z $CLIENT ] && sudo systemctl status isc-dhcp-server6
-	sudo systemctl enable rc-local
 	exit 0;;
 esac

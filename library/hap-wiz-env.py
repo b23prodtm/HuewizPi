@@ -133,8 +133,15 @@ def write_exports(envdict):
     path=".hap-wiz-env.sh"
     f = open(path, "w")
     f.write("#!/usr/bin/env bash\nexport")
+    escnl=" "
     for k,v in myenv.items():
-        f.write(" '{}'=\"{}\"".format(k,v))
+        f.write("{}'{}'=\"{}\"".format(escnl,k,v))
+        escnl="\\\n "
+    f.write("\nfunction slogger() {\n")
+    f.write("  [ -f /dev/log ] && logger $@ && return\n")
+    f.write("  [ \"$#\" -gt 1 ] && shift\n")
+    f.write("  echo -e \"$@\"\n");
+    f.write("}\n")
     f.close()
     os.chmod(path, 0o755)
 
