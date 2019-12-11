@@ -16,8 +16,7 @@ else
    fi
    sudo cp -f /lib/systemd/system/rc-local.service /etc/systemd/system
    printf '%s\n' "[Install]" "WantedBy=multi-user.target" | sudo tee -a /etc/systemd/system/rc-local.service
-   sudo systemctl enable rc-local
-   # apply once and disable
+   sudo systemctl daemon-reload
    if [ -z $CLIENT ]; then
     bash -c "sudo sed -i -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
 netplan apply\\n\
@@ -47,8 +46,8 @@ case $REBOOT in
   'y'|'Y'*) sudo reboot;;
   *)
 	[ -z $CLIENT ] && slogger -st sysctl "restarting Access Point"
-	[ -z $CLIENT ] && sudo systemctl unmask hostapd.service
-	[ -z $CLIENT ] && sudo systemctl enable hostapd.service
+	[ -z $CLIENT ] && sudo systemctl unmask hostapd
+	[ -z $CLIENT ] && sudo systemctl enable hostapd
 	# FIX driver AP_DISABLED error : first start up interface
 	sudo netplan apply
 	[ -z $CLIENT ] && sudo service hostapd start
@@ -60,8 +59,9 @@ case $REBOOT in
 	sleep 2
 	[ -z $CLIENT ] && sudo dhclient ${WAN_INT}
 	[ ! -z $CLIENT ] && sudo dhclient wlan0
-	[ -z $CLIENT ] && systemctl status hostapd.service
-	[ -z $CLIENT ] && systemctl status isc-dhcp-server.service
-	[ -z $CLIENT ] && systemctl status isc-dhcp-server6.service
+	[ -z $CLIENT ] && sudo systemctl status hostapd
+	[ -z $CLIENT ] && sudo systemctl status isc-dhcp-server
+	[ -z $CLIENT ] && sudo systemctl status isc-dhcp-server6
+	sudo systemctl enable rc-local
 	exit 0;;
 esac
