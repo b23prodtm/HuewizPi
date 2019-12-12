@@ -1,0 +1,51 @@
+FROM balenalib/generic-aarch64-ubuntu-python:bionic
+
+ENV INITSYSTEM on
+ENV UDEV on
+ARG DEBUG
+ENV DEBUG ${DEBUG:-0}
+
+ENV PROMPT N
+ENV PRIV_NETWORK 10.233.2
+ENV PRIV_NETWORK_MASK 255.255.255.0
+ENV PRIV_NETWORK_MASKb 24
+ENV WAN_NETWORK 10.233.1
+ENV WAN_NETWORK_MASK 255.255.255.0
+ENV WAN_NETWORK_MASKb 24
+ENV WAN_INT eth0
+ENV PRIV_SSID MyHomeWifi
+ENV PRIV_PASSWD 1passWoRd
+ENV PRIV_WIFI_MODE a
+ENV PRIV_WIFI_CTY FR
+ENV PRIV_WIFI_CHANNEL 36
+ENV DNS1 192.168.1.1
+ENV DNS2 8.8.8.8
+ENV DNS1_IPV6 2001:4860:4860::8888
+ENV DNS2_IPV6 2001:4860:4860::8844
+ENV PRIV_RANGE_START 2
+ENV PRIV_RANGE_END 253
+ENV PRIV_NETWORK_IPV6 2a01:e0a:16b:dc30::
+ENV PRIV_NETWORK_MASKb6 64
+ENV WAN_NETWORK_IPV6 2a01:db8:0:1::
+ENV WAN_NETWORK_MASKb6 64
+ENV SHARE Y
+
+RUN install_packages \
+  hostapd \
+  bridge-utils \
+  isc-dhcp-server \
+  ufw \
+  systemd \
+  wpasupplicant \
+  netplan
+
+COPY scripts/ /usr/src/scripts/
+COPY library/ /usr/src/library/
+RUN ls /usr/src/library
+RUN chmod +x /usr/src/scripts/*
+RUN chmod +x /usr/src/scripts/init.d/*
+
+WORKDIR /usr/src/
+
+RUN [ "bash", "-c", "scripts/hap-wiz-bionic.sh", "10.233.2.0/24", "10.233.1.0/24", "eth0" ]
+CMD [ "bash", "-c", "scripts/dns-lookup.sh"]

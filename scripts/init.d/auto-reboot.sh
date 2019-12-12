@@ -1,11 +1,11 @@
 #!/bin/bash
 # auto-reboot
 # description: Check if the system dpkg need a restart and send corresponding signal
-export work_dir=$(echo $0 | awk -F'/' '{ print $1 }')'/'
+[ -z ${scriptsd} ] && export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')../
 install() {
-  sudo cp -f ${work_dir}init.d/auto-reboot.sh /usr/local/bin/auto-reboot.sh
+  sudo cp -f ${scriptsd}init.d/auto-reboot.sh /usr/local/bin/auto-reboot.sh
   sudo chmod +x /usr/local/bin/auto-reboot.sh
-  sudo cp -f ${work_dir}init.d/auto-reboot.service /etc/systemd/system/auto-reboot.service
+  sudo cp -f ${scriptsd}init.d/auto-reboot.service /etc/systemd/system/auto-reboot.service
   sudo systemctl enable auto-reboot
 }
 uninstall() {
