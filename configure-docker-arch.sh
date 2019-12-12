@@ -37,7 +37,9 @@ eval $(cat ${arch}.env)
 function setArch() {
   while [ "$#" -gt 0 ]; do
     sed -i.old -E -e s/"%%BALENA_MACHINE_NAME%%"/"${BALENA_MACHINE_NAME}"/ \
--e "s/\\\$DKR_ARCH/${DKR_ARCH}/g" $1
+-e "s/\\\$DKR_ARCH/${DKR_ARCH}/g" \
+-e "s/(Dockerfile\.)[^\.]*/\\1${DKR_ARCH}/g" \
+$1
   shift; done
 }
 setArch Dockerfile.${DKR_ARCH} docker-compose.yml
