@@ -37,7 +37,7 @@ function prompt_arrgs () {
       		ARRGS=${arrgs[@]}
       	fi
       else
-          read -p "
+          echo -e "
   Enter $size values : $desc $desc_precise"
       fi
     done

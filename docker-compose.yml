@@ -6,6 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.aarch64
+    image: betothreeprod/hapwizpy-aarch64
     env_file: common.env
     privileged: true
     labels:

@@ -20,10 +20,10 @@ else
    if [ -z $CLIENT ]; then
     bash -c "sudo sed -i -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
 netplan apply\\n\
-systemctl restart hostapd\\n\
+service hostapd restart\\n\
 ip link set dev wlan0 up\\n\
-systemctl restart isc-dhcp-server\\n\
-systemctl restart isc-dhcp-server6\\n\
+service isc-dhcp-server restart\\n\
+service isc-dhcp-server6 restart\\n\
 sleep 2\\n\
 dhclient ${WAN_INT}\\n\
 ${MARKER_END}\\n'/ /etc/rc.local"
@@ -60,7 +60,7 @@ case $REBOOT in
 	sleep 2
 	[ -z $CLIENT ] && sudo dhclient ${WAN_INT}
 	[ ! -z $CLIENT ] && sudo dhclient wlan0
-	[ -z $CLIENT ] && sudo systemctl status hostapd
+	[ -z $CLIENT ] && sudo service hostapd status
 	[ -z $CLIENT ] && sudo systemctl status isc-dhcp-server
 	[ -z $CLIENT ] && sudo systemctl status isc-dhcp-server6
 	exit 0;;

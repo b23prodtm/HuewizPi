@@ -14,7 +14,7 @@ export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print 
 if [ ! -f ${scriptsd}../.hap-wiz-env.sh ]; then
   #This script arguments were edited in python file. To add more, modify there.
   echo "(+$# arguments) python ${scriptsd}../library/hap-wiz-env.py $*"
-  bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
+  bash -c "python3 ${scriptsd}../library/hap-wiz-env.py $*"
 fi
 source ${scriptsd}../.hap-wiz-env.sh
 echo "Set Private Network $PRIV_NETWORK.0/$PRIV_NETWORK_MASK"
@@ -117,7 +117,11 @@ if [ -z $CLIENT ]; then case $SHARE in
    'y'*|'Y'*)
       slogger -st brctl "share internet connection from ${WAN_INT} to wlan0 over bridge"
       sudo sed -i /bridge=br0/s/^\#// /etc/hostapd/hostapd.conf
-      source ${scriptsd}init.d/init_net_if.sh --wifi '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6} --bridge
+      if [ -f /etc/init.d/networking ]; then
+        source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_SSID $PRIV_PAWD --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6} --bridge
+      else
+        source ${scriptsd}init.d/init_net_if.sh --wifi '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6} --bridge
+      fi
       ;;
   'n'*|'N'*)
     [ -z $(which dnsmasq) ] && sudo apt-get -y install dnsmasq
@@ -143,12 +147,16 @@ dhcp-range=${PRIV_NETWORK}.15,${PRIV_NETWORK}.100,${PRIV_NETWORK_MASK},${PRIV_NE
     ;;
   *)
     slogger -st network "rendering configuration for router mode"
-    source ${scriptsd}init.d/init_net_if.sh --wifi '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6}
+    if [ -f /etc/init.d/networking ]; then
+      source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_SSID $PRIV_PAWD --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6}
+    else
+      source ${scriptsd}init.d/init_net_if.sh --wifi '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6}
+    fi
   ;;
 esac;
     slogger -st dhcpd  "configure dynamic dhcp addresses ${PRIV_NETWORK}.${PRIV_RANGE_START}-${PRIV_RANGE_END}"
     source ${scriptsd}init.d/init_dhcp_serv.sh --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6} --router ${PRIV_NETWORK}.1
 else
-  source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_SSID $PRIV_PASSWD
+  source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_SSID $PRIV_PAWD
 fi
 source ${scriptsd}init.d/net_restart.sh $CLIENT
