@@ -34,9 +34,7 @@ jobs:
           root: .
         # Must be relative path from root
           paths:
-            - bluetooth-audio
-            - airplay
-            - spotify
+            - .
       - run:
           name: Setup Environment Variables
           command: |
@@ -93,12 +91,21 @@ jobs:
       - run: git submodule sync
       - run: git submodule update --init --recursive
       - attach_workspace:
-          at: app
+          at: .
       - run:
           name: Setup Environment Variables
           command: |
             echo $(cat amd64.env | awk  '{printf "export %s\n", $1}') >> $BASH_ENV
             echo $(cat common.env | awk  '{printf "export %s\n", $1}') >> $BASH_ENV
+      # Download and cache dependencies
+      # - restore_cache:
+      #     keys:
+      #       # "composer.lock" can be used if it is committed to the repo
+      #       - v1-dependencies-{{ checksum "composer.lock" }}
+      #       # fallback to using the latest cache if no exact match is found
+      #       - v1-dependencies-
+      - setup_remote_docker:   # (2)
+          docker_layer_caching: false # (3)
       - run:
           name: Set architecture
           command: |
