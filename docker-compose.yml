@@ -5,8 +5,8 @@ services:
     restart: always
     build:
       context: .
-      dockerfile: Dockerfile.armhf
-    image: betothreeprod/hapwizpy-armhf
+      dockerfile: Dockerfile.template
+    image: betothreeprod/hapwizpy-${DKR_ARCH}
     env_file: common.env
     privileged: true
     labels:
