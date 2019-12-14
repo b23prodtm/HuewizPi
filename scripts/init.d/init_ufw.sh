@@ -2,11 +2,12 @@
 [ -z ${scriptsd} ] && export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')../
 [ ! -f ${scriptsd}../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
 source ${scriptsd}../.hap-wiz-env.sh
+sudo touch /etc/ufw/before.rules
 while [ "$#" -gt 0 ]; do case $1 in
   -r*|-R*)
     bash -c "sudo sed -i -e ${MARKERS}d /etc/ufw/before.rules"
     sudo ufw disable
-    return;;
+    exit 0;;
   -c*|--client)
     return;;
   -h*|--help)
@@ -35,20 +36,21 @@ echo -e "${MARKER_BEGIN}\\n\
 \\n\
 # Forward traffic from wlan0 through eth0.\\n\
 -A POSTROUTING -s ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb} -o ${WAN_INT} -j MASQUERADE\\n\
-#-A POSTROUTING -s ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} -o ${WAN_INT} -j MASQUERADE\\n\
+-A POSTROUTING -s ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} -o ${WAN_INT} -j MASQUERADE\\n\
 \\n\
 # dont delete the COMMIT line or these nat table rules wont be processed\\n\
 COMMIT\\n\
 ${MARKER_END}" | sudo tee /tmp/input.rules
-sudo sed -i -e 1r/tmp/input.rules /etc/ufw/before.rules
+sudo cat /etc/ufw/before.rules | sudo tee -a /tmp/input.rules
 sleep 1
 slogger -st ufw "add packet ip forwarding"
 echo -e "${MARKER_BEGIN}\\n\
 -A ufw-before-forward -m state --state RELATED,ESTABLISHED -j ACCEPT\\n\
 -A ufw-before-forward -i wlan0 -s ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb} -o ${WAN_INT} -m state --state NEW -j ACCEPT\\n\
-#-A ufw-before-forward -i wlan0 -s ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} -o ${WAN_INT} -m state --state NEW -j ACCEPT\\n\
-${MARKER_END}" | sudo tee /tmp/input.rules
-sudo sed -i -e /'^\# End required lines'/r/tmp/input.rules /etc/ufw/before.rules
+-A ufw-before-forward -i wlan0 -s ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} -o ${WAN_INT} -m state --state NEW -j ACCEPT\\n\
+${MARKER_END}" | sudo tee /tmp/input.rules.2
+sudo sed -e /"^# End required lines"/r/tmp/input.rules.2 /tmp/input.rules \
+&& sudo cp -f /tmp/input.rules /etc/ufw/before.rules
 sleep 1
 slogger -st ufw "allow ${PRIV_NETWORK}.0"
 sudo ufw allow from ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb}
