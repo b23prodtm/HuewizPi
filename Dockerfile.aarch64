@@ -34,7 +34,6 @@ RUN install_packages \
   hostapd \
   bridge-utils \
   isc-dhcp-server \
-  isc-dhcp-server6 \
   ufw \
   systemd \
   wpasupplicant \
