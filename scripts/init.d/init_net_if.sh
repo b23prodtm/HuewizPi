@@ -10,6 +10,7 @@ nameservers6_def="${PRIV_NETWORK_IPV6}1"
 nameservers=''
 nameservers6=''
 NP_ORIG=/usr/share/netplan && sudo mkdir -p $NP_ORIG
+NP_CLOUD=/etc/cloud/cloud.cfg.d && sudo mkdir -p $NP_CLOUD
 slogger -st netplan "disable cloud-init"
 sudo mv -fv /etc/netplan/50-cloud-init.yaml $NP_ORIG
 echo -e "network: { config: disabled }" | sudo tee /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
@@ -36,7 +37,7 @@ fi
 while [ "$#" -gt 0 ]; do case $1 in
   -r*|-R*)
     if [ -f /etc/init.d/networking ]; then
-      sudo sed -i ${MARKERS}d /etc/network/interfaces
+      sudo sed -i.old -e "${MARKERS}d" /etc/network/interfaces
     else
       # ubuntu server
       slogger -st netplan "move configuration to $NP_ORIG"
@@ -131,7 +132,7 @@ nameservers=$(nameservers $nameservers $nameservers_def)
 nameservers6=$(nameservers $nameservers6 "'${nameservers6_def}'")
 slogger -st network "add wifi network"
 if [ -f /etc/init.d/networking ]; then
-    sudo sed -i s/"iface wlan0 inet dhcp"/"\\n\
+    sudo sed -i.old -e s/"iface wlan0 inet dhcp"/"\\n\
 iface wlan0 inet manual\\n\
  address ${PRIV_NETWORK}.1\\n\
  network ${PRIV_NETWORK}.0\\n\
@@ -139,10 +140,10 @@ iface wlan0 inet manual\\n\
  nameservers ${nameservers}"/ /etc/network/interfaces
     cat /etc/network/interfaces | grep -A4 "iface wlan0"
 else
-    sudo sed -i /"password:"/a"\\
+    sudo sed -i.old /"password:"/a"\\
       addresses: [${PRIV_NETWORK}.1/24, '${PRIV_NETWORK_IPV6}1/64']\\n\
       nameservers:\\n\
         addresses: [${nameservers},${nameservers6}]" /etc/netplan/$clientyaml
-    sudo sed -i /"wlan0:"/,/"${MARKER_END}"/s/yes/no/g /etc/netplan/$clientyaml
+    sudo sed -i.old /"wlan0:"/,/"${MARKER_END}"/s/yes/no/g /etc/netplan/$clientyaml
     cat /etc/netplan/$clientyaml | grep -A8 "wlan0"
 fi

@@ -29,6 +29,7 @@ echo "Set WAN Network $WAN_NETWORK.0/$WAN_NETWORK_MASK"
 echo "Set WAN Network IPv6 ${WAN_NETWORK_IPV6}0/$WAN_NETWORK_MASKb6"
 echo "Set DNS Global IPv4 ${DNS1}, ${DNS2}"
 echo "Set DNS Global IPv6 ${DNS1_IPV6}, ${DNS2_IPV6}"
+echo "Config MARKERS ${MARKERS}"
 [ -z $CLIENT ] && rm -f hostapd.log
 [ -z $CLIENT ] && touch hostapd.log
 [ -z $CLIENT ] && [ -z $(which hostapd) ] && sudo apt-get -y install hostapd
