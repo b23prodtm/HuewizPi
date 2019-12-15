@@ -55,7 +55,7 @@ def r_parse_argv(defaults, argv, i, options, usage):
     if i >= len(defaults) : return
     if len(argv) < 4:
          print(usage)
-         return
+         sys.exit(1)
     pf = "-+[" + options + "]*"
     client = re.compile(pf + "c(lient)?.*")
     help = re.compile(pf + "h(elp)?.*")
@@ -125,6 +125,7 @@ def main(argv):
             myenv["DNS1"] = str(defdns1) if dns1 == "" else str(ip.ip_address(dns1))
         except ValueError as err:
             print("Oops! Please set a valid IPv4 address".format(err))
+            sys.exit(1)
     os.environ.update(myenv)
     write_exports(myenv)
 
