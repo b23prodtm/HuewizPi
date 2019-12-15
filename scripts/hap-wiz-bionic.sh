@@ -14,7 +14,8 @@ export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print 
 if [ ! -f ${scriptsd}../.hap-wiz-env.sh ]; then
   #This script arguments were edited in python file. To add more, modify there.
   echo "(+$# arguments) python ${scriptsd}../library/hap-wiz-env.py $*"
-  if [ $(bash -c "python3 ${scriptsd}../library/hap-wiz-env.py $*") > /dev/null ]; then
+  bash -c "python3 ${scriptsd}../library/hap-wiz-env.py $*" > /dev/null
+  if [ $? -eq 0 ]; then
      echo "success"
    else
      echo "Failed $?"
