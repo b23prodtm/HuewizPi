@@ -55,4 +55,8 @@ sleep 1
 slogger -st ufw "allow ${PRIV_NETWORK}.0"
 sudo ufw allow from ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb}
 sudo ufw allow from ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6}
+slogger -st "ufw Balena makes use of the following ports:"
+sudo ufw allow https
+sudo ufw allow ntp
+sudo ufw allow dns
 sudo ufw --force enable

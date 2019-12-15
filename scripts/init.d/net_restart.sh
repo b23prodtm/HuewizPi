@@ -60,8 +60,8 @@ case $REBOOT in
 	sleep 2
 	[ -z $CLIENT ] && sudo dhclient ${WAN_INT}
 	[ ! -z $CLIENT ] && sudo dhclient wlan0
-	[ -z $CLIENT ] && sudo service hostapd status
-	[ -z $CLIENT ] && sudo systemctl status isc-dhcp-server
-	[ -z $CLIENT ] && sudo systemctl status isc-dhcp-server6
-	exit 0;;
+	[ -z $CLIENT ] && sudo service status isc-dhcp-server
+	[ -z $CLIENT ] && sudo service status isc-dhcp-server6
+  [ -z $CLIENT ] && sudo service hostapd status
+  ;;
 esac
