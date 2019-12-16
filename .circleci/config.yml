@@ -53,7 +53,7 @@ jobs:
           name: Set architecture
           command: |
             set -x
-            ./configure-docker-arch.sh $DKR_ARCH
+            ./deploy.sh $DKR_ARCH --nobuild
       # - run:
       #     command: |
       #       set -x
@@ -110,7 +110,7 @@ jobs:
           name: Set architecture
           command: |
             set -x
-            ./configure-docker-arch.sh $DKR_ARCH
+            ./deploy.sh $DKR_ARCH --nobuild
       # build and push Docker image
       - run: |
           set -u

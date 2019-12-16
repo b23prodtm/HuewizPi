@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 work_dir=$(echo $0 | awk -F'/' 'BEGIN {ORS="/"} {for ( i=0; ++i<NF;) print $i}')
-[ "$#" -lt 3 ] && echo -e "Usage: $0 [options] <work_sub_dir> <container_name> <TAG>
+[ "$#" -lt 2 ] && echo -e "Usage: $0 [options] <work_sub_dir> <container_name> [ARCH]
 work_sub_dir:
     Path relative to $0
-container_name TAG:
-    Set to username/container to push to Docker.io, e.g. myself/cakephp2-image 0.1.1
+container_name ARCH:
+    Set to username/container to push to Docker.io, e.g. myself/cakephp2-image x86_64
 Note: Rename any existing images with docker tag <repository/image:tag> <new_repository/new_image:tag>" && exit 0
 DIR=$1
 NAME=$2
-TAG=$3
+ARCH=$3
 usage="$0 <-f, --force> <-e> <-m, --make-space>
 --force:
   Set docker daemon restart flag on
@@ -30,15 +30,12 @@ while [[ "$#" -gt 0 ]]; do case $1 in
   *)
     DIR=$1
     NAME=$2
-    TAG=$3
+    ARCH=$3
     shift;shift;;
 esac; shift; done
-pwd=`pwd`
-cd $work_dir$DIR
-[ -f DockerFile ] && mv DockerFile Dockerfile
-cd $pwd
-docker build -t $NAME:$TAG $work_dir$DIR || docker rm $(docker ps -q -f 'status=exited')
-docker run -itd $NAME:$TAG
+source ./deploy.sh "${ARCH}" --nobuild
+docker build -f $work_dir$DIR/Dockerfile.${DKR_ARCH} -t $NAME:$IMG_TAG $work_dir$DIR || docker rm $(docker ps -q -f 'status=exited')
+docker run -itd $NAME:$IMG_TAG
 # docker login -u $DOCKER_USER -p $DOCKER_PASS
 docker login
-docker push $NAME:$TAG
+docker push $NAME:$IMG_TAG
