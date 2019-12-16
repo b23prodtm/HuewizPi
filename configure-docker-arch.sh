@@ -1,30 +1,32 @@
 #!/usr/bin/env bash
-MARK_BEGIN_ARM="#BEGIN\sARM"
-MARK_END_ARM="#END\sARM"
-MARKERS_ARM="/${MARK_BEGIN_ARM}/,/${MARK_END_ARM}/"
-comment_ARM() {
-  [ "$#" -eq 0 ] && echo "comment had with no file input" && exit 0
-  sed -i.old -E ${MARKERS_ARM}s/^/#/g $1
+setMARKERS(){
+  export MARK_BEGIN="$1"
+  export MARK_END="$2"
 }
-uncomment_ARM() {
-  [ "$#" -eq 0 ] && echo "comment had with no file input" && exit 0
-  sed -i.old -E ${MARKERS_ARM}s/^#\s//g $1
+comment() {
+  [ "$#" -eq 0 ] && echo "missing file input" && exit 0
+  sed -i.old -E -e "s/[# ]*(${MARK_BEGIN})/# \\1/g" -e "s/[# ]*(${MARK_END})/# \\1/g" $1;
 }
+uncomment() {
+  [ "$#" -eq 0 ] && echo "missing file input" && exit 0
+  sed -i.old -E -e "s/[# ]+(${MARK_BEGIN})/\\1/g" -e "s/[# ]+(${MARK_END})/\\1/g" $1;
+}
+setMARKERS "RUN \[ \"cross-build-start\" \]" "RUN \[ \"cross-build-end\" \]"
 usage="Usage $0 <arch>"
 arch=$1
 while [ true ]; do
   case $arch in
     1|arm32*|armv7l|armhf)
       arch="arm32v7"
-      uncomment_ARM docker-compose.yml
+      uncomment Dockerfile.template
       break;;
     2|arm64*|aarch64)
       arch="arm64v8"
-      uncomment_ARM docker-compose.yml
+      uncomment Dockerfile.template
       break;;
     3|amd64|x86_64)
       arch="amd64"
-      comment_ARM docker-compose.yml
+      comment Dockerfile.template
       break;;
     *)
       echo $usage

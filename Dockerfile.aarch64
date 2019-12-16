@@ -46,4 +46,7 @@ COPY library/ library/
 RUN chmod -R g+xs scripts
 
 RUN [ "bash", "-c", "sudo scripts/hap-wiz-bionic.sh ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb} ${WAN_NETWORK}.0/${WAN_NETWORK_MASKb} ${WAN_INT} ${PRIV_SSID} ${PRIV_PASSWD} ${PRIV_WIFI_MODE} ${PRIV_WIFI_CTY} ${PRIV_WIFI_CHANNEL} ${DNS1} ${DNS2} ${DNS1_IPV6} ${DNS2_IPV6} ${PRIV_RANGE_START} ${PRIV_RANGE_END} ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} ${WAN_NETWORK_IPV6}0/${WAN_NETWORK_MASKb6} " ]
-RUN [ "bash", "-c", "sudo scripts/dns-lookup.sh"]
+ENTRYPOINT sudo scripts/dns-lookup.sh
+RUN sudo service hostapd stop
+# restart HostAPd
+CMD sudo /usr/sbin/hostapd -P /run/hostapd.pid -i wlan0 /etc/hostapd/hostapd.conf
