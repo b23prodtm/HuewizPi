@@ -55,20 +55,19 @@ eval $(cat ${arch}.env | grep BALENA_MACHINE_NAME)
 while [ true ]; do
   eval $(ssh-agent)
   ssh-add ~/.ssh/*id_rsa
-  [ $(which balena) > /dev/null ] && balena apps
+  [ $(which balena) > /dev/null ] && declare -a apps=($(sudo balena apps | awk '{if (NR>1) print $2}'))
+  i="1..${#apps}"; echo "$i: ${apps[@]}"
   case $target in
     1|--local)
       bash -c "docker-compose -f docker-compose.${DKR_ARCH} build"
       break;;
     2|--balena)
-      read -p "Where do you want to push ? " apporip
+      read -p "Where do you want to push [1-${#apps}] or give an IP? " apporip
       git commit -a -m "${DKR_ARCH} pushed to balena.io"
       if [ $(sudo which balena) > /dev/null ]; then
-        sudo balena devices | grep $apporip \
-        | awk '{print $2}' | sudo xargs -n1 balena device | grep IP | awk '{print $3}'
-        sudo balena push $apporip
+        sudo balena push ${apps[$apporip-1]}
       else
-        git push -uf balena $apporip
+        git push -uf balena ${apps[$apporip-1]}
       fi
       break;;
     3|--nobuild)
