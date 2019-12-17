@@ -4,7 +4,7 @@
 # Usage
 Basically, this script's made for linux machines that have got a wireless card or chipset and an ethernet interface connected to the internet. Following the wizard script to install hostapd and its dependencies on the machine : ```scripts/hap-wiz-bionic.sh [-c,--client] <priv-network-x.x.x.0/len> <wan-network-x.x.x.0/len> <wan-interface> [ssid passphrase [mode] [country_code channel] [net-range-start net-range-end] [priv-network-ipv6/mask-length wan-network-ipv6/mask-length]]```
 
-Here follows a sample command line of a host access point acting as a router on the local network 192.168.0.0/24 (ISP router setup). Routing Broadband Internet Connection from  Ethernet (eth0) via Wireless Card (wlan0: ip adresses 10.0.1.x) and open a HomeWifiNet WPA-PSK secured Wifi network, try :
+Here follows a sample command line of a host access point acting as a router on the local network 192.168.0.0/24 (ISP router setup). Routing Broadband Internet Connection (eth0/wlan1) via Wireless Card (wlan0): ip adresses 10.0.1.x) and open a HomeWifiNet WPA-PSK secured Wifi network, try :
 
   ```scripts/hap-wiz-bionic.sh 10.0.1.0/24 192.168.0.0/24 eth0 HomeWifiNet OneWPAssword a US 36```
 

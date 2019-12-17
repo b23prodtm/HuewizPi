@@ -6,6 +6,7 @@ ARG DEBUG
 ENV DEBUG ${DEBUG:-0}
 
 ENV PROMPT N
+ENV PRIV_INT wlan0
 ENV PRIV_NETWORK 10.233.2
 ENV PRIV_NETWORK_MASK 255.255.255.0
 ENV PRIV_NETWORK_MASKb 24
@@ -30,6 +31,8 @@ ENV WAN_NETWORK_IPV6 2a01:db8:0:1::
 ENV WAN_NETWORK_MASKb6 64
 ENV SHARE Y
 
+RUN [ "cross-build-start" ]
+
 RUN install_packages \
   hostapd \
   bridge-utils \
@@ -39,13 +42,16 @@ RUN install_packages \
   wpasupplicant \
   netplan
 
-COPY scripts/ /usr/src/scripts/
-COPY library/ /usr/src/library/
-RUN ls /usr/src/library
-RUN chmod +x /usr/src/scripts/*
-RUN chmod +x /usr/src/scripts/init.d/*
-
 WORKDIR /usr/src/
 
-RUN [ "bash", "-c", "scripts/hap-wiz-bionic.sh", "10.233.2.0/24", "10.233.1.0/24", "eth0" ]
-CMD [ "bash", "-c", "scripts/dns-lookup.sh"]
+COPY scripts/ scripts/
+COPY library/ library/
+RUN chmod -R g+xs scripts
+
+RUN [ "bash", "-c", "sudo scripts/hap-wiz-bionic.sh ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb} ${WAN_NETWORK}.0/${WAN_NETWORK_MASKb} ${WAN_INT} ${PRIV_SSID} ${PRIV_PASSWD} ${PRIV_WIFI_MODE} ${PRIV_WIFI_CTY} ${PRIV_WIFI_CHANNEL} ${DNS1} ${DNS2} ${DNS1_IPV6} ${DNS2_IPV6} ${PRIV_RANGE_START} ${PRIV_RANGE_END} ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} ${WAN_NETWORK_IPV6}0/${WAN_NETWORK_MASKb6} " ]
+ENTRYPOINT sudo scripts/dns-lookup.sh
+RUN sudo service hostapd stop
+# restart HostAPd
+CMD sudo /usr/sbin/hostapd -P /run/hostapd.pid -i ${PRIV_INT} /etc/hostapd/hostapd.conf
+
+RUN [ "cross-build-end" ]

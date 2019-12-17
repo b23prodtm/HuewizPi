@@ -59,10 +59,13 @@ while [ true ]; do
   i="1..${#apps}"; echo "$i: ${apps[@]}"
   case $target in
     1|--local)
+      echo "Cross-build may be enabled"
       bash -c "docker-compose -f docker-compose.${DKR_ARCH} build"
       break;;
     2|--balena)
       read -p "Where do you want to push [1-${#apps}] or give an IP? " apporip
+      echo "Disabled cross-build"
+      uncomment Dockerfile.template
       git commit -a -m "${DKR_ARCH} pushed to balena.io"
       if [ $(sudo which balena) > /dev/null ]; then
         sudo balena push ${apps[$apporip-1]}

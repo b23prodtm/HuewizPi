@@ -6,6 +6,7 @@ ARG DEBUG
 ENV DEBUG ${DEBUG:-0}
 
 ENV PROMPT N
+ENV PRIV_INT wlan0
 ENV PRIV_NETWORK 10.233.2
 ENV PRIV_NETWORK_MASK 255.255.255.0
 ENV PRIV_NETWORK_MASKb 24
@@ -49,4 +50,4 @@ RUN [ "bash", "-c", "sudo scripts/hap-wiz-bionic.sh ${PRIV_NETWORK}.0/${PRIV_NET
 ENTRYPOINT sudo scripts/dns-lookup.sh
 RUN sudo service hostapd stop
 # restart HostAPd
-CMD sudo /usr/sbin/hostapd -P /run/hostapd.pid -i wlan0 /etc/hostapd/hostapd.conf
+CMD sudo /usr/sbin/hostapd -P /run/hostapd.pid -i ${PRIV_INT} /etc/hostapd/hostapd.conf

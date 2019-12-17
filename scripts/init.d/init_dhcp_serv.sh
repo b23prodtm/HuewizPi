@@ -3,7 +3,7 @@
 [ ! -f ${scriptsd}../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
 source ${scriptsd}../.hap-wiz-env.sh
 source ${scriptsd}dns-lookup.sh
-routers="option routers ${PRIV_NETWORK}.1; #hostapd wlan0"
+routers="option routers ${PRIV_NETWORK}.1; #hostapd ${PRIV_INT}"
 nameservers=$(systemd-resolve --status | grep 'DNS Servers:' | awk '/(\w*\.){3}/{print $3}' | head -n 1)
 nameservers6="$(systemd-resolve -6 --status | grep 'DNS Servers:' | awk '/(\w*:){2}/{print $3}' | head -n 1)"
 function lease_blk() {
@@ -98,8 +98,8 @@ subnet6 ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} {
 #option dhcp6.domain-name "wifi.localhost";
 range6 ${PRIV_NETWORK_IPV6}${PRIV_RANGE_START} ${PRIV_NETWORK_IPV6}${PRIV_RANGE_END};
 }" | sudo tee /etc/dhcp/dhcpd6.conf
-sudo sed -i -e "s/INTERFACESv4=\".*\"/INTERFACESv4=\"wlan0\"/" /etc/default/isc-dhcp-server
-sudo sed -i -e "s/INTERFACESv6=\".*\"/INTERFACESv6=\"wlan0\"/" /etc/default/isc-dhcp-server
+sudo sed -i -e "s/INTERFACESv4=\".*\"/INTERFACESv4=\"${PRIV_INT}\"/" /etc/default/isc-dhcp-server
+sudo sed -i -e "s/INTERFACESv6=\".*\"/INTERFACESv6=\"${PRIV_INT}\"/" /etc/default/isc-dhcp-server
 #delete empty strings '', and ''
 sudo sed -i -e s/\'\',//g -e s/\'\'//g /etc/dhcp/dhcpd6.conf
 sudo cat /etc/default/isc-dhcp-server

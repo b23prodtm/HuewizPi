@@ -35,7 +35,7 @@ echo "Config MARKERS ${MARKERS}"
 [ -z $CLIENT ] && [ -z $(which hostapd) ] && sudo apt-get -y install hostapd
 [ -z $CLIENT ] && [ -z $(which brctl) ] && sudo apt-get -y install bridge-utils
 [ -z $CLIENT ] && [ -z $(which dhcpd) ] && sudo apt-get -y install isc-dhcp-server
-slogger -st hostapd "remove bridge (br0) to wlan0"
+slogger -st hostapd "remove bridge (br0) to ${PRIV_INT}"
 source ${scriptsd}init.d/init_net_if.sh -r
 slogger -st service "shutdown services"
 sudo service wpa_supplicant stop
@@ -52,7 +52,7 @@ ssh -J $USER@$(ifconfig ${WAN_INT} | grep 'inet ' | awk '{ print $2 }') $USER@${
 [ -z $CLIENT ] && sleep 3
 [ -z $CLIENT ] && slogger -t hostapd "Configure Access Point $PRIV_SSID"
 PSK_FILE=/etc/hostapd-psk
-[ -z $CLIENT ] && echo -e "interface=wlan0       # the interface used by the AP
+[ -z $CLIENT ] && echo -e "interface=${PRIV_INT}       # the interface used by the AP
 driver=nl80211
 ssid=${PRIV_SSID}
 
@@ -112,7 +112,7 @@ fragm_threshold=2346
 [ -z $CLIENT ] && slogger -st hostapd "configure Access Point as a Service"
 [ -z $CLIENT ] && sudo sed -i -e /DAEMON_CONF=/s/^\#// -e /DAEMON_CONF=/s/=\".*\"/=\"\\/etc\\/hostapd\\/hostapd.conf\"/ /etc/default/hostapd 2> hostapd.log
 [ -z $CLIENT ] && [ $(cat hostapd.log > /dev/null) ] && exit 1
-[ -z $CLIENT ] && sudo sed -i -e /DAEMON_OPTS=/s/^\#// -e "/DAEMON_OPTS=/s/=\".*\"/=\"-i wlan0\"/" /etc/default/hostapd 2> hostapd.log
+[ -z $CLIENT ] && sudo sed -i -e /DAEMON_OPTS=/s/^\#// -e "/DAEMON_OPTS=/s/=\".*\"/=\"-i ${PRIV_INT}\"/" /etc/default/hostapd 2> hostapd.log
 [ -z $CLIENT ] && [ $(cat hostapd.log > /dev/null) ] && exit 1
 [ -z $CLIENT ] && sudo cat /etc/default/hostapd | grep "DAEMON"
 [ -z $CLIENT ] && read -p "Do you wish to install Bridge Mode \
@@ -122,7 +122,7 @@ if [ -z $CLIENT ]; then case $SHARE in
 # Bridge Mode
 #
    'y'*|'Y'*)
-      slogger -st brctl "share internet connection from ${WAN_INT} to wlan0 over bridge"
+      slogger -st brctl "share internet connection from ${WAN_INT} to ${PRIV_INT} over bridge"
       sudo sed -i /bridge=br0/s/^\#// /etc/hostapd/hostapd.conf
       if [ -f /etc/init.d/networking ]; then
         source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_SSID $PRIV_PAWD --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6} --bridge
@@ -136,8 +136,8 @@ if [ -z $CLIENT ]; then case $SHARE in
     echo -e "bogus-priv
 filterwin2k
 # no-resolv
-interface=wlan0    # Use the require wireless interface - usually wlan0
-#no-dhcp-interface=wlan0
+interface=${PRIV_INT}    # Use the require wireless interface - usually ${PRIV_INT}
+#no-dhcp-interface=${PRIV_INT}
 dhcp-range=${PRIV_NETWORK}.15,${PRIV_NETWORK}.100,${PRIV_NETWORK_MASK},${PRIV_NETWORK_MASKb}h
   # " | sudo tee /etc/dnsmasq.conf
     logger -st dnsmasq "start DNS server"

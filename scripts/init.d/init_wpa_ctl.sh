@@ -57,7 +57,7 @@ slogger -st wpa_passphrase "Add Wifi password access"
 [ -z $essid ] && essid=$(prompt_arrgs 2 'your SSID and your passphrase' 'e.g. MyWifiNetwork myWip+Swod')
 [ -z $essid ] && exit 1
 wpa_passphrase $essid | sudo tee /etc/wpa_supplicant.conf
-[ -z $PRIV_INT ] && PRIV_INT=$(prompt_arrgs 1 "WLAN interface name" "e.g. wlp3s0 or wlan0")
+[ -z $PRIV_INT ] && PRIV_INT=$(prompt_arrgs 1 "WLAN interface name" "e.g. wlp3s0 or ${PRIV_INT}")
 [ -z $PRIV_INT ] && exit 1
 slogger -st wpa_supplicant "Start Wifi client"
 sudo wpa_supplicant -c /etc/wpa_supplicant.conf -i $PRIV_INT

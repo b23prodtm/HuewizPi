@@ -58,11 +58,11 @@ while [ "$#" -gt 0 ]; do case $1 in
   --wifi)
     if [ -f /etc/init.d/networking ]; then
       echo -e "${MARKER_BEGIN}
-allow-hotplug wlan0
-iface wlan0 inet dhcp
+allow-hotplug ${PRIV_INT}
+iface ${PRIV_INT} inet dhcp
 ${MARKER_END}" | sudo tee -a /etc/network/interfaces
       sudo /etc/init.d/networking restart
-      sudo ${scriptsd}init.d/init_wpa_ctl.sh "wlan0" "$2" "$3"
+      sudo ${scriptsd}init.d/init_wpa_ctl.sh "${PRIV_INT}" "$2" "$3"
     else
       slogger -st netplan "/etc/netplan/$clientyaml was created"
         echo -e "${MARKER_BEGIN}
@@ -70,7 +70,7 @@ network:
   version: 2
   renderer: networkd
   wifis:
-    wlan0:
+    ${PRIV_INT}:
       dhcp4: yes
       dhcp6: yes
       access-points:
@@ -86,9 +86,9 @@ ${MARKER_END}" | sudo tee /etc/netplan/$clientyaml
     -r
       Removes bridge interface
     --wifi
-      Render a Wifi interface wlan0
+      Render a Wifi interface ${PRIV_INT}
     --bridge
-      Render a bridge connection between ${WAN_INT} and wlan0, skipping private network ${PRIV_NETWORK}.0 (should be used with --wifi)
+      Render a bridge connection between ${WAN_INT} and ${PRIV_INT}, skipping private network ${PRIV_NETWORK}.0 (should be used with --wifi)
     --dns
       Add a public custom DNS address (e.g. --dns 8.8.8.8 --dns 9.9.9.9)
     --dns6
@@ -105,11 +105,11 @@ iface br0 inet dhcp
  network 10.33.0.0
  netmask 255.255.255.0
  nameservers $nameservers
-bridge_ports wlan0 ${WAN_INT}
+bridge_ports ${PRIV_INT} ${WAN_INT}
 ${MARKER_END}" | sudo tee -a /etc/network/interfaces
      slogger -st brctl "share the internet wireless over bridge"
      sudo brctl addbr br0
-     sudo brctl addif br0 eth0 wlan0
+     sudo brctl addif br0 eth0 ${PRIV_INT}
    else
      # new 18.04 netplan server (DHCPd set to bridge)
      slogger -st netplan "/etc/netplan/$yaml was created"
@@ -122,7 +122,7 @@ ${MARKER_END}" | sudo tee -a /etc/network/interfaces
       nameservers:
         addresses: [${nameservers},${nameservers6}]
       interfaces:
-        - wlan0
+        - ${PRIV_INT}
         - eth0
 ${MARKER_END}" | sudo tee -a /etc/netplan/$yaml
    fi;;
@@ -132,18 +132,18 @@ nameservers=$(nameservers $nameservers $nameservers_def)
 nameservers6=$(nameservers $nameservers6 "'${nameservers6_def}'")
 slogger -st network "add wifi network"
 if [ -f /etc/init.d/networking ]; then
-    sudo sed -i.old -e s/"iface wlan0 inet dhcp"/"\\n\
-iface wlan0 inet manual\\n\
+    sudo sed -i.old -e s/"iface ${PRIV_INT} inet dhcp"/"\\n\
+iface ${PRIV_INT} inet manual\\n\
  address ${PRIV_NETWORK}.1\\n\
  network ${PRIV_NETWORK}.0\\n\
  netmask ${PRIV_NETWORK_MASK}\\n\
  nameservers ${nameservers}"/ /etc/network/interfaces
-    cat /etc/network/interfaces | grep -A4 "iface wlan0"
+    cat /etc/network/interfaces | grep -A4 "iface ${PRIV_INT}"
 else
     sudo sed -i.old /"password:"/a"\\
       addresses: [${PRIV_NETWORK}.1/24, '${PRIV_NETWORK_IPV6}1/64']\\n\
       nameservers:\\n\
         addresses: [${nameservers},${nameservers6}]" /etc/netplan/$clientyaml
-    sudo sed -i.old /"wlan0:"/,/"${MARKER_END}"/s/yes/no/g /etc/netplan/$clientyaml
-    cat /etc/netplan/$clientyaml | grep -A8 "wlan0"
+    sudo sed -i.old /"${PRIV_INT}:"/,/"${MARKER_END}"/s/yes/no/g /etc/netplan/$clientyaml
+    cat /etc/netplan/$clientyaml | grep -A8 "${PRIV_INT}"
 fi

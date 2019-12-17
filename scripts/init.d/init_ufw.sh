@@ -34,7 +34,7 @@ echo -e "${MARKER_BEGIN}\\n\
 *nat\\n\
 :POSTROUTING ACCEPT [0:0]\\n\
 \\n\
-# Forward traffic from wlan0 through eth0.\\n\
+# Forward traffic from ${PRIV_INT} through eth0.\\n\
 -A POSTROUTING -s ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb} -o ${WAN_INT} -j MASQUERADE\\n\
 # ip6tables-restore:
 #-A POSTROUTING -s ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} -o ${WAN_INT} -j MASQUERADE\\n\
@@ -47,9 +47,9 @@ sleep 1
 slogger -st ufw "add packet ip forwarding"
 echo -e "${MARKER_BEGIN}\\n\
 -A ufw-before-forward -m state --state RELATED,ESTABLISHED -j ACCEPT\\n\
--A ufw-before-forward -i wlan0 -s ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb} -o ${WAN_INT} -m state --state NEW -j ACCEPT\\n\
+-A ufw-before-forward -i ${PRIV_INT} -s ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb} -o ${WAN_INT} -m state --state NEW -j ACCEPT\\n\
 # ip6tables-restore:
-#-A ufw-before-forward -i wlan0 -s ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} -o ${WAN_INT} -m state --state NEW -j ACCEPT\\n\
+#-A ufw-before-forward -i ${PRIV_INT} -s ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} -o ${WAN_INT} -m state --state NEW -j ACCEPT\\n\
 ${MARKER_END}" | sudo tee /tmp/input.rules.2
 sudo sed -e /"^# End required lines"/r/tmp/input.rules.2 /tmp/input.rules \
 && sudo cp -f /tmp/input.rules /etc/ufw/before.rules

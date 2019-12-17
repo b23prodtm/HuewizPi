@@ -14,5 +14,14 @@ services:
       io.balena.features.supervisor-api: 1
     volumes:
       - hostapcache:/var/cache/hostap
+  wifi-connect:
+    network_mode: host
+    build:
+      context: ./wifi-connect
+      dockerfile: Dockerfile.template
+    labels:
+      io.balena.features.dbus: 1
+      io.balena.features.supervisor-api: 1
+    privileged: true
 volumes:
   hostapcache:

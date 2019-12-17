@@ -21,7 +21,7 @@ else
     bash -c "sudo sed -i -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
 netplan apply\\n\
 service hostapd restart\\n\
-ip link set dev wlan0 up\\n\
+ip link set dev ${PRIV_INT} up\\n\
 service isc-dhcp-server restart\\n\
 service isc-dhcp-server6 restart\\n\
 sleep 2\\n\
@@ -30,9 +30,9 @@ ${MARKER_END}\\n'/ /etc/rc.local"
   else
     bash -c "sudo sed -i -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
 netplan apply\\n\
-ip link set dev wlan0 up\\n\
+ip link set dev ${PRIV_INT} up\\n\
 sleep 2\\n\
-dhclient wlan0\\n\
+dhclient ${PRIV_INT}\\n\
 ${MARKER_END}\\n'/ /etc/rc.local"
   fi
 slogger -st sed "/etc/rc.local added command lines"
@@ -54,12 +54,12 @@ case $REBOOT in
 	[ -z $CLIENT ] && sudo service hostapd start
 	[ -z $CLIENT ] && slogger -st dhcpd "restart DHCP server"
 	# Restart up interface
-	sudo ip link set dev wlan0 up
+	sudo ip link set dev ${PRIV_INT} up
 	[ -z $CLIENT ] && sudo service isc-dhcp-server restart
 	[ -z $CLIENT ] && sudo service isc-dhcp-server6 restart
 	sleep 2
 	[ -z $CLIENT ] && sudo dhclient ${WAN_INT}
-	[ ! -z $CLIENT ] && sudo dhclient wlan0
+	[ ! -z $CLIENT ] && sudo dhclient ${PRIV_INT}
 	[ -z $CLIENT ] && sudo service status isc-dhcp-server
 	[ -z $CLIENT ] && sudo service status isc-dhcp-server6
   [ -z $CLIENT ] && sudo service hostapd status
