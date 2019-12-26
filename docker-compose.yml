@@ -17,7 +17,7 @@ services:
   wifi-connect:
     network_mode: host
     build:
-      context: ./wifi-connect
+      context: ./python-wifi-connect
       dockerfile: Dockerfile.template
     labels:
       io.balena.features.dbus: 1

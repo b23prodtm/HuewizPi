@@ -31,7 +31,6 @@ ENV WAN_NETWORK_IPV6 2a01:db8:0:1::
 ENV WAN_NETWORK_MASKb6 64
 ENV SHARE Y
 
-RUN [ "cross-build-start" ]
 RUN install_packages \
   hostapd \
   bridge-utils \
@@ -52,4 +51,3 @@ ENTRYPOINT sudo scripts/dns-lookup.sh
 RUN sudo service hostapd stop
 # restart HostAPd
 CMD sudo /usr/sbin/hostapd -P /run/hostapd.pid -i ${PRIV_INT} /etc/hostapd/hostapd.conf
-RUN [ "cross-build-end" ]
