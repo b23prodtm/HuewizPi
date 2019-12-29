@@ -59,7 +59,7 @@ while [ true ]; do
     1|--local)
       echo "Allow Cross-build"
       uncomment Dockerfile.${DKR_ARCH} python-wifi-connect/Dockerfile.${DKR_ARCH}
-      bash -c "docker-compose -f docker-compose.${DKR_ARCH} build"
+      bash -c "docker-compose -f docker-compose.${DKR_ARCH} --verbose build"
       break;;
     2|--balena)
       read -p "Where do you want to push [1-${#apps}] or give an IP? " apporip
