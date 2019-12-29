@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
       # using custom image, see .circleci/images/primary/Dockerfile
-      - image: betothreeprod/dind-php7:0.1.12
+      - image: betothreeprod/dind-php7
     #An image that’s based on Alpine Linux (like docker), uses the ash shell.
     shell: /bin/sh -leo pipefail
     environment:
@@ -66,7 +66,7 @@ jobs:
   compose:
     docker:
       # use a primary image that already has Docker (recommended)
-      - image: betothreeprod/dind-php7:0.1.12
+      - image: betothreeprod/dind-php7
         environment:
           DOCKER_TLS_CERTDIR: /certs
     #An image that’s based on Alpine Linux (like docker), uses the ash shell.

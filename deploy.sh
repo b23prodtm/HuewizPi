@@ -50,7 +50,8 @@ function setArch() {
 }
 setArch Dockerfile.template Dockerfile.${DKR_ARCH} \
 docker-compose.yml docker-compose.${DKR_ARCH} \
-.circleci/images/primary/Dockerfile.template .circleci/images/primary/Dockerfile.${DKR_ARCH}
+.circleci/images/primary/Dockerfile.template .circleci/images/primary/Dockerfile.${DKR_ARCH} \
+python-wifi-connect/Dockerfile.template python-wifi-connect/Dockerfile.${DKR_ARCH}
 eval $(cat ${arch}.env | grep BALENA_MACHINE_NAME)
 while [ true ]; do
   eval $(ssh-agent)
@@ -59,13 +60,14 @@ while [ true ]; do
   i="1..${#apps}"; echo "$i: ${apps[@]}"
   case $target in
     1|--local)
-      echo "Cross-build may be enabled"
+      echo "Disabled cross-build"
+      comment Dockerfile.${DKR_ARCH} python-wifi-connect/Dockerfile.${DKR_ARCH}
       bash -c "docker-compose -f docker-compose.${DKR_ARCH} build"
       break;;
     2|--balena)
       read -p "Where do you want to push [1-${#apps}] or give an IP? " apporip
-      echo "Disabled cross-build"
-      uncomment Dockerfile.template
+      echo "Cross-build may be enabled"
+      uncomment Dockerfile.${DKR_ARCH} python-wifi-connect/Dockerfile.${DKR_ARCH}
       git commit -a -m "${DKR_ARCH} pushed to balena.io"
       if [ $(sudo which balena) > /dev/null ]; then
         sudo balena push ${apps[$apporip-1]}
