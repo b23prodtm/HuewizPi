@@ -19,15 +19,12 @@ while [ true ]; do
   case $arch in
     1|arm32*|armv7l|armhf)
       arch="arm32v7"
-      uncomment Dockerfile.template
       break;;
     2|arm64*|aarch64)
       arch="arm64v8"
-      uncomment Dockerfile.template
       break;;
     3|amd64|x86_64)
       arch="amd64"
-      comment Dockerfile.template
       break;;
     *)
       echo $usage
@@ -60,14 +57,14 @@ while [ true ]; do
   i="1..${#apps}"; echo "$i: ${apps[@]}"
   case $target in
     1|--local)
-      echo "Disabled cross-build"
-      comment Dockerfile.${DKR_ARCH} python-wifi-connect/Dockerfile.${DKR_ARCH}
+      echo "Allow Cross-build"
+      uncomment Dockerfile.${DKR_ARCH} python-wifi-connect/Dockerfile.${DKR_ARCH}
       bash -c "docker-compose -f docker-compose.${DKR_ARCH} build"
       break;;
     2|--balena)
       read -p "Where do you want to push [1-${#apps}] or give an IP? " apporip
-      echo "Cross-build may be enabled"
-      uncomment Dockerfile.${DKR_ARCH} python-wifi-connect/Dockerfile.${DKR_ARCH}
+      echo "Deny cross-build"
+      comment Dockerfile.${DKR_ARCH} python-wifi-connect/Dockerfile.${DKR_ARCH}
       git commit -a -m "${DKR_ARCH} pushed to balena.io"
       if [ $(sudo which balena) > /dev/null ]; then
         sudo balena push ${apps[$apporip-1]}
