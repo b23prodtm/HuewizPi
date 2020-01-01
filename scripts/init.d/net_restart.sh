@@ -9,9 +9,9 @@ if [ -f /etc/init.d/networking ]; then
    sudo /etc/init.d/networking restart
 else
    [[ $PROMPT != "N" ]] && sudo netplan try --timeout 12
-   slogger -st 'rc.local' 'Work around fix netplan apply on reboot'
+   slogger -st 'rc.local' 'Work around fix netplan and dhcpd apply on reboot'
    if [ ! -f /etc/rc.local ] || [[ $(wc -l /etc/rc.local | awk '{print $1}') -lt 3 ]]; then
-      printf '%s\n' "#!/bin/bash" "exit 0" | sudo tee /etc/rc.local
+      printf '%s\n' "#!/bin/sh" "exit 0" | sudo tee /etc/rc.local
       sudo chmod +x /etc/rc.local
    fi
    sudo cp -f /lib/systemd/system/rc-local.service /etc/systemd/system
