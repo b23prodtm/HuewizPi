@@ -13,9 +13,9 @@ else
    if [ ! -f /etc/rc.local ] || [[ $(wc -l /etc/rc.local | awk '{print $1}') -lt 3 ]]; then
       printf '%s\n' "#!/bin/sh" "exit 0" | sudo tee /etc/rc.local
       sudo chmod +x /etc/rc.local
+      sudo cp -f /usr/lib/systemd/system/rc-local.service /etc/systemd/system/rc-local.service
    fi
-   sudo cp -f /lib/systemd/system/rc-local.service /etc/systemd/system
-   printf '%s\n' "[Install]" "WantedBy=multi-user.target" | sudo tee -a /etc/systemd/system/rc-local.service
+   printf '%s\n' "[Install]" "WantedBy=multi-user.target" | sudo tee /usr/lib/systemd/system/rc-local.service.d/hostapd.conf
    sudo systemctl daemon-reload
    if [ -z $CLIENT ]; then
     bash -c "sudo sed -i -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
