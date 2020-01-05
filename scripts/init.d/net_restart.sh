@@ -16,7 +16,6 @@ else
       sudo cp -f /usr/lib/systemd/system/rc-local.service /etc/systemd/system/rc-local.service
    fi
    printf '%s\n' "[Install]" "WantedBy=multi-user.target" | sudo tee /usr/lib/systemd/system/rc-local.service.d/hostapd.conf
-   sudo systemctl daemon-reload
    if [ -z $CLIENT ]; then
     bash -c "sudo sed -i -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
 netplan apply\\n\
@@ -38,6 +37,7 @@ ${MARKER_END}\\n'/ /etc/rc.local"
 slogger -st sed "/etc/rc.local added command lines"
    cat /etc/rc.local
 fi
+sudo systemctl daemon-reload
 sudo systemctl enable rc-local
 logger -st dpkg "installing dpkg auto-reboot.service"
 source ${scriptsd}init.d/auto-rebooot.sh install
