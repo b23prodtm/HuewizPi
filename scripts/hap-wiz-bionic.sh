@@ -37,10 +37,10 @@ echo "Config MARKERS ${MARKERS}"
 [ -z $CLIENT ] && [ -z $(which dhcpd) ] && sudo apt-get -y install isc-dhcp-server
 slogger -st hostapd "remove bridge (br0) to ${PRIV_INT}"
 source ${scriptsd}init.d/init_net_if.sh -r
-slogger -st service "shutdown services"
-sudo service wpa_supplicant stop
-sudo service hostapd stop
-sudo systemctl disable wpa_supplicant.service
+slogger -st systemd "shutdown services"
+sudo systemctl stop wpa_supplicant
+sudo systemctl stop hostapd
+sudo systemctl disable wpa_supplicant
 source ${scriptsd}init.d/init_dhcp_serv.sh -r
 source ${scriptsd}init.d/init_ufw.sh -r
 [ -z $CLIENT ] && echo -e "### HostAPd will configure a public wireless network
@@ -148,9 +148,9 @@ dhcp-range=${PRIV_NETWORK}.15,${PRIV_NETWORK}.100,${PRIV_NETWORK_MASK},${PRIV_NE
     sleep 1
     slogger -st network "rendering configuration for dnsmasq mode"
     source ${scriptsd}init.d/init_net_if.sh --wifi '' ''}
-    sudo systemctl unmask dnsmasq.service
-    sudo systemctl enable dnsmasq.service
-    sudo service dnsmasq start
+    sudo systemctl unmask dnsmasq
+    sudo systemctl enable dnsmasq
+    sudo systemctl start dnsmasq
     ;;
   *)
     slogger -st network "rendering configuration for router mode"

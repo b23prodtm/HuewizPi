@@ -17,12 +17,12 @@ ${MARKER_END}"
 }
 while [ "$#" -gt 0 ]; do case $1 in
   -r*|-R*)
-    sudo systemctl disable dnsmasq.service
-    sudo service dnsmasq stop
-    sudo service isc-dhcp-server stop
-    sudo service isc-dhcp-server6 stop
-    sudo systemctl disable isc-dhcp-server.service
-    sudo systemctl disable isc-dhcp-server6.service
+    sudo systemctl disable dnsmasq
+    sudo systemctl stop dnsmasq
+    sudo systemctl stop isc-dhcp-server
+    sudo systemctl stop isc-dhcp-server6
+    sudo systemctl disable isc-dhcp-server
+    sudo systemctl disable isc-dhcp-server6
     return;;
   -h*|--help)
     echo "
@@ -49,11 +49,11 @@ Usage: $0 [-r] [--router <ipv4>] [--dns <ipv4>] [--dns6 <ipv6>]
    [ ! -z ${lease} ] && lease_blk ${PRIV_NETWORK}.${lease_add} | sudo tee /tmp/input.dhcp.lease && sudo sed -i \
 -e \$s/\}// -e \$r/tmp/input.dhcp.lease -e \$a\} \
 /etc/dhcp/dhcpd.conf && cat /etc/dhcp/dhcpd.conf | grep -B4 "fixed-address"
-   sudo service isc-dhcp-server restart
+   sudo systemctl restart isc-dhcp-server
    [ ! -z ${lease} ] && lease_blk ${PRIV_NETWORK_IPV6}${lease_add} | sudo tee /tmp/input.dhcp.lease && sudo sed -i \
 -e \$s/\}// -e \$r/tmp/input.dhcp.lease -e \$a\} \
 /etc/dhcp/dhcpd6.conf && cat /etc/dhcp/dhcpd6.conf | grep -B4 "fixed-address"
-    sudo service isc-dhcp-server6 restart
+    sudo systemctl restart isc-dhcp-server6
     exit 0;;
   --dns)
     nameservers=$(nameservers $nameservers $2)
@@ -105,9 +105,9 @@ sudo sed -i -e s/\'\',//g -e s/\'\'//g /etc/dhcp/dhcpd6.conf
 sudo cat /etc/default/isc-dhcp-server
 sleep 1
 slogger -st dhcpd "start DHCP server"
-sudo systemctl unmask isc-dhcp-server.service
-sudo systemctl enable isc-dhcp-server.service
-sudo service isc-dhcp-server start
-sudo systemctl unmask isc-dhcp-server6.service
-sudo systemctl enable isc-dhcp-server6.service
-sudo service isc-dhcp-server6 start
+sudo systemctl unmask isc-dhcp-server
+sudo systemctl enable isc-dhcp-server
+sudo systemctl start isc-dhcp-server
+sudo systemctl unmask isc-dhcp-server6
+sudo systemctl enable isc-dhcp-server6
+sudo systemctl start isc-dhcp-server6

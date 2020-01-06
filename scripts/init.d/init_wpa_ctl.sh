@@ -70,7 +70,7 @@ slogger -st systemd "Setup Wifi client service"
 [ ! $(sudo cp /lib/systemd/system/wpa_supplicant.service /etc/systemd/system/wpa_supplicant.service) ] && exit 1
 [ ! $(sudo sed -i -e "/ExecStart/s/-O \/run\/wpa_supplicant/-c \/etc\/wpa_supplicant.conf -i ${PRIV_INT}/g" /etc/systemd/system/wpa_supplicant.service) ] && exit 1
 # cat /etc/systemd/system/wpa_supplicant.service
-sudo systemctl enable wpa_supplicant.service
+sudo systemctl enable wpa_supplicant
 slogger -st systemd "Setup DHCP client service"
 echo -e "[Unit]
 Description= DHCP Client
@@ -84,5 +84,5 @@ ExecStart=/sbin/dhclient ${PRIV_INT}
 WantedBy=multi-user.target
 " | sudo tee /etc/systemd/system/dhclient.service
 # cat /etc/systemd/system/dhclient.service
-sudo systemctl enable dhclient.service
+sudo systemctl enable dhclient
 slogger -st "$0" "Wifi configuration done."

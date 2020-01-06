@@ -19,10 +19,10 @@ else
    if [ -z $CLIENT ]; then
     bash -c "sudo sed -i -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
 netplan apply\\n\
-service hostapd restart\\n\
+systemctl restart hostapd\\n\
 ip link set dev ${PRIV_INT} up\\n\
-service isc-dhcp-server restart\\n\
-service isc-dhcp-server6 restart\\n\
+systemctl restart isc-dhcp-server\\n\
+systemctl restart isc-dhcp-server6\\n\
 sleep 2\\n\
 dhclient ${WAN_INT}\\n\
 ${MARKER_END}\\n'/ /etc/rc.local"
