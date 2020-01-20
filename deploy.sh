@@ -62,7 +62,7 @@ while [ true ]; do
       bash -c "docker-compose -f docker-compose.${DKR_ARCH} --verbose build"
       break;;
     2|--balena)
-      read -p "Where do you want to push [1-${#apps}] or give an IP? " apporip
+      read -p "Where do you want to push [1-${#apps}] ? " apporip
       echo "Deny cross-build"
       comment Dockerfile.${DKR_ARCH} python-wifi-connect/Dockerfile.${DKR_ARCH}
       git commit -a -m "${DKR_ARCH} pushed to balena.io"
