@@ -3,6 +3,7 @@
 *.old
 Dockerfile.*
 !Dockerfile.template
+!Dockerfile.aarch64
 docker-compose.*
 !docker-compose.yml
 .circleci/config-compat.yml
