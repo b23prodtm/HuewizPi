@@ -68,9 +68,9 @@ while [ true ]; do
       fi
       break;;
     4|--docker)
-      echo "Deny cross-build"
+      echo "Allow cross-build"
       for d in ${projects[@]}; do
-        comment $d/Dockerfile.${DKR_ARCH}
+        uncomment $d/Dockerfile.${DKR_ARCH}
       done
       bash -c "docker-compose -f docker-compose.${DKR_ARCH} --host ${DOCKER_HOST:-''} build"
       break;;
