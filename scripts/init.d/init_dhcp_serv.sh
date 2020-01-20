@@ -1,4 +1,21 @@
 #!/usr/bin/env bash
+usage="
+Usage: $0 [-r] [--router <ipv4>] [--dns <ipv4>] [--dns6 <ipv6>]
+   $0 [-l, --leases <hostname> [host_number]]
+Initializes DHCP services (without dnsmasq)
+-r
+Disable all dhcp (also with dnsmasq) services
+-l <hostname>
+Prints ethernet mac address corresponding to the specified host DHCP lease. \
+A fixed address option will be added to /etc/dhcpd/dhcp.conf, /etc/dhcpd/dhcp6.conf.
+Activate it by commenting out the host option.
+--router
+Sets up router ip address for ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb}
+--dns
+Add a public custom DNS address (e.g. --dns 8.8.8.8 --dns 9.9.9.9)
+--dns6
+Add a public custom DNS ipv6 address(e.g. --dns6 2001:4860:4860::8888 --dns6 2001:4860:4860::8844)
+"
 [ -z ${scriptsd} ] && export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')../
 [ ! -f ${scriptsd}../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
 source ${scriptsd}../.hap-wiz-env.sh
@@ -25,23 +42,7 @@ while [ "$#" -gt 0 ]; do case $1 in
     sudo systemctl disable isc-dhcp-server6
     return;;
   -h*|--help)
-    echo "
-Usage: $0 [-r] [--router <ipv4>] [--dns <ipv4>] [--dns6 <ipv6>]
-       $0 [-l, --leases <hostname> [host_number]]
-  Initializes DHCP services (without dnsmasq)
-  -r
-    Disable all dhcp (also with dnsmasq) services
-  -l <hostname>
-    Prints ethernet mac address corresponding to the specified host DHCP lease. \
-    A fixed address option will be added to /etc/dhcpd/dhcp.conf, /etc/dhcpd/dhcp6.conf.
-    Activate it by commenting out the host option.
-  --router
-    Sets up router ip address for ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb}
-  --dns
-    Add a public custom DNS address (e.g. --dns 8.8.8.8 --dns 9.9.9.9)
-  --dns6
-    Add a public custom DNS ipv6 address(e.g. --dns6 2001:4860:4860::8888 --dns6 2001:4860:4860::8844)
-  "
+    echo -e $usage
     exit 1;;
   -l*|--leases*)
     lease_host=$2; lease_add=$3; lease=$(cat /var/lib/dhcp/dhcpd.leases | grep -C4 $2 | grep -m1 "hardware ethernet" | awk -F' ' '{print $3}')

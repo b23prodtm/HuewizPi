@@ -110,10 +110,10 @@ fragm_threshold=2346
 [ -z $CLIENT ] && sudo touch /etc/hostapd/hostapd.deny
 [ -z $CLIENT ] && echo -e "00:00:00:00:00:00 $(wpa_passphrase ${PRIV_SSID} ${PRIV_PASSWD} | grep 'psk' | awk -F= 'FNR == 2 { print $2 }')" | sudo tee ${PSK_FILE}
 [ -z $CLIENT ] && slogger -st hostapd "configure Access Point as a Service"
-[ -z $CLIENT ] && sudo sed -i -e /DAEMON_CONF=/s/^\#// -e /DAEMON_CONF=/s/=\".*\"/=\"\\/etc\\/hostapd\\/hostapd.conf\"/ /etc/default/hostapd 2> hostapd.log
-[ -z $CLIENT ] && [ $(cat hostapd.log > /dev/null) ] && exit 1
-[ -z $CLIENT ] && sudo sed -i -e /DAEMON_OPTS=/s/^\#// -e "/DAEMON_OPTS=/s/=\".*\"/=\"-i ${PRIV_INT}\"/" /etc/default/hostapd 2> hostapd.log
-[ -z $CLIENT ] && [ $(cat hostapd.log > /dev/null) ] && exit 1
+[ -z $CLIENT ] && sudo sed -i -e /DAEMON_CONF=/s/^\#// -e /DAEMON_CONF=/s/=\".*\"/=\"\\/etc\\/hostapd\\/hostapd.conf\"/ /etc/default/hostapd 2> /dev/null
+[ -z $CLIENT ] && [ $? -ne 0 ] && exit 1
+[ -z $CLIENT ] && sudo sed -i -e /DAEMON_OPTS=/s/^\#// -e "/DAEMON_OPTS=/s/=\".*\"/=\"-i ${PRIV_INT}\"/" /etc/default/hostapd 2> /dev/null
+[ -z $CLIENT ] && [ $? -ne 0 ] && exit 1
 [ -z $CLIENT ] && sudo cat /etc/default/hostapd | grep "DAEMON"
 [ -z $CLIENT ] && read -p "Do you wish to install Bridge Mode \
 [PRESS ENTER TO START in Router mode now / no to use DNSMasq (old) / yes for Bridge mode] ?" SHARE
@@ -125,29 +125,36 @@ if [ -z $CLIENT ]; then case $SHARE in
       slogger -st brctl "share internet connection from ${WAN_INT} to ${PRIV_INT} over bridge"
       sudo sed -i /bridge=br0/s/^\#// /etc/hostapd/hostapd.conf
       if [ -f /etc/init.d/networking ]; then
-        source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_SSID $PRIV_PAWD --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6} --bridge
+        source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_INT $PRIV_SSID $PRIV_PAWD --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6} --bridge
       else
-        source ${scriptsd}init.d/init_net_if.sh --wifi '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6} --bridge
+        source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_INT '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6} --bridge
       fi
       ;;
   'n'*|'N'*)
     [ -z $(which dnsmasq) ] && sudo apt-get -y install dnsmasq
     slogger -st dnsmasq "configure a DNS server as a Service"
-    echo -e "bogus-priv
-filterwin2k
-# no-resolv
-interface=${PRIV_INT}    # Use the require wireless interface - usually ${PRIV_INT}
-#no-dhcp-interface=${PRIV_INT}
-dhcp-range=${PRIV_NETWORK}.15,${PRIV_NETWORK}.100,${PRIV_NETWORK_MASK},${PRIV_NETWORK_MASKb}h
-  # " | sudo tee /etc/dnsmasq.conf
+    # patch python scripts
+    GATEWAY="${PRIV_NETWORK}.1"
+    DHCP_RANGE="${PRIV_NETWORK}.${PRIV_RANGE_START},${PRIV_NETWORK}.${PRIV_RANGE_END}"
+    INTERFACE="${PRIV_INT}"
     logger -st dnsmasq "start DNS server"
-    sudo dnsmasq -x /run/dnsmasq.pid -C /etc/dnsmasq.conf
-    sleep 3
+    python3 dnsmasq.py -a $GATEWAY -r $DHCP_RANGE -i $INTERFACE
+    sleep 2
     slogger -st modprobe "enable IP Masquerade"
     sudo modprobe ipt_MASQUERADE
     sleep 1
     slogger -st network "rendering configuration for dnsmasq mode"
-    source ${scriptsd}init.d/init_net_if.sh --wifi '' ''}
+    case "$WAN_INT" in
+      'eth'*)
+        source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_INT $PRIV_SSID $PRIV_PAWD
+        ;;
+      'wl'*)
+        source ${scriptsd}init.d/init_net_if.sh --wifi $WAN_INT $WAN_SSID $WAN_PAWD
+        ;;
+      *)
+        slogger -st hap-wiz-bionic "Unknown wan interface ${WAN_INT}"
+        ;;
+    esac
     sudo systemctl unmask dnsmasq
     sudo systemctl enable dnsmasq
     sudo systemctl start dnsmasq
@@ -155,15 +162,15 @@ dhcp-range=${PRIV_NETWORK}.15,${PRIV_NETWORK}.100,${PRIV_NETWORK_MASK},${PRIV_NE
   *)
     slogger -st network "rendering configuration for router mode"
     if [ -f /etc/init.d/networking ]; then
-      source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_SSID $PRIV_PAWD --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6}
+      source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_INT $PRIV_SSID $PRIV_PAWD --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6}
     else
-      source ${scriptsd}init.d/init_net_if.sh --wifi '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6}
+      source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_INT '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6}
     fi
   ;;
 esac;
     slogger -st dhcpd  "configure dynamic dhcp addresses ${PRIV_NETWORK}.${PRIV_RANGE_START}-${PRIV_RANGE_END}"
     source ${scriptsd}init.d/init_dhcp_serv.sh --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6} --router ${PRIV_NETWORK}.1
 else
-  source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_SSID $PRIV_PAWD
+  source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_INT $PRIV_SSID $PRIV_PAWD
 fi
 source ${scriptsd}init.d/net_restart.sh $CLIENT

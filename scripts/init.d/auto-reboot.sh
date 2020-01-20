@@ -1,6 +1,8 @@
 #!/bin/bash
 # auto-reboot
 # description: Check if the system dpkg need a restart and send corresponding signal
+usage="
+Usage: $0 {start|stop|status|restart|install|uninstall}"
 [ -z ${scriptsd} ] && export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')../
 install() {
   sudo cp -f ${scriptsd}init.d/auto-reboot.sh /usr/local/bin/auto-reboot.sh
@@ -56,6 +58,6 @@ case "$1" in
        uninstall
        ;;
 *)
-echo "Usage: $0 {start|stop|status|restart|install|uninstall}"
+echo -e $usage
 esac
 exit 0

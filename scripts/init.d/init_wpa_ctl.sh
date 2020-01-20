@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Usage: $ scripts/systemctl-wpa-ssh.sh
-# source: https://www.linuxbabe.com/command-line/ubuntu-server-16-04-wifi-wpa-supplicant
-# https://git.io/fjYQI
+usage="
+Usage: $0 [interface] <ssid> <passphrase>"
 [ -z ${scriptsd} ] && export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')../
 [ ! -f ${scriptsd}../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
 source ${scriptsd}../.hap-wiz-env.sh
@@ -45,44 +44,27 @@ function prompt_arrgs () {
   echo $ARRGS
   #Usage: $0 <array_size> <description> <example_values> [array values]
 }
-essid=""
+ssid=''
+password=''
+INTERFACE='wlan0'
 while [ "$#" -gt 0 ]; do case $1 in
   wl*)
-    PRIV_INT=$1;;
+    INTERFACE=$1;;
   *)
-    essid="$1 $2"
+    ssid="$1"
+    password="$2"
     shift;;
 esac; shift; done
-slogger -st wpa_passphrase "Add Wifi password access"
-[ -z $essid ] && essid=$(prompt_arrgs 2 'your SSID and your passphrase' 'e.g. MyWifiNetwork myWip+Swod')
-[ -z $essid ] && exit 1
-wpa_passphrase $essid | sudo tee /etc/wpa_supplicant.conf
-[ -z $PRIV_INT ] && PRIV_INT=$(prompt_arrgs 1 "WLAN interface name" "e.g. wlp3s0 or ${PRIV_INT}")
-[ -z $PRIV_INT ] && exit 1
-slogger -st wpa_supplicant "Start Wifi client"
-sudo wpa_supplicant -c /etc/wpa_supplicant.conf -i $PRIV_INT
-iwconfig
-sudo wpa_supplicant -B -c /etc/wpa_supplicant.conf -i $PRIV_INT
-slogger -st dhclient "Obtain an IP address"
-sudo dhclient $PRIV_INT
-ifconfig $PRIV_INT
-slogger -st systemd "Setup Wifi client service"
-[ ! $(sudo cp /lib/systemd/system/wpa_supplicant.service /etc/systemd/system/wpa_supplicant.service) ] && exit 1
-[ ! $(sudo sed -i -e "/ExecStart/s/-O \/run\/wpa_supplicant/-c \/etc\/wpa_supplicant.conf -i ${PRIV_INT}/g" /etc/systemd/system/wpa_supplicant.service) ] && exit 1
-# cat /etc/systemd/system/wpa_supplicant.service
-sudo systemctl enable wpa_supplicant
-slogger -st systemd "Setup DHCP client service"
-echo -e "[Unit]
-Description= DHCP Client
-Before=network.target
-
-[Service]
-Type=simple
-ExecStart=/sbin/dhclient ${PRIV_INT}
-
-[Install]
-WantedBy=multi-user.target
-" | sudo tee /etc/systemd/system/dhclient.service
-# cat /etc/systemd/system/dhclient.service
-sudo systemctl enable dhclient
-slogger -st "$0" "Wifi configuration done."
+slogger -st init_wpa_ctl "Add Wifi password access"
+[ -z $ssid ] && ssid=$(prompt_arrgs 1 'a Wifi SSID' 'e.g. MyWifiNetwork')
+[ -z $ssid ] && exit 1
+[ -z $password ] && ssid=$(prompt_arrgs 1 'a Wifi passphrase' 'e.g. myWip+Swod')
+[ -z $password ] && exit 1
+slogger -st netman "set Wifi SSID connection"
+sudo python3 netman.py -t "PASSWORD" -i $INTERFACE --ssid="${ssid}" --password="${password}"
+if [ $? -eq 0 ]; then
+  slogger -st netman " Success"
+else
+  slogger -st netman " Fail"
+  exit 1
+fi

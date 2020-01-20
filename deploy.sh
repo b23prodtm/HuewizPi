@@ -40,42 +40,59 @@ function setArch() {
     sed -E -e "s/%%BALENA_MACHINE_NAME%%/${BALENA_MACHINE_NAME}/g" \
     -e "s/(Dockerfile\.)[^\.]*/\\1${DKR_ARCH}/g" \
     -e "s/(DKR_ARCH[=:-]+)[^\$ }]+/\\1${DKR_ARCH}/g" \
-    -e "s/(IMG_TAG[=:-]+)[^\$ }]+/\\1${IMG_TAG}/g" \
-    -e "s/(PHP_OWNER[=:-]+)[^\$ }]+/\\1${PHP_OWNER}/g" \
     $1 | tee $2
   shift; shift; done
 }
-setArch Dockerfile.template Dockerfile.${DKR_ARCH} \
-docker-compose.yml docker-compose.${DKR_ARCH} \
-.circleci/images/primary/Dockerfile.template .circleci/images/primary/Dockerfile.${DKR_ARCH} \
-python-wifi-connect/Dockerfile.template python-wifi-connect/Dockerfile.${DKR_ARCH}
+setArch docker-compose.yml docker-compose.${DKR_ARCH}
+declare -a projects=("." "python-wifi-connect" ".circleci/images/primary")
+for d in ${projects[@]}; do
+  setArch $d/Dockerfile.template $d/Dockerfile.${DKR_ARCH}
+done
 eval $(cat ${arch}.env | grep BALENA_MACHINE_NAME)
 while [ true ]; do
   eval $(ssh-agent)
   ssh-add ~/.ssh/*id_rsa
-  [ $(which balena) > /dev/null ] && declare -a apps=($(sudo balena apps | awk '{if (NR>1) print $2}'))
-  i="1..${#apps}"; echo "$i: ${apps[@]}"
   case $target in
     1|--local)
-      echo "Allow Cross-build"
-      uncomment Dockerfile.${DKR_ARCH} python-wifi-connect/Dockerfile.${DKR_ARCH}
-      bash -c "docker-compose -f docker-compose.${DKR_ARCH} --verbose build"
+      echo "Allow cross-build"
+      for d in ${projects[@]}; do
+        uncomment $d/Dockerfile.${DKR_ARCH}
+      done
+      [ $(which balena) > /dev/null ] && declare -a apps=($(sudo balena scan | awk '/address:/{print $2}'))
+      i="1..${#apps}"; echo "$i: ${apps[@]}"
+      read -p "Where do you want to push [1-${#apps}] ? " appName
+      if [ $(sudo which balena) > /dev/null ]; then
+        sudo balena push ${apps[$appName-1]}
+      else
+        git push -uf balena ${apps[$appName-1]}
+      fi
+      break;;
+    4|--docker)
+      echo "Deny cross-build"
+      for d in ${projects[@]}; do
+        comment $d/Dockerfile.${DKR_ARCH}
+      done
+      bash -c "docker-compose -f docker-compose.${DKR_ARCH} --host ${DOCKER_HOST:-''} build"
       break;;
     2|--balena)
-      read -p "Where do you want to push [1-${#apps}] ? " apporip
       echo "Deny cross-build"
-      comment Dockerfile.${DKR_ARCH} python-wifi-connect/Dockerfile.${DKR_ARCH}
+      for d in ${projects[@]}; do
+        comment $d/Dockerfile.template
+      done
+      [ $(which balena) > /dev/null ] && declare -a apps=($(sudo balena apps | awk '{if (NR>1) print $2}'))
+      i="1..${#apps}"; echo "$i: ${apps[@]}"
+      read -p "Where do you want to push [1-${#apps}] ? " appName
       git commit -a -m "${DKR_ARCH} pushed to balena.io"
       if [ $(sudo which balena) > /dev/null ]; then
-        sudo balena push ${apps[$apporip-1]}
+        sudo balena push ${apps[$appName-1]}
       else
-        git push -uf balena ${apps[$apporip-1]}
+        git push -uf balena ${apps[$appName-1]}
       fi
       break;;
     3|--nobuild)
       break;;
     *)
-      read -p "What target docker's going to use (1:local, 2:balena, 3:nobuilt) ?" target
+      read -p "What target docker's going to use (1:local-balena, 2:balena, 3:nobuilt, 4:docker) ?" target
       ;;
   esac
 done
