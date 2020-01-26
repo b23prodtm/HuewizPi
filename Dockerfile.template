@@ -87,16 +87,17 @@ WORKDIR /usr/src/
 COPY python-wifi-connect/src/ src/
 COPY python-wifi-connect/nm_scripts/ nm_scripts/
 COPY python-wifi-connect/ui/ ui/
-COPY python-wifi-connect/scripts/ scripts/
+COPY python-wifi-connect/scripts/run.sh scripts/run.sh
+COPY python-wifi-connect/scripts/run scripts/run
 
 COPY scripts/ scripts/
 COPY library/ library/
 RUN chmod g+xs scripts
 
-RUN [ "bash", "-c", "scripts/hap-wiz-bionic.sh ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb} ${WAN_NETWORK}.0/${WAN_NETWORK_MASKb} ${WAN_INT} ${PRIV_SSID} ${PRIV_PASSWD} ${PRIV_WIFI_MODE} ${PRIV_WIFI_CTY} ${PRIV_WIFI_CHANNEL} ${DNS1} ${DNS2} ${DNS1_IPV6} ${DNS2_IPV6} ${PRIV_RANGE_START} ${PRIV_RANGE_END} ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} ${WAN_NETWORK_IPV6}0/${WAN_NETWORK_MASKb6} 2>&1 | tee hapwizpy.log" ]
+RUN [ "bash", "-c", "sudo scripts/hap-wiz-bionic.sh ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb} ${WAN_NETWORK}.0/${WAN_NETWORK_MASKb} ${WAN_INT} ${PRIV_SSID} ${PRIV_PASSWD} ${PRIV_WIFI_MODE} ${PRIV_WIFI_CTY} ${PRIV_WIFI_CHANNEL} ${DNS1} ${DNS2} ${DNS1_IPV6} ${DNS2_IPV6} ${PRIV_RANGE_START} ${PRIV_RANGE_END} ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} ${WAN_NETWORK_IPV6}0/${WAN_NETWORK_MASKb6} 2>&1 | tee hapwizpy.log" ]
 RUN cat hapwizpy.log
 ENV DEFAULT_INTERFACE $PRIV_INT
-CMD [ "bash", "-c", "scripts/run"]
+CMD [ "bash", "-c", "sudo scripts/run"]
 # restart HostAPd
 #CMD /usr/sbin/hostapd -P /run/hostapd.pid -i ${PRIV_INT} /etc/hostapd/hostapd.conf
 # RUN [ "cross-build-end" ]
