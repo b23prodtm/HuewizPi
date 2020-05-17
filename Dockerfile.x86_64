@@ -78,17 +78,24 @@ ENV PRIV_NETWORK_MASKb6 64
 ENV WAN_NETWORK_IPV6 2a01:db8:0:1::
 ENV WAN_NETWORK_MASKb6 64
 
-# RUN [ "cross-build-start" ]
-RUN install_packages \
-  hostapd \
-  bridge-utils \
-  isc-dhcp-server \
-	iptables \
-  ufw \
-  wpasupplicant \
-  netplan \
-  dnsmasq \
-	python3
+RUN \
+ echo "**** install runtime packages ****" && \
+ apt-get update && \
+ apt-get install -y \
+	 hostapd \
+	 bridge-utils \
+	 isc-dhcp-server \
+	 iptables \
+	 ufw \
+	 wpasupplicant \
+	 netplan \
+	 dnsmasq \
+	 python3 && \
+ echo "**** cleanup ****" && \
+ rm -rf \
+	/tmp/* \
+	/var/lib/apt/lists/* \
+	/var/tmp/*
 
 WORKDIR /usr/src/
 
@@ -97,4 +104,3 @@ COPY library/ library/
 RUN chmod g+xs scripts
 
 VOLUME /etc/hostapd/
-# RUN [ "cross-build-end" ]

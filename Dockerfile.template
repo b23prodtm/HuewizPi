@@ -78,7 +78,6 @@ ENV PRIV_NETWORK_MASKb6 64
 ENV WAN_NETWORK_IPV6 2a01:db8:0:1::
 ENV WAN_NETWORK_MASKb6 64
 
-# RUN [ "cross-build-start" ]
 RUN \
  echo "**** install runtime packages ****" && \
  apt-get update && \
@@ -105,4 +104,3 @@ COPY library/ library/
 RUN chmod g+xs scripts
 
 VOLUME /etc/hostapd/
-# RUN [ "cross-build-end" ]
