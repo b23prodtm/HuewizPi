@@ -85,12 +85,6 @@ RUN install_packages \
 
 WORKDIR /usr/src/
 
-COPY python-wifi-connect/src/ src/
-COPY python-wifi-connect/nm_scripts/ nm_scripts/
-COPY python-wifi-connect/ui/ ui/
-COPY python-wifi-connect/scripts/run.sh scripts/run.sh
-COPY python-wifi-connect/scripts/run scripts/run
-
 COPY scripts/ scripts/
 COPY library/ library/
 RUN chmod g+xs scripts

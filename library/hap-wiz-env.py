@@ -28,6 +28,7 @@ def parse_args (argv):
     myenv.update(markers)
     defaults = {
         "file":argv[0],
+        "PRIV_INT":"wlan0",
         "PRIV_NETWORK":"",
         "WAN_NETWORK":defintnet.with_prefixlen,
         "WAN_INT":"eth0",
@@ -40,12 +41,24 @@ def parse_args (argv):
 	    "DNS2":str(defdns2),
 	    "DNS1_IPV6":str(defdns61),
 	    "DNS2_IPV6":str(defdns62),
+        "WAN_SSID":"",
+        "WAN_PASSWD":"",
         "PRIV_RANGE_START":"15",
         "PRIV_RANGE_END":"100",
         "PRIV_NETWORK_IPV6":defnet6.with_prefixlen,
         "WAN_NETWORK_IPV6":defintnet6.with_prefixlen
         }
-    r_parse_argv(defaults, argv, 1, 'hc', "Usage: {} [-c,--client] <priv-network-x.x.x.0/len> <wan-network-x.x.x.0/len> <wan-interface> [ssid passphrase [mode] [country_code channel] [dns1 dns2] [dns1-ipv6 dns2-ipv6] [net-range-start net-range-end] [priv-network-ipv6/mask-length wan-network-ipv6/mask-length]]".format(argv[0]))
+    usage = ('Usage: {}'.format(argv[0]),
+	'optional:	[-c,--client]'
+	'required:	<priv_interface> <priv-network-x.x.x.0/len>',
+ 	'required:	<wan-network-x.x.x.0/len> <wan-interface>',
+	'user input:	[ssid passphrase [mode] [country_code channel]',
+	'user input:	[dns1 dns2]',
+	'w/ wan wlan1:	[wan_ssid wan_passphrase]',
+	'optional:	[dns1-ipv6 dns2-ipv6]',
+	'optional:	[net-range-start net-range-end]',
+	'optional:	[priv-network-ipv6/mask-length wan-network-ipv6/mask-length]')
+    r_parse_argv(defaults, argv, 1, 'hc', '\n		'.join(usage))
 
 def r_parse_argv(defaults, argv, i, options, usage):
     """Parse script arguments recursively
@@ -53,7 +66,7 @@ def r_parse_argv(defaults, argv, i, options, usage):
     options -- Literals set of options, e.g. afh where -a, -f, -h are valid options as for -afh
     """
     if i >= len(defaults) : return
-    if len(argv) < 4:
+    if len(argv) < 5:
          print(usage)
          sys.exit(1)
     pf = "-+[" + options + "]*"
@@ -126,6 +139,12 @@ def main(argv):
         except ValueError as err:
             print("Oops! Please set a valid IPv4 address".format(err))
             sys.exit(1)
+    wl = re.compile("wl.*");
+    if wl.match(myenv["WAN_INT"]):
+         while myenv["WAN_SSID"] == "":
+            myenv["WAN_SSID"] = input("Please enter the SSID on %s: " % myenv["WAN_INT"])
+         while len(myenv["WAN_PASSWD"]) < 8 or len(myenv["WAN_PASSWD"]) > 63:
+       	    myenv["WAN_PASSWD"] = input("Please enter the passphrase (8..63 characters) for the WAN_SSID " + myenv["WAN_SSID"] + ": ")
     os.environ.update(myenv)
     write_exports(myenv)
 

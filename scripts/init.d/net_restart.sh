@@ -18,16 +18,19 @@ else
    printf '%s\n' "[Install]" "WantedBy=multi-user.target" | sudo tee /usr/lib/systemd/system/rc-local.service.d/hostapd.conf
    if [ -z $CLIENT ]; then
     bash -c "sudo sed -i -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
+systemctl daemon-reload\\n\
 netplan apply\\n\
 systemctl restart hostapd\\n\
 ip link set dev ${PRIV_INT} up\\n\
 systemctl restart isc-dhcp-server\\n\
-systemctl restart isc-dhcp-server6\\n\
+[ $? != 0 ] && systemctl restart dnsmasq\\n\
+[ $? != 0 ] && systemctl restart isc-dhcp-server6\\n\
 sleep 2\\n\
 dhclient ${WAN_INT}\\n\
 ${MARKER_END}\\n'/ /etc/rc.local"
   else
     bash -c "sudo sed -i -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
+systemctl daemon-reload\\n\
 netplan apply\\n\
 ip link set dev ${PRIV_INT} up\\n\
 sleep 2\\n\
@@ -39,7 +42,7 @@ slogger -st sed "/etc/rc.local added command lines"
 fi
 sudo systemctl daemon-reload
 logger -st dpkg "installing dpkg auto-reboot.service"
-source ${scriptsd}/init.d/auto-rebooot.sh install
+source ${scriptsd}/init.d/auto-reboot.sh install
 logger -st ufw  "enable ip forwarding (internet connectivity)"
 source ${scriptsd}/init.d/init_ufw.sh
 slogger -st systemctl "restarting Access Point"
