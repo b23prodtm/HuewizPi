@@ -6,8 +6,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.template
-    image: betothreeprod/hapwizpy
-    env_file: common.env
+    image: betothreeprod/hapwizpy-%%BALENA_MACHINE_NAME%%
+    env_file: 
+      - common.env
+      - .env
     privileged: true
     labels:
       io.balena.features.dbus: 1

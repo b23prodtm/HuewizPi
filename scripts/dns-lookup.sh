@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+[ -z ${scriptsd} ] && export scriptsd=$(cd `dirname $BASH_SOURCE` && pwd)
+banner=("" "[$0] BUILD RUNNING $BASH_SOURCE" ""); printf "%s\n" "${banner[@]}"
 function nameservers() {
   ns=$1
   sep=''

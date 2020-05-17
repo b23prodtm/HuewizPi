@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 usage="
 Usage: $0 [interface] <ssid> <passphrase>"
-[ -z ${scriptsd} ] && export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')../
-[ ! -f ${scriptsd}../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
-source ${scriptsd}../.hap-wiz-env.sh
+[ -z ${scriptsd} ] && export scriptsd=$(cd `dirname $BASH_SOURCE`/.. && pwd)
+banner=("" "[$0] BUILD RUNNING $BASH_SOURCE" ""); printf "%s\n" "${banner[@]}"
+[ ! -f ${scriptsd}/../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}/../library/hap-wiz-env.py $*"
+source ${scriptsd}/../.hap-wiz-env.sh
 function cfrm_act () {
   def_go=$2
   y='y'

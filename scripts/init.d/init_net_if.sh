@@ -12,12 +12,13 @@ Initializes netplan.io networks plans and eventually restart them.
   Add a public custom DNS address (e.g. --dns 8.8.8.8 --dns 9.9.9.9)
 --dns6
   Add a public custom DNS ipv6 address, (e.g. --dns6 2001:4860:4860::8888 --dns6 2001:4860:4860::8844)"
-[ -z ${scriptsd} ] && export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')../
-[ ! -f ${scriptsd}../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
-source ${scriptsd}../.hap-wiz-env.sh
-source ${scriptsd}dns-lookup.sh
-yaml='02-hostap.yaml'
-clientyaml='01-cliwpa.yaml'
+[ -z ${scriptsd} ] && export scriptsd=$(cd `dirname $BASH_SOURCE`/.. && pwd)
+banner=("" "[$0] BUILD RUNNING $BASH_SOURCE" ""); printf "%s\n" "${banner[@]}"
+[ ! -f ${scriptsd}/../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}/../library/hap-wiz-env.py $*"
+source ${scriptsd}/../.hap-wiz-env.sh
+source ${scriptsd}/dns-lookup.sh
+yaml='01-hostap.yaml'
+clientyaml='02-cliwpa.yaml'
 nameservers_def="${PRIV_NETWORK}.1"
 nameservers6_def="${PRIV_NETWORK_IPV6}1"
 nameservers=''

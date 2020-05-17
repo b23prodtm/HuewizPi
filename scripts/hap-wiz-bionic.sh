@@ -4,17 +4,19 @@ then
     echo -e "You need to run this script as root."
     exit 1
 fi
+[ -z ${scriptsd} ] && export scriptsd=$(cd `dirname $BASH_SOURCE` && pwd)
+banner=("" "[$0] BUILD RUNNING $BASH_SOURCE" ""); printf "%s\n" "${banner[@]}"
 if [ ! -f /etc/os-release ]
 then
     echo -e "This script is made for Linux."
     [ $(which sw_vers) > /dev/null ] && sw_vers
     exit 1
 fi
-export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')
-if [ ! -f ${scriptsd}../.hap-wiz-env.sh ]; then
+export scriptsd=$(cd $(dirname $BASH_SOURCE) && pwd)
+if [ ! -f ${scriptsd}/../.hap-wiz-env.sh ]; then
   #This script arguments were edited in python file. To add more, modify there.
-  echo "(+$# arguments) python ${scriptsd}../library/hap-wiz-env.py $*"
-  bash -c "sudo python3 ${scriptsd}../library/hap-wiz-env.py $*" > /dev/null
+  echo "(+$# arguments) python ${scriptsd}/../library/hap-wiz-env.py $*"
+  python3 ${scriptsd}/../library/hap-wiz-env.py $*
   if [ $? -eq 0 ]; then
      echo "success"
    else
@@ -22,7 +24,7 @@ if [ ! -f ${scriptsd}../.hap-wiz-env.sh ]; then
      exit $?
   fi
 fi
-source ${scriptsd}../.hap-wiz-env.sh
+source ${scriptsd}/../.hap-wiz-env.sh
 echo "Set Private Network $PRIV_NETWORK.0/$PRIV_NETWORK_MASK"
 echo "Set Private Network IPv6 ${PRIV_NETWORK_IPV6}0/$PRIV_NETWORK_MASKb6"
 echo "Set WAN Network $WAN_NETWORK.0/$WAN_NETWORK_MASK"
@@ -36,7 +38,7 @@ echo "Config MARKERS ${MARKERS}"
 [ -z $CLIENT ] && [ -z $(which brctl) ] && sudo apt-get -y install bridge-utils
 [ -z $CLIENT ] && [ -z $(which dhcpd) ] && sudo apt-get -y install isc-dhcp-server
 slogger -st hostapd "remove bridge (br0) to ${PRIV_INT}"
-source ${scriptsd}init.d/init_net_if.sh -r
+source ${scriptsd}/init.d/init_net_if.sh -r
 slogger -st systemd "shutdown services"
 sudo systemctl stop wpa_supplicant
 sudo systemctl stop hostapd
@@ -115,9 +117,10 @@ fragm_threshold=2346
 [ -z $CLIENT ] && sudo sed -i -e /DAEMON_OPTS=/s/^\#// -e "/DAEMON_OPTS=/s/=\".*\"/=\"-i ${PRIV_INT}\"/" /etc/default/hostapd 2> /dev/null
 [ -z $CLIENT ] && [ $? -ne 0 ] && exit 1
 [ -z $CLIENT ] && sudo cat /etc/default/hostapd | grep "DAEMON"
-[ -z $CLIENT ] && read -p "Do you wish to install Bridge Mode \
-[PRESS ENTER TO START in Router mode now / no to use DNSMasq (old) / yes for Bridge mode] ?" SHARE
-if [ -z $CLIENT ]; then case $SHARE in
+[ -z $CLIENT ] && [ "$DEBIAN_FRONTEND" != 'noninteractive' ] && read -p "Do you wish to install Bridge Mode \
+[PRESS ENTER TO START in Router mode now / no to use DNSMasq (old) / yes for Bridge mode] ?" MYNET_SHARING
+[ "$DEBIAN_FRONTEND" = 'noninteractive' ] && MYNET_SHARING='N'
+if [ -z $CLIENT ]; then case $MYNET_SHARING in
 #
 # Bridge Mode
 #
@@ -137,7 +140,22 @@ if [ -z $CLIENT ]; then case $SHARE in
     GATEWAY="${PRIV_NETWORK}.1"
     DHCP_RANGE="${PRIV_NETWORK}.${PRIV_RANGE_START},${PRIV_NETWORK}.${PRIV_RANGE_END}"
     INTERFACE="${PRIV_INT}"
-    logger -st dnsmasq "start DNS server"
+#     echo -e "bogus-priv
+# filterwin2k
+# # no-resolv
+# interface=${PRIV_INT}    # Use the require wireless interface - usually ${PRIV_INT}
+# #no-dhcp-interface=${PRIV_INT}
+# dhcp-range=${PRIV_NETWORK}.15,${PRIV_NETWORK}.100,${PRIV_NETWORK_MASK},${PRIV_NETWORK_MASKb}
+# " | sudo tee /etc/dnsmasq.conf
+# sudo sed -E -i.$(date +%Y-%m-%d_%H:%M:%S) -e "s/^(domain .*)/#\\1/g" \
+# -e "s/^(nameserver .*)/#\\1/g" -e "s/^(search .*)/#\\1/g" /etc/resolv.conf
+# echo -e "
+# domain wifi.local
+# search wifi.local
+# nameserver ${DNS1}
+# nameserver ${DNS2}
+# " | sudo tee -a /etc/resolv.conf
+logger -st dnsmasq "start DNS server"
     python3 dnsmasq.py -a $GATEWAY -r $DHCP_RANGE -i $INTERFACE
     sleep 2
     slogger -st modprobe "enable IP Masquerade"
@@ -155,6 +173,7 @@ if [ -z $CLIENT ]; then case $SHARE in
         slogger -st hap-wiz-bionic "Unknown wan interface ${WAN_INT}"
         ;;
     esac
+    sudo systemctl mask isc-dhcp-server.service
     sudo systemctl unmask dnsmasq
     sudo systemctl enable dnsmasq
     sudo systemctl start dnsmasq
@@ -166,11 +185,11 @@ if [ -z $CLIENT ]; then case $SHARE in
     else
       source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_INT '' '' --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6}
     fi
+    slogger -st dhcpd  "configure dynamic dhcp addresses ${PRIV_NETWORK}.${PRIV_RANGE_START}-${PRIV_RANGE_END}"
+    source ${scriptsd}/init.d/init_dhcp_serv.sh --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6} --router ${PRIV_NETWORK}.1
   ;;
 esac;
-    slogger -st dhcpd  "configure dynamic dhcp addresses ${PRIV_NETWORK}.${PRIV_RANGE_START}-${PRIV_RANGE_END}"
-    source ${scriptsd}init.d/init_dhcp_serv.sh --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6} --router ${PRIV_NETWORK}.1
 else
   source ${scriptsd}init.d/init_net_if.sh --wifi $PRIV_INT $PRIV_SSID $PRIV_PAWD
 fi
-source ${scriptsd}init.d/net_restart.sh $CLIENT
+source ${scriptsd}/init.d/net_restart.sh $CLIENT
