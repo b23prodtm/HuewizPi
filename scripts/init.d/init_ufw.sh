@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-[ -z ${scriptsd} ] && export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')../
-[ ! -f ${scriptsd}../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
-source ${scriptsd}../.hap-wiz-env.sh
-sudo cp -f ${scriptsd}../backup/etc/ufw/before.rules /etc/ufw/before.rules
+[ -z ${scriptsd} ] && export scriptsd=$(cd `dirname $BASH_SOURCE`/.. && pwd)
+banner=("" "[$0] BUILD RUNNING $BASH_SOURCE" ""); printf "%s\n" "${banner[@]}"
+[ ! -f ${scriptsd}/../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}/../library/hap-wiz-env.py $*"
+source ${scriptsd}/../.hap-wiz-env.sh
+sudo cp -f ${scriptsd}/../backup/etc/ufw/before.rules /etc/ufw/before.rules
 while [ "$#" -gt 0 ]; do case $1 in
   -r*|-R*)
-    bash -c "sudo sed -i -e ${MARKERS}d /etc/ufw/before.rules"
+    sudo sed -i -e "${MARKERS}d" /etc/ufw/before.rules
     sudo ufw disable
-    exit 0;;
+    return;;
   -c*|--client)
     return;;
   -h*|--help)
@@ -15,7 +16,7 @@ while [ "$#" -gt 0 ]; do case $1 in
   Configure the firewall rules
   -r
     Removes all rules, disable firewall"
-    exit 1;;
+    exit 0;;
   *);;
 esac; shift; done
 

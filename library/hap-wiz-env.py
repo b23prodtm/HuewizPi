@@ -147,4 +147,6 @@ def write_exports(envdict):
     os.chmod(path, 0o755)
 
 if __name__ == '__main__':
+    banner = ('', 'BUILD RUNNING python3', sys.argv[0], '')
+    print("{}\n{}\n{}\n{}\n".format(*banner))
     main(sys.argv)

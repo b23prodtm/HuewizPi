@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-[ -z ${scriptsd} ] && export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')../
-[ ! -f ${scriptsd}../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
-source ${scriptsd}../.hap-wiz-env.sh
-source ${scriptsd}dns-lookup.sh
+[ -z ${scriptsd} ] && export scriptsd=$(cd `dirname $BASH_SOURCE`/.. && pwd)
+banner=("" "[$0] BUILD RUNNING $BASH_SOURCE" ""); printf "%s\n" "${banner[@]}"
+[ ! -f ${scriptsd}/../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}/../library/hap-wiz-env.py $*"
+source ${scriptsd}/../.hap-wiz-env.sh
+source ${scriptsd}/dns-lookup.sh
 routers="option routers ${PRIV_NETWORK}.1; #hostapd ${PRIV_INT}"
 nameservers=$(systemd-resolve --status | grep 'DNS Servers:' | awk '/(\w*\.){3}/{print $3}' | head -n 1)
 nameservers6="$(systemd-resolve -6 --status | grep 'DNS Servers:' | awk '/(\w*:){2}/{print $3}' | head -n 1)"

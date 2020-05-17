@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-[ -z ${scriptsd} ] && export scriptsd=$(echo $0 | awk 'BEGIN{FS="/";ORS="/"}{ for(i=1;i<NF;i++) print $i }')../
-[ ! -f ${scriptsd}../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}../library/hap-wiz-env.py $*"
-source ${scriptsd}../.hap-wiz-env.sh
-source ${scriptsd}dns-lookup.sh
-yaml='02-hostap.yaml'
-clientyaml='01-cliwpa.yaml'
+[ -z ${scriptsd} ] && export scriptsd=$(cd `dirname $BASH_SOURCE`/.. && pwd)
+banner=("" "[$0] BUILD RUNNING $BASH_SOURCE" ""); printf "%s\n" "${banner[@]}"
+[ ! -f ${scriptsd}/../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}/../library/hap-wiz-env.py $*"
+source ${scriptsd}/../.hap-wiz-env.sh
+source ${scriptsd}/dns-lookup.sh
+yaml='01-hostap.yaml'
+clientyaml='02-cliwpa.yaml'
 nameservers_def="${PRIV_NETWORK}.1"
 nameservers6_def="${PRIV_NETWORK_IPV6}1"
 nameservers=''
@@ -62,7 +63,7 @@ allow-hotplug ${PRIV_INT}
 iface ${PRIV_INT} inet dhcp
 ${MARKER_END}" | sudo tee -a /etc/network/interfaces
       sudo /etc/init.d/networking restart
-      sudo ${scriptsd}init.d/init_wpa_ctl.sh "${PRIV_INT}" "$2" "$3"
+      sudo ${scriptsd}/init.d/init_wpa_ctl.sh "${PRIV_INT}" "$2" "$3"
     else
       slogger -st netplan "/etc/netplan/$clientyaml was created"
         echo -e "${MARKER_BEGIN}
