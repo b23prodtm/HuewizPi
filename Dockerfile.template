@@ -1,53 +1,47 @@
-FROM balenalib/%%BALENA_MACHINE_NAME%%-ubuntu-python:bionic-build
+ARG PRIMARY_HUB
+FROM ${PRIMARY_HUB:-lsiobase/ubuntu:bionic}
 ARG DBUS_SYSTEM_BUS_ADDRESS
 ENV DBUS_SYSTEM_BUS_ADDRESS ${DBUS_SYSTEM_BUS_ADDRESS:-unix:path=/host/run/dbus/system_bus_socket}
 
 # Deprecated INITSYSTEM as of balenalib major changes
 # https://www.balena.io/docs/reference/base-images/base-images/#major-changes
-ENV INITSYSTEM OFF
+# ENV INITSYSTEM On
 ENV UDEV on
 # Install Systemd
 RUN install_packages \
 		systemd \
     systemd-sysv
 
-ENV container docker
+# ENV container docker
 
 # We never want these to run in a container
 # Feel free to edit the list but this is the one we used
-RUN systemctl mask \
-    dev-hugepages.mount \
-    sys-fs-fuse-connections.mount \
-    sys-kernel-config.mount \
-\
-    display-manager.service \
-    getty@.service \
-    systemd-logind.service \
-    systemd-remount-fs.service \
-\
-    getty.target \
-    graphical.target \
-    kmod-static-nodes.service
+# RUN systemctl mask \
+#    dev-hugepages.mount \
+#    sys-fs-fuse-connections.mount \
+#    sys-kernel-config.mount \
+#\
+#    display-manager.service \
+#    getty@.service \
+#    systemd-logind.service \
+#    systemd-remount-fs.service \
+#\
+#    getty.target \
+#    graphical.target \
+#    kmod-static-nodes.service
 
-COPY scripts/entry.sh /usr/bin/entry.sh
-COPY scripts/balena.service /etc/systemd/system/balena.service
+# COPY scripts/entry.sh /usr/bin/entry.sh
+# COPY scripts/balena.service /etc/systemd/system/balena.service
 
 # docker systemctl replacement - allows to deploy to systemd-controlled containers without starting an actual systemd daemon (e.g. centos7, ubuntu16)
 # https://github.com/gdraheim/docker-systemctl-replacement/blob/master/INIT-DAEMON.md
 COPY scripts/systemctl3.py /usr/bin/systemctl
 RUN chmod g+xs /usr/bin/systemctl
 
-RUN /usr/bin/systemctl enable balena
-
-STOPSIGNAL 37
-VOLUME ["/sys/fs/cgroup"]
-ENTRYPOINT ["/usr/bin/entry.sh"]
-
 ENV DEBIAN_FRONTEND noninteractive
 ARG DEBUG
 ENV DEBUG ${DEBUG:-0}
 
-ENV PROMPT N
 ENV PRIV_INT wlan1
 ENV PRIV_NETWORK 10.233.2
 ENV PRIV_NETWORK_MASK 255.255.255.0
@@ -56,13 +50,15 @@ ENV WAN_NETWORK 10.233.1
 ENV WAN_NETWORK_MASK 255.255.255.0
 ENV WAN_NETWORK_MASKb 24
 ENV WAN_INT wlan0
-ENV PRIV_SSID MyHomeWifi
+ENV PRIV_SSID MyHotspot
 ENV PRIV_PASSWD 1passWoRd
 ENV PRIV_WIFI_MODE a
 ENV PRIV_WIFI_CTY FR
 ENV PRIV_WIFI_CHANNEL 36
 ENV DNS1 192.168.1.1
 ENV DNS2 8.8.8.8
+ENV WAN_SSID HomeWifi
+ENV WAN_PASSWD 1passWoRd
 ENV DNS1_IPV6 2001:4860:4860::8888
 ENV DNS2_IPV6 2001:4860:4860::8844
 ENV PRIV_RANGE_START 2
@@ -81,7 +77,8 @@ RUN install_packages \
   ufw \
   wpasupplicant \
   netplan \
-  dnsmasq
+  dnsmasq \
+	python3
 
 WORKDIR /usr/src/
 
@@ -89,10 +86,5 @@ COPY scripts/ scripts/
 COPY library/ library/
 RUN chmod g+xs scripts
 
-RUN [ "bash", "-c", "sudo scripts/hap-wiz-bionic.sh ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb} ${WAN_NETWORK}.0/${WAN_NETWORK_MASKb} ${WAN_INT} ${PRIV_SSID} ${PRIV_PASSWD} ${PRIV_WIFI_MODE} ${PRIV_WIFI_CTY} ${PRIV_WIFI_CHANNEL} ${DNS1} ${DNS2} ${DNS1_IPV6} ${DNS2_IPV6} ${PRIV_RANGE_START} ${PRIV_RANGE_END} ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} ${WAN_NETWORK_IPV6}0/${WAN_NETWORK_MASKb6} 2>&1 | tee hapwizpy.log" ]
-RUN cat hapwizpy.log
-ENV DEFAULT_INTERFACE $PRIV_INT
-CMD [ "bash", "-c", "sudo scripts/run"]
-# restart HostAPd
-#CMD /usr/sbin/hostapd -P /run/hostapd.pid -i ${PRIV_INT} /etc/hostapd/hostapd.conf
+VOLUME /etc/hostapd/
 # RUN [ "cross-build-end" ]

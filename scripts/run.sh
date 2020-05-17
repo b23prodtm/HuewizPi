@@ -1,1 +1,0 @@
-python-wifi-connect/scripts/run.sh

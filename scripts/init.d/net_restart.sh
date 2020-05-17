@@ -23,8 +23,8 @@ netplan apply\\n\
 systemctl restart hostapd\\n\
 ip link set dev ${PRIV_INT} up\\n\
 systemctl restart isc-dhcp-server\\n\
-[ $? != 0 ] && systemctl restart dnsmasq\\n\
-[ $? != 0 ] && systemctl restart isc-dhcp-server6\\n\
+[ \$? != 0 ] && systemctl restart dnsmasq\\n\
+[ \$? != 0 ] && systemctl restart isc-dhcp-server6\\n\
 sleep 2\\n\
 dhclient ${WAN_INT}\\n\
 ${MARKER_END}\\n'/ /etc/rc.local"
