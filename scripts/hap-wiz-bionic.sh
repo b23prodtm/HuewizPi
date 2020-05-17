@@ -140,22 +140,22 @@ if [ -z $CLIENT ]; then case $MYNET_SHARING in
     GATEWAY="${PRIV_NETWORK}.1"
     DHCP_RANGE="${PRIV_NETWORK}.${PRIV_RANGE_START},${PRIV_NETWORK}.${PRIV_RANGE_END}"
     INTERFACE="${PRIV_INT}"
-#     echo -e "bogus-priv
-# filterwin2k
-# # no-resolv
-# interface=${PRIV_INT}    # Use the require wireless interface - usually ${PRIV_INT}
-# #no-dhcp-interface=${PRIV_INT}
-# dhcp-range=${PRIV_NETWORK}.15,${PRIV_NETWORK}.100,${PRIV_NETWORK_MASK},${PRIV_NETWORK_MASKb}
-# " | sudo tee /etc/dnsmasq.conf
-# sudo sed -E -i.$(date +%Y-%m-%d_%H:%M:%S) -e "s/^(domain .*)/#\\1/g" \
-# -e "s/^(nameserver .*)/#\\1/g" -e "s/^(search .*)/#\\1/g" /etc/resolv.conf
-# echo -e "
-# domain wifi.local
-# search wifi.local
-# nameserver ${DNS1}
-# nameserver ${DNS2}
-# " | sudo tee -a /etc/resolv.conf
-logger -st dnsmasq "start DNS server"
+    #     echo -e "bogus-priv
+    # filterwin2k
+    # # no-resolv
+    # interface=${PRIV_INT}    # Use the require wireless interface - usually ${PRIV_INT}
+    # #no-dhcp-interface=${PRIV_INT}
+    # dhcp-range=${PRIV_NETWORK}.15,${PRIV_NETWORK}.100,${PRIV_NETWORK_MASK},${PRIV_NETWORK_MASKb}
+    # " | sudo tee /etc/dnsmasq.conf
+    # sudo sed -E -i.$(date +%Y-%m-%d_%H:%M:%S) -e "s/^(domain .*)/#\\1/g" \
+    # -e "s/^(nameserver .*)/#\\1/g" -e "s/^(search .*)/#\\1/g" /etc/resolv.conf
+    # echo -e "
+    # domain wifi.local
+    # search wifi.local
+    # nameserver ${DNS1}
+    # nameserver ${DNS2}
+    # " | sudo tee -a /etc/resolv.conf
+    logger -st dnsmasq "start DNS server"
     python3 dnsmasq.py -a $GATEWAY -r $DHCP_RANGE -i $INTERFACE
     sleep 2
     slogger -st modprobe "enable IP Masquerade"
