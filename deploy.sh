@@ -4,6 +4,4 @@ REV=https://raw.githubusercontent.com/b23prodtm/vagrant-shell-scripts/b23prodtm-
 #REV=https://raw.githubusercontent.com/b23prodtm/vagrant-shell-scripts/87e48481c955e213de3d08453dd4dd56d1104bec/vendor/cni/balena_deploy.sh
 sudo curl -SL -o /usr/local/bin/balena_deploy $REV
 sudo chmod 0755 /usr/local/bin/balena_deploy
-rm -f mysqldb/conf.d/custom.cnf
 source balena_deploy ${BASH_SOURCE[0]} "$@"
-

@@ -3,6 +3,8 @@
 # description: Check if the system dpkg need a restart and send corresponding signal
 [ -z ${scriptsd} ] && export scriptsd=$(cd `dirname $BASH_SOURCE`/.. && pwd)
 banner=("" "[$0] BUILD RUNNING $BASH_SOURCE" ""); printf "%s\n" "${banner[@]}"
+usage="
+Usage: $0 {start|stop|status|restart|install|uninstall}"
 install() {
   sudo cp -f ${scriptsd}/init.d/auto-reboot.sh /usr/local/bin/auto-reboot.sh
   sudo chmod +x /usr/local/bin/auto-reboot.sh
@@ -57,6 +59,6 @@ case "$1" in
        uninstall
        ;;
 *)
-echo "Usage: $0 {start|stop|status|restart|install|uninstall}"
+echo -e $usage
 esac
 exit 0

@@ -1,0 +1,3 @@
+#!/usr/bin/with-contenv bash
+chown -R abc:abc /usr/src/
+chown -R abc:abc /etc/hostapd/
