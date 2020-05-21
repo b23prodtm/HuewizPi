@@ -22,13 +22,13 @@ systemctl daemon-reload\\n\
 netplan apply\\n\
 systemctl restart hostapd\\n\
 ip link set dev ${PRIV_INT} up\\n\
+sleep 2\\n\
+dhclient ${WAN_INT}\\n\
 systemctl restart isc-dhcp-server\\n\
 if [[ \$? != 0 ]]; then\\n\
   systemctl restart dnsmasq\\n\
   systemctl restart isc-dhcp-server6\\n\
 fi\\n\
-sleep 2\\n\
-dhclient ${WAN_INT}\\n\
 ${MARKER_END}\\n'/ /etc/rc.local"
   else
     bash -c "sudo sed -i -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
@@ -42,6 +42,11 @@ ${MARKER_END}\\n'/ /etc/rc.local"
 slogger -st sed "/etc/rc.local added command lines"
    cat /etc/rc.local
 fi
+logger -st bash "profile boot script"
+bash -c "sudo sed -i -e ${MARKERS}d ~/.bash_profile"
+printf "%s\n" '${MARKER_BEGIN}' | tee -a ~/.bash_profile
+cat ${scriptsd}/bash_profile | tee -a ~/.bash_profile
+printf "%s\n" '${MARKER_END}' | tee -a ~/.bash_profile
 sudo systemctl daemon-reload
 logger -st dpkg "installing dpkg auto-reboot.service"
 source ${scriptsd}/init.d/auto-reboot.sh install
