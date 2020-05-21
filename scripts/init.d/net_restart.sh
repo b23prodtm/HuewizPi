@@ -12,19 +12,21 @@ else
   [ "$DEBIAN_FRONTEND" != 'noninteractive' ] && sudo netplan try --timeout 12
    slogger -st 'rc.local' 'Work around fix netplan and dhcpd apply on reboot'
    if [ ! -f /etc/rc.local ] || [[ $(wc -l /etc/rc.local | awk '{print $1}') -lt 3 ]]; then
-      printf '%s\n' "#!/bin/sh" "exit 0" | sudo tee /etc/rc.local
+      printf '%s\n' "#!/usr/bin/env bash" "exit 0" | sudo tee /etc/rc.local
       sudo chmod +x /etc/rc.local
    fi
    printf '%s\n' "[Install]" "WantedBy=multi-user.target" | sudo tee /usr/lib/systemd/system/rc-local.service.d/hostapd.conf
    if [ -z $CLIENT ]; then
-    bash -c "sudo sed -i -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
+    bash -c "sudo sed -i -e 's#/bin/sh#/usr/bin/env bash#' -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
 systemctl daemon-reload\\n\
 netplan apply\\n\
 systemctl restart hostapd\\n\
 ip link set dev ${PRIV_INT} up\\n\
 systemctl restart isc-dhcp-server\\n\
-[ \$? != 0 ] && systemctl restart dnsmasq\\n\
-[ \$? != 0 ] && systemctl restart isc-dhcp-server6\\n\
+if [[ \$? != 0 ]]; then\\n\
+  systemctl restart dnsmasq\\n\
+  systemctl restart isc-dhcp-server6\\n\
+fi\\n\
 sleep 2\\n\
 dhclient ${WAN_INT}\\n\
 ${MARKER_END}\\n'/ /etc/rc.local"
