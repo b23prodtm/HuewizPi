@@ -53,6 +53,13 @@ A few minutes later, *clientmachine* will be permanently fixed to the IP address
 ### Troubleshooting
   - If you cannot access the internet after the script returns from reboot
   that maybe linked to an error in the DHCPd process. Either way if you can access the host machine with ssh or from host keyboard, restart the DHCPd service : ```sudo netplan apply && sudo service isc-dhcp-server restart```, check status then ```sudo service isc-dhcp-server status```from host machine (which runs hostapd).
+  > A custom profile script may be added to the user shell, so it can reload it anytime when you login with ssh. Paste in _~/.bash_profile_:
+  
+      sudo systemctl daemon-reload
+      sudo systemctl restart rc-local
+      sudo systemctl status rc-local
+
+  > When you see that the dhcp is down, just connect and login to the machine that's got _hostapd_ running e.g. `ssh ubuntu@node1` and the network service will restart itself and you can see the status on Terminal.
 
 # Copyright 2018 www.b23prodtm.info
 
