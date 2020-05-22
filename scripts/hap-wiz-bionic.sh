@@ -123,18 +123,10 @@ fragm_threshold=2346
 function init_net_if() {
     case "$WAN_INT" in
       'eth'*)
-        if [ -f /etc/init.d/networking ]; then
-           source ${scriptsd}/init.d/init_net_if.sh --wifi $PRIV_INT $PRIV_SSID $PRIV_PASSWD $*
-        else
-           source ${scriptsd}/init.d/init_net_if.sh --wifi $PRIV_INT '' '012345678' $*
-        fi
+        source ${scriptsd}/init.d/init_net_if.sh --wifi $PRIV_INT $PRIV_SSID $PRIV_PASSWD $*
         ;;
       'wl'*)
-        if [ -f /etc/init.d/networking ]; then
-            source ${scriptsd}/init.d/init_net_if.sh --wifi $PRIV_INT $PRIV_SSID $PRIV_PASSWD --wifi $WAN_INT $WAN_SSID $WAN_PASSWD $*
-        else
-            source ${scriptsd}/init.d/init_net_if.sh --wifi $PRIV_INT '' '012345678' --wifi $WAN_INT $WAN_SSID $WAN_PASSWD $*
-        fi
+        source ${scriptsd}/init.d/init_net_if.sh --wifi $PRIV_INT $PRIV_SSID $PRIV_PASSWD --wifi $WAN_INT $WAN_SSID $WAN_PASSWD $*
         ;;
       *)
         slogger -st hap-wiz-bionic "Unknown wan interface ${WAN_INT}"
