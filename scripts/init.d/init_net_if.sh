@@ -17,8 +17,8 @@ banner=("" "[$0] BUILD RUNNING $BASH_SOURCE" ""); printf "%s\n" "${banner[@]}"
 [ ! -f ${scriptsd}/../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}/../library/hap-wiz-env.py $*"
 source ${scriptsd}/../.hap-wiz-env.sh
 source ${scriptsd}/dns-lookup.sh
-yaml='01-hostap.yaml'
-clientyaml='02-cliwpa.yaml'
+clientyaml='01-cliwpa.yaml'
+yaml='02-hostap.yaml'
 nameservers_def="${PRIV_NETWORK}.1"
 nameservers6_def="${PRIV_NETWORK_IPV6}1"
 nameservers=''
@@ -80,7 +80,8 @@ while [ "$#" -gt 0 ]; do case $1 in
     if [ -f /etc/init.d/networking ]; then
       source init_wpa_ctl.sh $*
     else
-      slogger -st netplan "/etc/netplan/${1}-$clientyaml was created"
+      clientyaml="$(echo ${clientyaml} | cut -d. -f1)-${PRIV_INT}.yaml"
+      slogger -st netplan "/etc/netplan/$clientyaml was created"
         echo -e "${MARKER_BEGIN}
 network:
   version: 2
@@ -92,7 +93,7 @@ network:
       access-points:
         \"$2\":
           password: \"$3\"
-${MARKER_END}" | sudo tee /etc/netplan/${1}-$clientyaml
+${MARKER_END}" | sudo tee /etc/netplan/$clientyaml
     fi
     shift;shift
     ;;
@@ -156,7 +157,7 @@ else
     sudo sed -i.old /"password:"/a"\\
       addresses: [${PRIV_NETWORK}.1/${PRIV_NETWORK_MASKb}, '${PRIV_NETWORK_IPV6}1/${PRIV_NETWORK_MASKb6}']\\n\
       nameservers:\\n\
-        addresses: [${nameservers},${nameservers6}]" /etc/netplan/${PRIV_INT}-$clientyaml
-    sudo sed -i.old /"${PRIV_INT}:"/,/"${MARKER_END}"/s/yes/no/g /etc/netplan//${PRIV_INT}-$clientyaml
-    cat /etc/netplan/${PRIV_INT}-$clientyaml | grep -A8 "${PRIV_INT}"
+        addresses: [${nameservers},${nameservers6}]" /etc/netplan/$clientyaml
+    sudo sed -i.old /"${PRIV_INT}:"/,/"${MARKER_END}"/s/yes/no/g /etc/netplan/$clientyaml
+    cat /etc/netplan/$clientyaml | grep -A8 "${PRIV_INT}"
 fi
