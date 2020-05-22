@@ -18,6 +18,7 @@ else
    printf '%s\n' "[Install]" "WantedBy=multi-user.target" | sudo tee /usr/lib/systemd/system/rc-local.service.d/hostapd.conf
    if [ -z $CLIENT ]; then
     bash -c "sudo sed -i -e 's#/bin/sh#/usr/bin/env bash#' -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
+systemctl disable netplan-wpa-wlan0.service\\n\
 systemctl daemon-reload\\n\
 netplan apply\\n\
 systemctl restart hostapd\\n\
@@ -32,6 +33,7 @@ fi\\n\
 ${MARKER_END}\\n'/ /etc/rc.local"
   else
     bash -c "sudo sed -i -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
+systemctl enable netplan-wpa-wlan0.service\\n\
 systemctl daemon-reload\\n\
 netplan apply\\n\
 ip link set dev ${PRIV_INT} up\\n\
