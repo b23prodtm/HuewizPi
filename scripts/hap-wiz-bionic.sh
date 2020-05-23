@@ -141,6 +141,9 @@ if [ -z $CLIENT ]; then case $MYNET_SHARING in
       slogger -st brctl "share internet connection from ${WAN_INT} to ${PRIV_INT} over bridge"
       sudo sed -i /bridge=br0/s/^\#// /etc/hostapd/hostapd.conf
       init_net_if --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6} --bridge
+      sudo systemctl unmask isc-dhcp-server
+      sudo systemctl unmask isc-dhcp-server6
+      sudo systemctl mask dnsmasq
       ;;
   'n'*|'N'*)
     [ -z $(which dnsmasq) ] && sudo apt-get -y install dnsmasq
@@ -173,6 +176,7 @@ if [ -z $CLIENT ]; then case $MYNET_SHARING in
     slogger -st network "rendering configuration for dnsmasq mode"
     init_net_if
     sudo systemctl mask isc-dhcp-server
+    sudo systemctl mask isc-dhcp-server6
     sudo systemctl unmask dnsmasq
     sudo systemctl enable dnsmasq
     sudo systemctl start dnsmasq
@@ -182,6 +186,7 @@ if [ -z $CLIENT ]; then case $MYNET_SHARING in
     init_net_if --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6}
     slogger -st dhcpd  "configure dynamic dhcp addresses ${PRIV_NETWORK}.${PRIV_RANGE_START}-${PRIV_RANGE_END}"
     sudo systemctl unmask isc-dhcp-server
+    sudo systemctl unmask isc-dhcp-server6
     sudo systemctl mask dnsmasq
     source ${scriptsd}/init.d/init_dhcp_serv.sh --dns ${DNS1} --dns ${DNS2} --dns6 ${DNS1_IPV6} --dns6 ${DNS2_IPV6} --router ${PRIV_NETWORK}.1
   ;;

@@ -18,7 +18,7 @@ else
    printf '%s\n' "[Install]" "WantedBy=multi-user.target" | sudo tee /usr/lib/systemd/system/rc-local.service.d/hostapd.conf
    if [ -z $CLIENT ]; then
     bash -c "sudo sed -i -e 's#/bin/sh#/usr/bin/env bash#' -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
-systemctl disable netplan-wpa-wlan0.service\\n\
+systemctl disable netplan-wpa-wlan0.service\\n
 systemctl daemon-reload\\n\
 netplan apply\\n\
 systemctl restart hostapd\\n\
@@ -28,7 +28,9 @@ dhclient ${WAN_INT}\\n\
 systemctl restart isc-dhcp-server\\n\
 if [[ \$? != 0 ]]; then\\n\
   systemctl restart dnsmasq\\n\
+else\\n\
   systemctl restart isc-dhcp-server6\\n\
+  systemctl restart systemd-resolved\\n\
 fi\\n\
 ${MARKER_END}\\n'/ /etc/rc.local"
   else
