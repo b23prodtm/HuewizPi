@@ -53,7 +53,7 @@ cat ${scriptsd}/bash_profile | tee -a ~/.bash_profile
 printf "%s\n" '${MARKER_END}' | tee -a ~/.bash_profile
 sudo systemctl daemon-reload
 logger -st dpkg "installing dpkg auto-reboot.service"
-source ${scriptsd}/init.d/auto-reboot.sh install
+source ${scriptsd}/init.d/auto-reboot.sh install &
 logger -st ufw  "enable ip forwarding (internet connectivity)"
 source ${scriptsd}/init.d/init_ufw.sh
 slogger -st systemctl "restarting Access Point"
