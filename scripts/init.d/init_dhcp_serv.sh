@@ -80,10 +80,10 @@ log-facility local7;
 
 #subnet ${WAN_NETWORK}.0 netmask ${WAN_NETWORK_MASK} {}
 subnet ${PRIV_NETWORK}.0 netmask ${PRIV_NETWORK_MASK} {
-#option domain-name \"wifi.localhost\";
+option domain-name \"wifi.local\";
 ${routers}
 option subnet-mask ${PRIV_NETWORK_MASK};
-option broadcast-address ${PRIV_NETWORK}.0; # dhcpd
+option broadcast-address ${PRIV_NETWORK}.255; # dhcpd
 range ${PRIV_NETWORK}.${PRIV_RANGE_START} ${PRIV_NETWORK}.${PRIV_RANGE_END};
 }" | sudo tee /etc/dhcp/dhcpd.conf
 echo -e "option dhcp6.name-servers ${nameservers6};
@@ -97,7 +97,7 @@ log-facility local7;
 
 #subnet6 ${WAN_NETWORK_IPV6}0/${WAN_NETWORK_MASKb6} {}
 subnet6 ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} {
-#option dhcp6.domain-name \"wifi.localhost\";
+#option dhcp6.domain-name \"wifi.local\";
 range6 ${PRIV_NETWORK_IPV6}${PRIV_RANGE_START} ${PRIV_NETWORK_IPV6}${PRIV_RANGE_END};
 }" | sudo tee /etc/dhcp/dhcpd6.conf
 sudo sed -i -e "s/INTERFACESv4=\".*\"/INTERFACESv4=\"${PRIV_INT}\"/" /etc/default/isc-dhcp-server
