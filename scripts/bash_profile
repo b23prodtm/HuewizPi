@@ -1,4 +1,3 @@
 sudo systemctl daemon-reload
-sudo systemctl restart rc-local
 sudo systemctl status rc-local
 service --status-all
