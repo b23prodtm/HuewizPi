@@ -18,7 +18,7 @@ else
    printf '%s\n' "[Install]" "WantedBy=multi-user.target" | sudo tee /usr/lib/systemd/system/rc-local.service.d/hostapd.conf
    if [ -z $CLIENT ]; then
     bash -c "sudo sed -i -e 's#/bin/sh#/usr/bin/env bash#' -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
-systemctl mask netplan-wpa-wlan0.service\\n
+systemctl mask netplan-wpa-wlan0.service\\n\
 systemctl daemon-reload\\n\
 netplan apply\\n\
 systemctl enable --now hostapd\\n\
@@ -36,7 +36,7 @@ systemctl enable --now resolvconf\\n\
 ${MARKER_END}\\n'/ /etc/rc.local"
   else
     bash -c "sudo sed -i -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
-systemctl unmask netplan-wpa-wlan0.service\\n
+systemctl unmask netplan-wpa-wlan0.service\\n\
 systemctl enable --now netplan-wpa-wlan0.service\\n\
 systemctl daemon-reload\\n\
 netplan apply\\n\
@@ -49,17 +49,17 @@ slogger -st sed "/etc/rc.local added command lines"
    cat /etc/rc.local
 fi
 logger -st bash "profile boot script"
-bash -c "sudo sed -i -e ${MARKERS}d ~/.bash_profile"
-printf "%s\n" '${MARKER_BEGIN}' | tee -a ~/.bash_profile
-cat ${scriptsd}/bash_profile | tee -a ~/.bash_profile
-printf "%s\n" '${MARKER_END}' | tee -a ~/.bash_profile
+bash -c "sed -i.old -e ${MARKERS}d /home/${SUDO_USER}/.bash_profile"
+printf "%s\n" "${MARKER_BEGIN}" | tee -a /home/$SUDO_USER/.bash_profile
+cat ${scriptsd}/bash_profile | tee -a /home/$SUDO_USER/.bash_profile
+printf "%s\n" "${MARKER_END}" | tee -a /home/$SUDO_USER/.bash_profile
 sudo systemctl daemon-reload
 logger -st dpkg "installing dpkg auto-reboot.service"
 source ${scriptsd}/init.d/auto-reboot.sh install &
 logger -st ufw  "enable ip forwarding (internet connectivity)"
 source ${scriptsd}/init.d/init_ufw.sh
 slogger -st systemctl "restarting Access Point"
-sudo systemctl start rc-local
+sudo systemctl enable --now rc-local
 case $REBOOT in
   'y'|'Y'*) sudo reboot;;
   *)
