@@ -21,22 +21,23 @@ else
 systemctl mask netplan-wpa-wlan0.service\\n
 systemctl daemon-reload\\n\
 netplan apply\\n\
-systemctl restart hostapd\\n\
+systemctl enable --now hostapd\\n\
 ip link set dev ${PRIV_INT} up\\n\
 sleep 2\\n\
 dhclient ${WAN_INT}\\n\
-systemctl restart isc-dhcp-server\\n\
+systemctl enable --now isc-dhcp-server\\n\
 if [[ \$? != 0 ]]; then\\n\
-  systemctl restart dnsmasq\\n\
+  systemctl enable --now dnsmasq\\n\
 else\\n\
-  systemctl restart isc-dhcp-server6\\n\
-  systemctl restart systemd-resolved\\n\
+  systemctl enable --now isc-dhcp-server6\\n\
+  systemctl enable --now systemd-resolved\\n\
 fi\\n\
+systemctl enable --now resolvconf\\n\
 ${MARKER_END}\\n'/ /etc/rc.local"
   else
     bash -c "sudo sed -i -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
 systemctl unmask netplan-wpa-wlan0.service\\n
-systemctl enable netplan-wpa-wlan0.service\\n\
+systemctl enable --now netplan-wpa-wlan0.service\\n\
 systemctl daemon-reload\\n\
 netplan apply\\n\
 ip link set dev ${PRIV_INT} up\\n\

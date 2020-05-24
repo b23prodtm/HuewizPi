@@ -1,5 +1,5 @@
 sudo systemctl daemon-reload
+sudo systemctl enable --now rc-local
 sudo systemctl status rc-local
-sudo systemctl enable --now hostapd
-sudo systemctl enable --now resolvconf
 service --status-all
+dhcp-lease-list 
