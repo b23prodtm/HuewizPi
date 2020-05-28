@@ -51,15 +51,22 @@ You can assign a fixed IP to any host with the following script :
 A few minutes later, *clientmachine* will be permanently fixed to the IP address 10.0.1.5 instead of 10.0.1.37.
 
 ### Troubleshooting
-  - If you cannot access the internet after the script returns from reboot
-  that maybe linked to an error in the DHCPd process. Either way if you can access the host machine with ssh or from host keyboard, restart the DHCPd service : ```sudo netplan apply && sudo service isc-dhcp-server restart```, check status then ```sudo service isc-dhcp-server status```from host machine (which runs hostapd).
+  - I cannot access the internet after the script returns from reboot.
+  Is that maybe linked to an error in the DHCPd process ?
+
+  > Choose either way: if you can connect to the host machine with ssh or from host keyboard, restart the DHCP server : ```sudo netplan apply && sudo systemctl restart isc-dhcp-server```, check status then ```sudo systemctl status isc-dhcp-server```from host machine (which runs hostapd).
+
   > A custom profile script may be added to the user shell, so it can reload it anytime when you login with ssh. Paste in _~/.bash_profile_:
-  
+
       sudo systemctl daemon-reload
       sudo systemctl restart rc-local
       sudo systemctl status rc-local
 
-  > When you see that the dhcp is down, just connect and login to the machine that's got _hostapd_ running e.g. `ssh ubuntu@node1` and the network service will restart itself and you can see the status on Terminal.
+  Next time just connect and login to the machine that's got _hostapd_ running e.g. `ssh ubuntu@node1` and the network service will restart itself and you can see the status on Terminal, you see that the isc-dhcp-server is down (-).
+
+  - The Wifi machines never get an IP Address on 10.233.1.x after they connected to the private Wifi network, or they have to wait for several minutes to get an answer.
+
+  > Obviously the DHCP server (isc-dhcp-server) is getting a lot of DHCPREQUEST and reading leases from _/var/lib/dhcp/dhcpd.leases_ takes some time. Remove obsolete hosts from this _lease_ file.
 
 # Copyright 2018 www.b23prodtm.info
 
