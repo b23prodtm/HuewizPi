@@ -58,13 +58,13 @@ PSK_FILE=/etc/hostapd-psk
 driver=nl80211
 ssid=${PRIV_SSID}
 
-#ieee80211ac=1         # 5Ghz support
+ieee80211ac=1         # 5Ghz support
 #hw_mode=a
 #channel=36
 # 2,4-2,5Ghz (HT 20MHz band)
 #hw_mode=b
 #channel=13
-#ieee80211n=1          # 802.11n (HT 40 MHz) support
+ieee80211n=1          # 802.11n (HT 40 MHz) support
 #hw_mode=g # 2,4-2,5Ghz (HT 40MHz band)
 #channel=6
 hw_mode=${PRIV_WIFI_MODE}
