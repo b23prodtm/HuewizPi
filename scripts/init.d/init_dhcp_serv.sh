@@ -90,14 +90,12 @@ echo -e "option dhcp6.name-servers ${nameservers6};
 
 default-lease-time 600;
 max-lease-time 7200;
-
-authoritative;
-
 log-facility local7;
-
 #subnet6 ${WAN_NETWORK_IPV6}0/${WAN_NETWORK_MASKb6} {}
 subnet6 ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} {
-#option dhcp6.domain-name \"wifi.local\";
+# FQDN and subdomains from *.localhost
+option dhcp6.domain-name \"wifi.localhost\";
+authoritative;
 range6 ${PRIV_NETWORK_IPV6}${PRIV_RANGE_START} ${PRIV_NETWORK_IPV6}${PRIV_RANGE_END};
 }" | sudo tee /etc/dhcp/dhcpd6.conf
 sudo sed -i -e "s/INTERFACESv4=\".*\"/INTERFACESv4=\"${PRIV_INT}\"/" /etc/default/isc-dhcp-server
