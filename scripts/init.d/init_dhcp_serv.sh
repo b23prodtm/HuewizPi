@@ -74,13 +74,14 @@ echo -e "option domain-name-servers ${nameservers};
 default-lease-time 600;
 max-lease-time 7200;
 
-authoritative;
 
 log-facility local7;
 
-#subnet ${WAN_NETWORK}.0 netmask ${WAN_NETWORK_MASK} {}
+subnet ${WAN_NETWORK}.0 netmask ${WAN_NETWORK_MASK} {}
 subnet ${PRIV_NETWORK}.0 netmask ${PRIV_NETWORK_MASK} {
-option domain-name \"wifi.local\";
+authoritative;
+# FQDN and subdomains from *.localhost
+option domain-name \"wifi.localhost\";
 ${routers}
 option subnet-mask ${PRIV_NETWORK_MASK};
 option broadcast-address ${PRIV_NETWORK}.255; # dhcpd
@@ -91,11 +92,10 @@ echo -e "option dhcp6.name-servers ${nameservers6};
 default-lease-time 600;
 max-lease-time 7200;
 log-facility local7;
-#subnet6 ${WAN_NETWORK_IPV6}0/${WAN_NETWORK_MASKb6} {}
+subnet6 ${WAN_NETWORK_IPV6}0/${WAN_NETWORK_MASKb6} {}
 subnet6 ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} {
-# FQDN and subdomains from *.localhost
-option dhcp6.domain-name \"wifi.localhost\";
 authoritative;
+option dhcp6.domain-name \"wifi.localhost\";
 range6 ${PRIV_NETWORK_IPV6}${PRIV_RANGE_START} ${PRIV_NETWORK_IPV6}${PRIV_RANGE_END};
 }" | sudo tee /etc/dhcp/dhcpd6.conf
 sudo sed -i -e "s/INTERFACESv4=\".*\"/INTERFACESv4=\"${PRIV_INT}\"/" /etc/default/isc-dhcp-server
