@@ -21,7 +21,6 @@ else
 systemctl mask netplan-wpa-wlan0.service\\n\
 systemctl daemon-reload\\n\
 netplan apply\\n\
-systemctl enable --now hostapd\\n\
 ip link set dev ${PRIV_INT} up\\n\
 sleep 2\\n\
 dhclient ${WAN_INT}\\n\
@@ -33,16 +32,17 @@ else\\n\
   systemctl enable --now systemd-resolved\\n\
 fi\\n\
 systemctl enable --now resolvconf\\n\
+systemctl enable --now hostapd\\n\
 ${MARKER_END}\\n'/ /etc/rc.local"
   else
     bash -c "sudo sed -i -e ${MARKERS}d -e /^exit/s/^/'${MARKER_BEGIN}\\n\
 systemctl unmask netplan-wpa-wlan0.service\\n\
-systemctl enable --now netplan-wpa-wlan0.service\\n\
 systemctl daemon-reload\\n\
 netplan apply\\n\
 ip link set dev ${PRIV_INT} up\\n\
 sleep 2\\n\
 dhclient ${PRIV_INT}\\n\
+systemctl enable --now netplan-wpa-wlan0.service\\n\
 ${MARKER_END}\\n'/ /etc/rc.local"
   fi
 slogger -st sed "/etc/rc.local added command lines"
