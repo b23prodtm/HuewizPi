@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+
+### BEGIN INIT INFO
+# Provides:          HAP Wizard
+# Required-Start:
+# Required-Stop:
+# Should-Start:
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: Hostapd Wizard Service
+# Description:       Intended to start a Hotspot Access point  on system startup.
+### END INIT INFO
+
+set -eu
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+SVC_NAME=hapwizard
+DAEMON_CF="/etc/$SVC_NAME/$SVC_NAME.conf"
+DAEMON_SVC="/usr/lib/systemd/system/$SVC_NAME.service.d/"
+# shellcheck disable=SC1091
+. /lib/lsb/init-functions
+
+[ -f $DAEMON_CF ] || mkdir -p "$(dirname $DAEMON_CF)"
+[ -f $DAEMON_CF ] || touch "$DAEMON_CF"
+[ -d $DAEMON_SVC ] || mkdir -p "$DAEMON_SVC"
+
+banner=("" "[services.d] $DAEMON_SVC" ""); log_daemon_msg "%s\n" "${banner[@]}"
+
+DAEMON_CF="$DAEMON_CF $(find "$DAEMON_SVC" -name "*.conf")"
+for cnf in $DAEMON_CF; do
+  # shellcheck disable=SC1090
+  . "$cnf"
+done
+[ -z "${scriptsd:-}" ] && scriptsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+usage=("" \
+"Usage: $0 {start|stop|status|restart|force-reload}" \
+"" \
+"Definition: Intended to start a Hotspot Access point  on system startup." \
+"")
+
+function list_phy_net() {
+  filter="state UP"
+  [ "$#" -gt 0 ] && filter=$1
+  # list physical network ip
+  ip link show | grep "$filter" | grep qlen | awk '{ print $2 }' | cut -d: -f1 | xargs
+}
+function start() {
+  list_phy_net
+  if [ -f /etc/init.d/networking ]; then
+    # /etc/init.d/networking restart
+    nmcli networking off
+    sleep 2
+    nmcli networking on
+  else
+    systemctl unmask "netplan-wpa-${PRIV_INT}.service"
+    systemctl daemon-reload
+    netplan apply
+    systemctl enable --now "netplan-wpa-${PRIV_INT}.service"
+    dhclient -r "${WAN_INT}"
+    dhclient "${WAN_INT}"
+  fi
+  list_phy_net "state"
+  sleep 2
+  if [ -z "${CLIENT:-''}" ]; then
+    systemctl enable --now hostapd
+    if systemctl enable --now isc-dhcp-server; then
+      systemctl enable --now dnsmasq
+    else
+      systemctl enable --now isc-dhcp-server6
+      systemctl enable --now systemd-resolved
+    fi
+  fi
+}
+function stop() {
+  systemctl disable hostapd
+  if systemctl disable isc-dhcp-server; then
+    systemctl disable dnsmasq
+  else
+    systemctl disable isc-dhcp-server6
+    systemctl disable systemd-resolved
+  fi
+}
+case "$1" in
+    start)
+        log_daemon_msg "${BASH_SOURCE[0]} Will be started.."
+        start
+        ;;
+    stop)
+        log_daemon_msg "${BASH_SOURCE[0]} Will be stopped now..."
+        stop
+        ;;
+    restart|force-reload)
+        $0 stop
+        sleep 8
+        $0 start
+        ;;
+    foreground)
+        log_daemon_msg "${BASH_SOURCE[0]} Read tcpdump of Hotspot Acces Point."
+        tcpdump -v -i "${PRIV_INT}"
+        ;;
+    *)
+        log_daemon_msg "${usage[@]}" >&2
+        exit 3
+        ;;
+esac
+exit 0

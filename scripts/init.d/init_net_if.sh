@@ -1,33 +1,37 @@
 #!/usr/bin/env bash
-usage="
-Usage: $0 [-r] [[--wifi <INTERFACE> <SSID> <passphrase>] [-b, --bridge]] [--dns <ipv4> [--dns6 '<ipv6>']
-Initializes netplan.io networks plans and eventually restart them.
--r
-  Removes bridge interface
---wifi
-  Render a Wifi interface
---bridge
-  Render a bridge connection between ${WAN_INT} and ${PRIV_INT}, skipping private network ${PRIV_NETWORK}.0 (should be used with --wifi)
---dns
-  Add a public custom DNS address (e.g. --dns 8.8.8.8 --dns 9.9.9.9)
---dns6
-  Add a public custom DNS ipv6 address, (e.g. --dns6 2001:4860:4860::8888 --dns6 2001:4860:4860::8844)"
-[ -z ${scriptsd} ] && export scriptsd=$(cd `dirname $BASH_SOURCE`/.. && pwd)
-banner=("" "[$0] BUILD RUNNING $BASH_SOURCE" ""); printf "%s\n" "${banner[@]}"
-[ ! -f ${scriptsd}/../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}/../library/hap-wiz-env.py $*"
-source ${scriptsd}/../.hap-wiz-env.sh
-source ${scriptsd}/dns-lookup.sh
+usage=("" \
+"Usage: $0 [-r] [[--wifi <INTERFACE> <SSID> <passphrase>] [-b, --bridge]] [--dns <ipv4> [--dns6 '<ipv6>']" \
+"Initializes netplan.io networks plans and eventually restart them." \
+"-r" \
+"  Removes bridge interface" \
+"--wifi" \
+"  Render a Wifi interface" \
+"--bridge" \
+"  Render a bridge connection between ${WAN_INT} and ${PRIV_INT}, skipping private network ${PRIV_NETWORK}.0 (should be used with --wifi)" \
+"--dns" \
+"  Add a public custom DNS address (e.g. --dns 8.8.8.8 --dns 9.9.9.9)" \
+"--dns6" \
+"  Add a public custom DNS ipv6 address, (e.g. --dns6 2001:4860:4860::8888 --dns6 2001:4860:4860::8844)" \
+"")
+[ -z "${scriptsd:-}" ] && scriptsd="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
+banner=("" "[$0] BUILD RUNNING ${BASH_SOURCE[0]}" ""); printf "%s\n" "${banner[@]}"
+[ ! -f "${scriptsd}/../configure" ] && bash -c "python ${scriptsd}/../library/configure.py $*"
+# shellcheck disable=SC1090
+source "${scriptsd}/../configure"
+# shellcheck source=../dns-lookup.sh
+. "${scriptsd}/dns-lookup.sh" || true
 clientyaml='01-cliwpa.yaml'
 yaml='02-hostap.yaml'
 nameservers_def="${PRIV_NETWORK}.1"
 nameservers6_def="${PRIV_NETWORK_IPV6}1"
 nameservers=''
 nameservers6=''
-NP_ORIG=/usr/share/netplan && sudo mkdir -p $NP_ORIG
-NP_CLOUD=/etc/cloud/cloud.cfg.d && sudo mkdir -p $NP_CLOUD
+NP_ORIG=/usr/share/netplan && sudo mkdir -p "$NP_ORIG"
+NP_CLOUD=/etc/cloud/cloud.cfg.d//99-disable-network-config.cfg && sudo mkdir -p "$(dirname "$NP_CLOUD")"
+NP_INIT=50-cloud-init.yaml
 slogger -st netplan "disable cloud-init"
-sudo mv -fv /etc/netplan/50-cloud-init.yaml $NP_ORIG
-echo -e "network: { config: disabled }" | sudo tee /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+[ -f "/etc/netplan/$NP_INIT" ] && mv -fv "/etc/netplan/$NP$NP_INIT" "$NP_ORIG"
+echo -e "network: { config: disabled }" | sudo tee "${NP_CLOUD}"
 case "${WAN_INT}" in
   'eth'*)
     if [ -f /etc/init.d/networking ]; then
@@ -63,42 +67,45 @@ while [ "$#" -gt 0 ]; do case $1 in
       slogger -st netplan "move configuration to $NP_ORIG"
       sudo mv -fv /etc/netplan/* $NP_ORIG
       slogger -st netplan "reset configuration to cloud-init"
-      sudo mv -fv $NP_ORIG/50-cloud-init.yaml /etc/netplan
-      sudo rm -fv /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+      [ -f "$NP_ORIG/$NP_INIT" ] && sudo mv -fv "$NP_ORIG/$NP_INIT" /etc/netplan
+      sudo rm -fv "$NP_CLOUD"
     fi
     return;;
   --dns)
       nameservers_def=''
-      nameservers=$(nameservers $nameservers $2)
+      nameservers=$(nameservers "$nameservers" "$2")
       shift;;
   --dns6)
       nameservers6_def=''
-      nameservers6=$(nameservers $nameservers6 "'$2'")
+      nameservers6=$(nameservers "$nameservers6 " "'$2'")
       shift;;
   --wifi)
     shift
     if [ -f /etc/init.d/networking ]; then
-      source init_wpa_ctl.sh $*
+      # shellcheck source=init_wpa_ctl.sh
+      source "${scriptsd}/init.d/init_wpa_ctl.sh $*"
     else
-      clientyaml="$(echo ${clientyaml} | cut -d. -f1)-${PRIV_INT}.yaml"
+      clientyaml="$(echo ${clientyaml} | cut -d. -f1)-${1}.yaml"
       slogger -st netplan "/etc/netplan/$clientyaml was created"
         echo -e "${MARKER_BEGIN}
 network:
   version: 2
   renderer: networkd
   wifis:
-    $1:
+    ${1}:
       dhcp4: yes
       dhcp6: yes
       access-points:
-        \"$2\":
-          password: \"$3\"
-${MARKER_END}" | sudo tee /etc/netplan/$clientyaml
+        \"${2}\":
+          password: \"${3}\"
+${MARKER_END}" | sudo tee "/etc/netplan/${clientyaml}"
+      sudo mkdir -p "/usr/lib/systemd/system/netplan-wpa-${1}.service.d"
+      printf '%s\n' "[Install]" "WantedBy=multi-user.target" | sudo tee "/usr/lib/systemd/system/netplan-wpa-${1}.service.d/10-multi-user.conf"
     fi
-    shift;shift
+    shift 2
     ;;
   -h*|--help)
-    echo -e $usage
+    echo -e "${usage[0]}"
     exit 1;;
    -b*|--bridge)
    if [ -f /etc/init.d/networking ]; then
@@ -115,7 +122,7 @@ bridge_ports ${PRIV_INT} ${WAN_INT}
 ${MARKER_END}" | sudo tee -a /etc/network/interfaces
      slogger -st brctl "share the internet wireless over bridge"
      sudo brctl addbr br0
-     sudo brctl addif br0 eth0 ${PRIV_INT}
+     sudo brctl addif br0 "${WAN_INT}" "${PRIV_INT}"
    else
      # new 18.04 netplan server (DHCPd set to bridge)
      slogger -st netplan "/etc/netplan/$yaml was created"
@@ -134,30 +141,32 @@ ${MARKER_END}" | sudo tee -a /etc/netplan/$yaml
    fi;;
    *);;
 esac; shift; done
-nameservers=$(nameservers $nameservers $nameservers_def)
-nameservers6=$(nameservers $nameservers6 "'${nameservers6_def}'")
+nameservers=$(nameservers "$nameservers" "$nameservers_def")
+nameservers6=$(nameservers "$nameservers6" "'${nameservers6_def}'")
 if [ -f /etc/init.d/networking ]; then
     slogger -st netman "add wifi network"
-    export DEFAULT_GATEWAY=${PRIV_NETWORK}.1 \
-    DEFAULT_MASKb=${PRIV_NETWORK_MASKb}
+    export DEFAULT_GATEWAY=${PRIV_NETWORK}.1
+    # shellcheck disable=SC2154
+    export DEFAULT_MASKb=${PRIV_NETWORK_MASKb}
     case "${PRIV_WIFI_MODE}" in
       'a'*)
         export DEFAULT_WIFI_BAND="a";;
       'b'*|'g'*)
         export DEFAULT_WIFI_BAND="bg";;
     esac
-    sudo python3 netman.py -t "hotspot" -i ${PRIV_INT} -s ${PRIV_SSID} --password="${PRIV_PAWD}"
-    if [ $? -eq 0 ]; then
+    if sudo python3 netman.py -t "hotspot" -i "${PRIV_INT}" -s "${PRIV_SSID}" --password="${PRIV_PAWD}"; then
       slogger -st netman " Success"
     else
       slogger -st netman " Fail"
     fi
 else
-    slogger -st netplan "add wifi network"
-    sudo sed -i.old /"password:"/a"\\
+    slogger -st netplan "add wifi network class /etc/netplan/$clientyaml"
+    # shellcheck disable=SC2154
+    [ -z "$CLIENT" ] && sudo sed -i.old "/password:/a\\
       addresses: [${PRIV_NETWORK}.1/${PRIV_NETWORK_MASKb}, '${PRIV_NETWORK_IPV6}1/${PRIV_NETWORK_MASKb6}']\\n\
       nameservers:\\n\
-        addresses: [${nameservers},${nameservers6}]" /etc/netplan/$clientyaml
-    sudo sed -i.old /"${PRIV_INT}:"/,/"${MARKER_END}"/s/yes/no/g /etc/netplan/$clientyaml
-    cat /etc/netplan/$clientyaml | grep -A8 "${PRIV_INT}"
+        addresses: [${nameservers},${nameservers6}]" "/etc/netplan/$clientyaml"
+    # shellcheck disable=SC2154
+    [ -z "$CLIENT" ] && sudo sed -i.old "/${PRIV_INT}:/,/${MARKER_END}/s/yes/no/g" "/etc/netplan/$clientyaml"
+    grep -A8 "${PRIV_INT}" < "/etc/netplan/$clientyaml"
 fi

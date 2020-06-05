@@ -1,36 +1,40 @@
 #!/usr/bin/env bash
-usage="
-Usage: $0 [-r] [--router <ipv4>] [--dns <ipv4>] [--dns6 <ipv6>]
-   $0 [-l, --leases <hostname> [host_number]]
-Initializes DHCP services (without dnsmasq)
--r
-Disable all dhcp (also with dnsmasq) services
--l <hostname>
-Prints ethernet mac address corresponding to the specified host DHCP lease. \
-A fixed address option will be added to /etc/dhcpd/dhcp.conf, /etc/dhcpd/dhcp6.conf.
-Activate it by commenting out the host option.
---router
-Sets up router ip address for ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb}
---dns
-Add a public custom DNS address (e.g. --dns 8.8.8.8 --dns 9.9.9.9)
---dns6
-Add a public custom DNS ipv6 address(e.g. --dns6 2001:4860:4860::8888 --dns6 2001:4860:4860::8844)
-"
-[ -z ${scriptsd} ] && export scriptsd=$(cd `dirname $BASH_SOURCE`/.. && pwd)
-banner=("" "[$0] BUILD RUNNING $BASH_SOURCE" ""); printf "%s\n" "${banner[@]}"
-[ ! -f ${scriptsd}/../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}/../library/hap-wiz-env.py $*"
-source ${scriptsd}/../.hap-wiz-env.sh
-source ${scriptsd}/dns-lookup.sh
+usage=("" \
+"Usage: $0 [-r] [--router <ipv4>] [--dns <ipv4>] [--dns6 <ipv6>]" \
+"       $0 [-l, --leases <hostname> [host_number]]" \
+"              Initializes DHCP services (without dnsmasq)" \
+"          -r" \
+"              Disable all dhcp (also with dnsmasq) services" \
+"          -l <hostname>" \
+"              Prints ethernet mac address corresponding to the specified host DHCP lease. " \
+"              A fixed address option will be added to /etc/dhcpd/dhcp.conf, " \
+"              /etc/dhcpd/dhcp6.conf." \
+"              Activate it by commenting out the host option." \
+"          --router" \
+"              Sets up router ip address for ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb}" \
+"          --dns" \
+"              Add a public custom DNS address (e.g. --dns 8.8.8.8 --dns 9.9.9.9)" \
+"          --dns6" \
+"              Add a public custom DNS ipv6 address(e.g. --dns6 2001:4860:4860::8888" \
+"          --dns6 2001:4860:4860::8844)" \
+"")
+[ -z "${scriptsd:-}" ] && scriptsd="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
+banner=("" "[$0] BUILD RUNNING ${BASH_SOURCE[0]}" ""); printf "%s\n" "${banner[@]}"
+[ ! -f "${scriptsd}/../configure" ] && bash -c "python ${scriptsd}/../library/configure.py $*"
+# shellcheck disable=SC1090
+source "${scriptsd}/../configure"
+# shellcheck source=../dns-lookup.sh
+. "${scriptsd}/dns-lookup.sh" || true
 routers="option routers ${PRIV_NETWORK}.1; #hostapd ${PRIV_INT}"
 nameservers=$(systemd-resolve --status | grep 'DNS Servers:' | awk '/(\w*\.){3}/{print $3}' | head -n 1)
 nameservers6="$(systemd-resolve -6 --status | grep 'DNS Servers:' | awk '/(\w*:){2}/{print $3}' | head -n 1)"
 function lease_blk() {
   address=$1
-echo -e "${MARKER_BEGIN} \n\
-# Example for a fixed host address try $0 --leases <hostname> [host_number]  \n\
+  echo -e "${MARKER_BEGIN} \n\
+      # Example for a fixed host address try $0 --leases <hostname> [host_number]  \n\
       host ${lease_host} { # host hostname (dhcp-leases-list) \n\
       hardware ethernet ${lease} # hardware ethernet 00:00:00:00:00:00 (/var/lib/dhcp/dhcpd.leases); \n\
-        fixed-address ${address}; } \n\
+      fixed-address ${address}; } \n\
 ${MARKER_END}"
 }
 while [ "$#" -gt 0 ]; do case $1 in
@@ -43,25 +47,25 @@ while [ "$#" -gt 0 ]; do case $1 in
     sudo systemctl disable isc-dhcp-server6
     return;;
   -h*|--help)
-    echo -e $usage
+    echo -e "${usage[0]}"
     exit 1;;
   -l*|--leases*)
-    lease_host=$2; lease_add=$3; lease=$(cat /var/lib/dhcp/dhcpd.leases | grep -C4 $2 | grep -m1 "hardware ethernet" | awk -F' ' '{print $3}')
-    [ -z $3 ] && lease_add=${PRIV_RANGE_START}
-   [ ! -z ${lease} ] && lease_blk ${PRIV_NETWORK}.${lease_add} | sudo tee /tmp/input.dhcp.lease && sudo sed -i \
+    lease_host=$2; lease_add=$3; lease=$(grep -C4 "$2" < /var/lib/dhcp/dhcpd.leases | grep -m1 "hardware ethernet" | awk -F' ' '{print $3}')
+    [ -z "$3" ] && lease_add=${PRIV_RANGE_START}
+    [ -n "${lease}" ] && lease_blk "${PRIV_NETWORK}.${lease_add}" | sudo tee /tmp/input.dhcp.lease && sudo sed -i \
 -e \$s/\}// -e \$r/tmp/input.dhcp.lease -e \$a\} \
-/etc/dhcp/dhcpd.conf && cat /etc/dhcp/dhcpd.conf | grep -B4 "fixed-address"
-   sudo systemctl restart isc-dhcp-server
-   [ ! -z ${lease} ] && lease_blk ${PRIV_NETWORK_IPV6}${lease_add} | sudo tee /tmp/input.dhcp.lease && sudo sed -i \
+/etc/dhcp/dhcpd.conf && grep -B4 "fixed-address" < /etc/dhcp/dhcpd.conf
+    sudo systemctl restart isc-dhcp-server
+    [ -n "${lease}" ] && lease_blk "${PRIV_NETWORK_IPV6}${lease_add}" | sudo tee /tmp/input.dhcp.lease && sudo sed -i \
 -e \$s/\}// -e \$r/tmp/input.dhcp.lease -e \$a\} \
-/etc/dhcp/dhcpd6.conf && cat /etc/dhcp/dhcpd6.conf | grep -B4 "fixed-address"
+/etc/dhcp/dhcpd6.conf && grep -B4 "fixed-address" < /etc/dhcp/dhcpd6.conf
     sudo systemctl restart isc-dhcp-server6
     exit 0;;
   --dns)
-    nameservers=$(nameservers $nameservers $2)
+    nameservers=$(nameservers "$nameservers" "$2")
     shift;;
   --dns6)
-    nameservers6=$(nameservers $nameservers6 $2)
+    nameservers6=$(nameservers "$nameservers6" "$2")
     shift;;
   --router)
     routers="option routers $2;"
@@ -87,6 +91,7 @@ option subnet-mask ${PRIV_NETWORK_MASK};
 option broadcast-address ${PRIV_NETWORK}.255; # dhcpd
 range ${PRIV_NETWORK}.${PRIV_RANGE_START} ${PRIV_NETWORK}.${PRIV_RANGE_END};
 }" | sudo tee /etc/dhcp/dhcpd.conf
+# shellcheck disable=SC2154
 echo -e "option dhcp6.name-servers ${nameservers6};
 
 default-lease-time 600;

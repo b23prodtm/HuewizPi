@@ -4,11 +4,12 @@ Usage: $0 [-r]
   Configure the firewall rules
 -r
   Removes all rules, disable firewall"
-[ -z ${scriptsd} ] && export scriptsd=$(cd `dirname $BASH_SOURCE`/.. && pwd)
-banner=("" "[$0] BUILD RUNNING $BASH_SOURCE" ""); printf "%s\n" "${banner[@]}"
-[ ! -f ${scriptsd}/../.hap-wiz-env.sh ] && bash -c "python ${scriptsd}/../library/hap-wiz-env.py $*"
-source ${scriptsd}/../.hap-wiz-env.sh
-sudo cp -f ${scriptsd}/../backup/etc/ufw/before.rules /etc/ufw/before.rules
+[ -z "${scriptsd}" ] && scriptsd=$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)
+banner=("" "[$0] BUILD RUNNING ${BASH_SOURCE[0]}" ""); printf "%s\n" "${banner[@]}"
+[ ! -f "${scriptsd}/../configure" ] && bash -c "python ${scriptsd}/../library/configure.py $*"
+# shellcheck disable=SC1090
+. "${scriptsd}/../configure"
+sudo cp -f "${scriptsd}"/../backup/etc/ufw/before.rules /etc/ufw/before.rules
 while [ "$#" -gt 0 ]; do case $1 in
   -r*|-R*)
     sudo sed -i -e "${MARKERS}d" /etc/ufw/before.rules
@@ -17,7 +18,7 @@ while [ "$#" -gt 0 ]; do case $1 in
   -c*|--client)
     return;;
   -h*|--help)
-    echo -e $usage
+    echo -e "$usage"
     exit 0;;
   *);;
 esac; shift; done
@@ -32,6 +33,7 @@ sudo sed -i /DEFAULT_FORWARD_POLICY/s/DROP/ACCEPT/g /etc/default/ufw
 sleep 1
 slogger -st ufw "add ip masquerading rules"
 bash -c "sudo sed -i -e ${MARKERS}d /etc/ufw/before.rules"
+# shellcheck disable=SC2154
 echo -e "${MARKER_BEGIN}
 # nat Table rules
 *nat
@@ -58,8 +60,8 @@ sudo sed -e /"^# End required lines"/r/tmp/input.rules.2 /tmp/input.rules \
 && sudo cp -f /tmp/input.rules /etc/ufw/before.rules
 sleep 1
 slogger -st ufw "allow ${PRIV_NETWORK}.0"
-sudo ufw allow from ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb}
-sudo ufw allow from ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6}
+sudo ufw allow from "${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb}"
+sudo ufw allow from "${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6}"
 slogger -st "ufw Balena makes use of the following ports:"
 sudo ufw allow https
 sudo ufw allow ntp

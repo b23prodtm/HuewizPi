@@ -1,5 +1,5 @@
 # cache files
-.hap-wiz-*
+configure
 *.old
 Dockerfile.*
 !Dockerfile.template

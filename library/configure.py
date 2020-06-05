@@ -150,17 +150,18 @@ def main(argv):
 
 def write_exports(envdict):
     print("Current working dir : %s" % os.getcwd())
-    path=".hap-wiz-env.sh"
+    path="configure"
     f = open(path, "w")
     f.write("#!/usr/bin/env bash\nexport")
     escnl=" "
     for k,v in myenv.items():
         f.write("{}'{}'=\"{}\"".format(escnl,k,v))
         escnl="\\\n "
+    f.write("\nsource library/init-functions.sh\n")
     f.write("\nfunction slogger() {\n")
-    f.write("  [ -f /dev/log ] && logger $@ && return\n")
+    f.write("  [ -f /dev/log ] && logger \"$@\" && return\n")
     f.write("  [ \"$#\" -gt 1 ] && shift\n")
-    f.write("  echo -e \"$@\"\n");
+    f.write("  log_daemon_msg \"$@\"\n");
     f.write("}\n")
     f.close()
     os.chmod(path, 0o755)
