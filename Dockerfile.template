@@ -6,12 +6,13 @@ ENV DBUS_SYSTEM_BUS_ADDRESS ${DBUS_SYSTEM_BUS_ADDRESS:-unix:path=/host/run/dbus/
 # Deprecated INITSYSTEM as of balenalib major changes
 # https://www.balena.io/docs/reference/base-images/base-images/#major-changes
 # ENV INITSYSTEM On
+# RUN [ "cross-build-start" ]
 
 # ADD S6 Overlay
 ARG S6_ARCH
 ENV S6_ARCH ${S6_ARCH:-'%%BALENA_ARCH%%'}
 ARG S6_RELEASE
-ENV S6_RELEASE ${S6_RELEASE:-'v1.21.8.0'}
+ENV S6_RELEASE ${S6_RELEASE:-v2.0.0.1}
 ENV S6_REPO https://github.com/just-containers/s6-overlay/releases/download
 ADD ${S6_REPO}/${S6_RELEASE}/s6-overlay-${S6_ARCH}.tar.gz /tmp/
 ADD ${S6_REPO}/${S6_RELEASE}/s6-overlay-${S6_ARCH}.tar.gz.sig /tmp/
@@ -104,5 +105,6 @@ VOLUME /etc/hostapd/
 VOLUME /etc/hapwizard/
 
 ENTRYPOINT /init
+# RUN [ "cross-build-end" ]
 
 CMD /etc/init.d/hapwizard foreground

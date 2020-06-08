@@ -3,7 +3,7 @@ configure
 *.old
 Dockerfile.*
 !Dockerfile.template
-!Dockerfile.aarch64
+!Dockerfile.armhf
 !Dockerfile.x86_64
 docker-compose.*
 !docker-compose.yml
@@ -12,6 +12,7 @@ docker-compose.*
 __pycache__/
 *.py[cod]
 *$py.class
+node_modules
 
 # C extensions
 *.so
@@ -134,3 +135,4 @@ dmypy.json
 
 # Nano workspace
 .save
+init_functions

@@ -1,0 +1,24 @@
+{
+  "name": "HapwizPY",
+  "version": "1.0.0",
+  "description": "Host access point Wizard script for Debian/Ubuntu",
+  "main": "index.js",
+  "dependencies": {
+    "balena-cloud": "^1.0.8"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/b23prodtm/HapwizPY.git"
+  },
+  "keywords": [],
+  "author": "Tiana Rakoto Arimanana <b23prodtm@users.sourceforge.net>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/b23prodtm/HapwizPY/issues"
+  },
+  "homepage": "https://github.com/b23prodtm/HapwizPY#readme"
+}
