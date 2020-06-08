@@ -1,0 +1,37 @@
+version: '2'
+services:
+  hostap:
+    network_mode: host
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile.x86_64
+    image: betothreeprod/hapwizpy-raspberrypi3
+    env_file:
+      - common.env
+      - .env
+    privileged: true
+    labels:
+      io.balena.features.dbus: 1
+    volumes:
+      - hostapd:/etc/hostapd
+      - hapwizard:/etc/hapwizard
+      - library:/usr/src/library
+  wifi-connect:
+    network_mode: host
+    build:
+      context: ./python-wifi-connect
+      dockerfile: Dockerfile.x86_64
+    image: betothreeprod/python-wifi-connect-raspberrypi3
+    labels:
+      io.balena.features.dbus: 1
+      io.balena.features.supervisor-api: 1
+    privileged: true
+    ports:
+      - "80:80"
+    volumes:
+      - library:/usr/src/app/src
+volumes:
+  hostapd:
+  hapwizard:
+  library:
