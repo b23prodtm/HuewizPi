@@ -34,9 +34,9 @@ done
 [ -z "${scriptsd:-}" ] && scriptsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 usage=("" \
-"Usage: $0 {start|stop|status|restart|force-reload}" \
+"Usage: $0 {start|stop|status|restart|fore-reload|install|uninstall}" \
 "" \
-"Definition: Intended to start a Hotspot Access point  on system startup." \
+"Definition: Intended to start a Hotspot Access point on system startup." \
 "")
 
 function list_phy_net() {
@@ -44,6 +44,24 @@ function list_phy_net() {
   [ "$#" -gt 0 ] && filter=$1
   # list physical network ip
   ip link show | grep "$filter" | grep qlen | awk '{ print $2 }' | cut -d: -f1 | xargs
+}
+function install() {
+  if [ -f /etc/init.d/networking ]; then
+    :
+  else
+    systemctl unmask "netplan-wpa-${PRIV_INT}.service"
+    systemctl daemon-reload
+    systemctl enable "netplan-wpa-${PRIV_INT}.service"
+  fi
+  list_phy_net "state"
+  sleep 2
+  if [ -z "${CLIENT:-''}" ]; then
+    if ! systemctl enable hostapd isc-dhcp-server; then
+      systemctl enable dnsmasq
+    else
+      systemctl enable systemd-resolved isc-dhcp-server6
+    fi
+  fi
 }
 function start() {
   list_phy_net
@@ -56,34 +74,45 @@ function start() {
     systemctl unmask "netplan-wpa-${PRIV_INT}.service"
     systemctl daemon-reload
     netplan apply
-    systemctl enable --now "netplan-wpa-${PRIV_INT}.service"
+    systemctl start "netplan-wpa-${PRIV_INT}.service"
     dhclient -r "${WAN_INT}"
     dhclient "${WAN_INT}"
   fi
   list_phy_net "state"
   sleep 2
   if [ -z "${CLIENT:-''}" ]; then
-    systemctl enable --now hostapd
-    if systemctl enable --now isc-dhcp-server; then
-      systemctl enable --now dnsmasq
+    if ! systemctl start hostapd isc-dhcp-server; then
+      systemctl start dnsmasq
     else
-      systemctl enable --now isc-dhcp-server6
-      systemctl enable --now systemd-resolved
+      systemctl start systemd-resolved isc-dhcp-server6
     fi
   fi
 }
 function stop() {
-  systemctl disable hostapd
-  if systemctl disable isc-dhcp-server; then
+  if ! systemctl stop hostapd isc-dhcp-server; then
+    systemctl stop dnsmasq
+  else
+    systemctl stop isc-dhcp-server6 systemd-resolved
+  fi
+}
+function stop() {
+  if ! systemctl disable hostapd isc-dhcp-server; then
     systemctl disable dnsmasq
   else
-    systemctl disable isc-dhcp-server6
-    systemctl disable systemd-resolved
+    systemctl disable isc-dhcp-server6 systemd-resolved
   fi
 }
 case "$1" in
+    install)
+        log_daemon_msg "${BASH_SOURCE[0]} Will be enabled..."
+        install
+        ;;
+    uninstall)
+        log_daemon_msg "${BASH_SOURCE[0]} Will be disabled..."
+        uninstall
+        ;;
     start)
-        log_daemon_msg "${BASH_SOURCE[0]} Will be started.."
+        log_daemon_msg "${BASH_SOURCE[0]} Will be started..."
         start
         ;;
     stop)
