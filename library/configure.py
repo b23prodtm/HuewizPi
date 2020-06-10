@@ -157,7 +157,7 @@ def write_exports(envdict):
     for k,v in myenv.items():
         f.write("{}'{}'=\"{}\"".format(escnl,k,v))
         escnl="\\\n "
-    f.write("\nsource library/init-functions.sh\n")
+    f.write("\n. init_functions \"${BASH_SOURCE[0]}\" \"$@\"\n")
     f.write("\nfunction slogger() {\n")
     f.write("  [ -f /dev/log ] && logger \"$@\" && return\n")
     f.write("  [ \"$#\" -gt 1 ] && shift\n")

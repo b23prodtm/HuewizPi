@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 [ -z "${scriptsd:-}" ] && scriptsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 banner=("" "[$0] BUILD RUNNING ${BASH_SOURCE[0]}" ""); printf "%s\n" "${banner[@]}"
-# shellcheck source=../library/init-functions.sh
-source "${scriptsd}/../library/init-functions.sh"
+. init_functions "${BASH_SOURCE[0]}" "$@"
 function nameservers() {
   ns=$1
   shift
@@ -14,7 +13,7 @@ function nameservers() {
         ns="${ns}${sep}$1";;
   esac; shift; done
   if [[ $ns != '' ]] && [[ $ns != "''" ]]; then
-    echo "$ns" | sed -e "s/,[ ]*,/,/g" -e "s/,$//g "-e "s/^,//g"
+    echo "$ns" | sed -e "s/,[ ]*,/,/g" -e "s/,[ ]*\n//g" -e "s/^[ ]*,//g"
   fi
 }
 dns1=""

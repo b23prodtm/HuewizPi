@@ -4,7 +4,7 @@
   "description": "Host access point Wizard script for Debian/Ubuntu",
   "main": "index.js",
   "dependencies": {
-    "balena-cloud": "^1.0.8"
+    "balena-cloud": "stable"
   },
   "devDependencies": {},
   "scripts": {
