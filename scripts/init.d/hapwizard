@@ -95,7 +95,7 @@ function stop() {
     systemctl stop isc-dhcp-server6 systemd-resolved
   fi
 }
-function stop() {
+function uninstall() {
   if ! systemctl disable hostapd isc-dhcp-server; then
     systemctl disable dnsmasq
   else
