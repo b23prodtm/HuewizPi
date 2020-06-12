@@ -6,6 +6,7 @@ ENV DBUS_SYSTEM_BUS_ADDRESS ${DBUS_SYSTEM_BUS_ADDRESS:-unix:path=/host/run/dbus/
 # Deprecated INITSYSTEM as of balenalib major changes
 # https://www.balena.io/docs/reference/base-images/base-images/#major-changes
 # ENV INITSYSTEM On
+# RUN [ "cross-build-start" ]
 
 # ADD S6 Overlay
 ARG S6_ARCH
@@ -104,5 +105,6 @@ VOLUME /etc/hostapd/
 VOLUME /etc/hapwizard/
 
 ENTRYPOINT /init
+# RUN [ "cross-build-end" ]
 
 CMD /etc/init.d/hapwizard foreground
