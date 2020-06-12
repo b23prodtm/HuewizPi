@@ -10,6 +10,7 @@ aliases:
           && apk del build-base \
           && rm -rf /var/cache/apk/*
         rm node_modules/balena-cloud || true
+        rm node_modules/balena-cli || true
         npm update
         npm link balena-cloud
         npm link balena-cli
