@@ -37,7 +37,7 @@ RUN apk update \
     php7-xmlwriter \
     php7-fpm \
     php7-zlib \
-    py-pip \
+    py3-pip \
     python3-dev \
     libffi-dev \
     openssl-dev \
@@ -56,6 +56,4 @@ RUN apk update \
 # Make sure the nginx and php-fpm7 (FASTCGI server) starts when system reboots
 # RUN rc-update add php-fpm7 default
 # RUN rc-service php-fpm7 start
-RUN LIBSODIUM_MAKE_ARGS=-j4 pip install docker-compose
-RUN docker-compose --version
 WORKDIR /var/www/html/

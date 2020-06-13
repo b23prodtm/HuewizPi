@@ -49,14 +49,15 @@ function install() {
   if [ -f /etc/init.d/networking ]; then
     :
   else
-    systemctl unmask "netplan-wpa-${PRIV_INT}.service"
+    systemctl unmask "netplan-wpa-${PRIV_INT}.service" hostapd
     systemctl daemon-reload
     systemctl enable "netplan-wpa-${PRIV_INT}.service"
   fi
   list_phy_net "state"
   sleep 2
   if [ -z "${CLIENT:-''}" ]; then
-    if ! systemctl enable hostapd isc-dhcp-server; then
+    systemctl enable hostapd
+    if ! systemctl enable isc-dhcp-server; then
       systemctl enable dnsmasq
     else
       systemctl enable systemd-resolved isc-dhcp-server6
@@ -66,14 +67,9 @@ function install() {
 function start() {
   list_phy_net
   if [ -f /etc/init.d/networking ]; then
-    # /etc/init.d/networking restart
-    nmcli networking off
-    sleep 2
     nmcli networking on
   else
-    systemctl unmask "netplan-wpa-${PRIV_INT}.service"
-    systemctl daemon-reload
-    netplan apply
+    netplan --debug apply
     systemctl start "netplan-wpa-${PRIV_INT}.service"
     dhclient -r "${WAN_INT}"
     dhclient "${WAN_INT}"
@@ -89,6 +85,11 @@ function start() {
   fi
 }
 function stop() {
+  if [ -f /etc/init.d/networking ]; then
+    # /etc/init.d/networking restart
+    nmcli networking off
+    sleep 2
+  fi
   if ! systemctl stop hostapd isc-dhcp-server; then
     systemctl stop dnsmasq
   else
@@ -119,14 +120,18 @@ case "$1" in
         log_daemon_msg "${BASH_SOURCE[0]} Will be stopped now..."
         stop
         ;;
-    restart|force-reload)
+    force-reload)
+        systemctl daemon-reload
+        restart
+        ;;
+    restart)
         $0 stop
         sleep 8
         $0 start
         ;;
     foreground)
-        log_daemon_msg "${BASH_SOURCE[0]} Read tcpdump of Hotspot Acces Point."
-        tcpdump -v -i "${PRIV_INT}"
+        log_daemon_msg "${BASH_SOURCE[0]} Listening at Hotspot Acces Point..."
+        tcpdump -v -i "${PRIV_INT}" -z "${2:-$USER}"
         ;;
     *)
         log_daemon_msg "${usage[@]}" >&2

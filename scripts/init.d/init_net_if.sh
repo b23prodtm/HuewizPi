@@ -26,12 +26,12 @@ nameservers_def="${PRIV_NETWORK}.1"
 nameservers6_def="${PRIV_NETWORK_IPV6}1"
 nameservers=''
 nameservers6=''
-NP_ORIG=/usr/share/netplan && sudo mkdir -p "$NP_ORIG"
-NP_CLOUD=/etc/cloud/cloud.cfg.d//99-disable-network-config.cfg && sudo mkdir -p "$(dirname "$NP_CLOUD")"
+NP_ORIG=/usr/share/netplan && mkdir -p "$NP_ORIG"
+NP_CLOUD=/etc/cloud/cloud.cfg.d//99-disable-network-config.cfg && mkdir -p "$(dirname "$NP_CLOUD")"
 NP_INIT=50-cloud-init.yaml
 slogger -st netplan "disable cloud-init"
 [ -f "/etc/netplan/$NP_INIT" ] && mv -fv "/etc/netplan/$NP$NP_INIT" "$NP_ORIG"
-echo -e "network: { config: disabled }" | sudo tee "${NP_CLOUD}"
+echo -e "network: { config: disabled }" > "${NP_CLOUD}"
 case "${WAN_INT}" in
   'eth'*)
     if [ -f /etc/init.d/networking ]; then
@@ -42,7 +42,7 @@ face lo inet loopback
 allow-hotplug ${WAN_INT}
 iface ${WAN_INT} inet dhcp
  network ${WAN_NETWORK}.0
-${MARKER_END}" | sudo tee /etc/network/interfaces
+${MARKER_END}" > /etc/network/interfaces
     else
       echo -e "${MARKER_BEGIN}
 network:
@@ -52,7 +52,7 @@ network:
     ${WAN_INT}:
       dhcp4: yes
       dhcp6: yes
-${MARKER_END}" | sudo tee /etc/netplan/$yaml
+${MARKER_END}" > /etc/netplan/$yaml
     fi
     ;;
   'wl'*);;
@@ -61,14 +61,14 @@ esac
 while [ "$#" -gt 0 ]; do case $1 in
   -r*|-R*)
     if [ -f /etc/init.d/networking ]; then
-      sudo sed -i.old -e "${MARKERS}d" /etc/network/interfaces
+      sed -i.old -e "${MARKERS}d" /etc/network/interfaces
     else
       # ubuntu server
       slogger -st netplan "move configuration to $NP_ORIG"
-      sudo mv -fv /etc/netplan/* $NP_ORIG
+      mv -fv /etc/netplan/* $NP_ORIG
       slogger -st netplan "reset configuration to cloud-init"
-      [ -f "$NP_ORIG/$NP_INIT" ] && sudo mv -fv "$NP_ORIG/$NP_INIT" /etc/netplan
-      sudo rm -fv "$NP_CLOUD"
+      [ -f "$NP_ORIG/$NP_INIT" ] && mv -fv "$NP_ORIG/$NP_INIT" /etc/netplan
+      rm -fv "$NP_CLOUD"
     fi
     return;;
   --dns)
@@ -83,7 +83,7 @@ while [ "$#" -gt 0 ]; do case $1 in
     shift
     if [ -f /etc/init.d/networking ]; then
       # shellcheck source=init_wpa_ctl.sh
-      source "${scriptsd}/init.d/init_wpa_ctl.sh $*"
+      "${scriptsd}/init.d/init_wpa_ctl.sh $*"
     else
       clientyaml="$(echo ${clientyaml} | cut -d. -f1)-${1}.yaml"
       slogger -st netplan "/etc/netplan/$clientyaml was created"
@@ -98,9 +98,9 @@ network:
       access-points:
         \"${2}\":
           password: \"${3}\"
-${MARKER_END}" | sudo tee "/etc/netplan/${clientyaml}"
-      sudo mkdir -p "/usr/lib/systemd/system/netplan-wpa-${1}.service.d"
-      printf '%s\n' "[Install]" "WantedBy=multi-user.target" | sudo tee "/usr/lib/systemd/system/netplan-wpa-${1}.service.d/10-multi-user.conf"
+${MARKER_END}" > "/etc/netplan/${clientyaml}"
+      mkdir -p "/usr/lib/systemd/system/netplan-wpa-${1}.service.d"
+      printf '%s\n' "[Install]" "WantedBy=multi-user.target" > "/usr/lib/systemd/system/netplan-wpa-${1}.service.d/10-multi-user.conf"
     fi
     shift 2
     ;;
@@ -119,10 +119,10 @@ iface br0 inet dhcp
  netmask 255.255.255.0
  nameservers $nameservers
 bridge_ports ${PRIV_INT} ${WAN_INT}
-${MARKER_END}" | sudo tee -a /etc/network/interfaces
+${MARKER_END}" >> /etc/network/interfaces
      slogger -st brctl "share the internet wireless over bridge"
-     sudo brctl addbr br0
-     sudo brctl addif br0 "${WAN_INT}" "${PRIV_INT}"
+     brctl addbr br0
+     brctl addif br0 "${WAN_INT}" "${PRIV_INT}"
    else
      # new 18.04 netplan server (DHCPd set to bridge)
      slogger -st netplan "/etc/netplan/$yaml was created"
@@ -137,7 +137,7 @@ ${MARKER_END}" | sudo tee -a /etc/network/interfaces
       interfaces:
         - ${PRIV_INT}
         - ${WAN_INT}
-${MARKER_END}" | sudo tee -a /etc/netplan/$yaml
+${MARKER_END}" >> "/etc/netplan/$yaml"
    fi;;
    *);;
 esac; shift; done
@@ -154,7 +154,7 @@ if [ -f /etc/init.d/networking ]; then
       'b'*|'g'*)
         export DEFAULT_WIFI_BAND="bg";;
     esac
-    if sudo python3 netman.py -t "hotspot" -i "${PRIV_INT}" -s "${PRIV_SSID}" --password="${PRIV_PAWD}"; then
+    if python3 "${scriptsd}/../library/src/netman.py" -t "hotspot" -i "${PRIV_INT}" -s "${PRIV_SSID}" --password="${PRIV_PAWD}"; then
       slogger -st netman " Success"
     else
       slogger -st netman " Fail"
@@ -162,11 +162,11 @@ if [ -f /etc/init.d/networking ]; then
 else
     slogger -st netplan "add wifi network class /etc/netplan/$clientyaml"
     # shellcheck disable=SC2154
-    [ -z "$CLIENT" ] && sudo sed -i.old "/password:/a\\
+    [ -z "$CLIENT" ] && sed -i.old "/password:/a\\
       addresses: [${PRIV_NETWORK}.1/${PRIV_NETWORK_MASKb}, '${PRIV_NETWORK_IPV6}1/${PRIV_NETWORK_MASKb6}']\\n\
       nameservers:\\n\
         addresses: [${nameservers},${nameservers6}]" "/etc/netplan/$clientyaml"
     # shellcheck disable=SC2154
-    [ -z "$CLIENT" ] && sudo sed -i.old "/${PRIV_INT}:/,/${MARKER_END}/s/yes/no/g" "/etc/netplan/$clientyaml"
+    [ -z "$CLIENT" ] && sed -i.old "/${PRIV_INT}:/,/${MARKER_END}/s/yes/no/g" "/etc/netplan/$clientyaml"
     grep -A8 "${PRIV_INT}" < "/etc/netplan/$clientyaml"
 fi

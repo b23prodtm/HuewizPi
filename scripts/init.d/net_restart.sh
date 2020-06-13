@@ -9,29 +9,24 @@ slogger -st reboot "to complete the Access Point installation, reboot the Raspbe
 if [ "$DEBIAN_FRONTEND" = 'noninteractive' ]; then
   REBOOT=N
 fi
-slogger -st init.d "init script's updated"
-sudo cp -f "${scriptsd}/init.d/hapwizard" /etc/init.d/hapwizard
-sudo mkdir -p /etc/hapwizard
-printf '%s\n' "PRIV_INT=${PRIV_INT}" "WAN_INT=${WAN_INT}" | sudo tee /etc/hapwizard/hapwizard.conf
-sudo chmod +x /etc/init.d/hapwizard
 slogger -st bash "profile boot script"
 bash -c "sed -i.old -e ${MARKERS}d /home/${SUDO_USER}/.bash_profile"
 [ -z "$CLIENT" ] && printf "%s\n" "${MARKER_BEGIN}" | tee -a "/home/$SUDO_USER/.bash_profile"
 # shellcheck source=../bash_profile
 [ -z "$CLIENT" ] && tee -a "/home/$SUDO_USER/.bash_profile" < "${scriptsd}/bash_profile"
 [ -z "$CLIENT" ] && printf "%s\n" "${MARKER_END}" | tee -a "/home/$SUDO_USER/.bash_profile"
-sudo systemctl daemon-reload
+systemctl daemon-reload
 slogger -st dpkg "installing dpkg auto_reboot.service"
 # shellcheck source=auto_reboot.sh
-source "${scriptsd}/init.d/auto_reboot.sh" install &
+"${scriptsd}/init.d/auto_reboot.sh" install &
 slogger -st ufw  "enable ip forwarding (internet connectivity)"
 # shellcheck source=init_ufw.sh
-[ -z "$CLIENT" ] && source "${scriptsd}/init.d/init_ufw.sh"
+[ -z "$CLIENT" ] && "${scriptsd}/init.d/init_ufw.sh"
 [ -z "$CLIENT" ] && slogger -st systemctl "restarting Access Point /home/$SUDO_USER"
 case $REBOOT in
-  'y'|'Y'*) sudo reboot;;
+  'y'|'Y'*) reboot;;
   *)
    # shellcheck disable=SC1090
-   if [ -z "$CLIENT" ]; then . "/home/$SUDO_USER/.bash_profile"; else sudo netplan try; fi
+   if [ -z "$CLIENT" ]; then . "/home/$SUDO_USER/.bash_profile"; else netplan try; fi
   ;;
 esac

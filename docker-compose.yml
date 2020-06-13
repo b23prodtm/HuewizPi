@@ -1,6 +1,6 @@
 version: '2'
 services:
-  hostap:
+  wifi-spot:
     network_mode: host
     restart: always
     build:
@@ -16,8 +16,8 @@ services:
     volumes:
       - hostapd:/etc/hostapd
       - hapwizard:/etc/hapwizard
-      - library:/usr/src/library
-  wifi-connect:
+      - wifi-connect:/usr/src/python-wifi-connect/
+  wifi-box:
     network_mode: host
     build:
       context: ./python-wifi-connect
@@ -30,8 +30,8 @@ services:
     ports:
       - "80:80"
     volumes:
-      - library:/usr/src/app/src
+      - wifi-connect:/usr/src/app/
 volumes:
   hostapd:
   hapwizard:
-  library:
+  wifi-connect:

@@ -65,7 +65,7 @@ slogger -st init_wpa_ctl "Add Wifi password access"
 [ -z "$password" ] && ssid=$(prompt_arrgs 1 'a Wifi passphrase' 'e.g. myWip+Swod')
 [ -z "$password" ] && exit 1
 slogger -st netman "set Wifi SSID connection"
-if sudo python3 netman.py -t "PASSWORD" -i "$INTERFACE" --ssid="${ssid}" --password="${password}"; then
+if python3 "${scriptsd}/../library/src/netman.py" -t "PASSWORD" -i "$INTERFACE" --ssid="${ssid}" --password="${password}"; then
   log_success_msg "netman set wifi connection"
 else
   log_success_msg "netman failed set wifi connection"

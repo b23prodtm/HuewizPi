@@ -39,12 +39,12 @@ ${MARKER_END}"
 }
 while [ "$#" -gt 0 ]; do case $1 in
   -r*|-R*)
-    sudo systemctl disable dnsmasq
-    sudo systemctl stop dnsmasq
-    sudo systemctl stop isc-dhcp-server
-    sudo systemctl stop isc-dhcp-server6
-    sudo systemctl disable isc-dhcp-server
-    sudo systemctl disable isc-dhcp-server6
+    systemctl disable dnsmasq
+    systemctl stop dnsmasq
+    systemctl stop isc-dhcp-server
+    systemctl stop isc-dhcp-server6
+    systemctl disable isc-dhcp-server
+    systemctl disable isc-dhcp-server6
     return;;
   -h*|--help)
     echo -e "${usage[0]}"
@@ -52,14 +52,14 @@ while [ "$#" -gt 0 ]; do case $1 in
   -l*|--leases*)
     lease_host=$2; lease_add=$3; lease=$(grep -C4 "$2" < /var/lib/dhcp/dhcpd.leases | grep -m1 "hardware ethernet" | awk -F' ' '{print $3}')
     [ -z "$3" ] && lease_add=${PRIV_RANGE_START}
-    [ -n "${lease}" ] && lease_blk "${PRIV_NETWORK}.${lease_add}" | sudo tee /tmp/input.dhcp.lease && sudo sed -i \
+    [ -n "${lease}" ] && lease_blk "${PRIV_NETWORK}.${lease_add}" > /tmp/input.dhcp.lease && sed -i \
 -e \$s/\}// -e \$r/tmp/input.dhcp.lease -e \$a\} \
 /etc/dhcp/dhcpd.conf && grep -B4 "fixed-address" < /etc/dhcp/dhcpd.conf
-    sudo systemctl restart isc-dhcp-server
-    [ -n "${lease}" ] && lease_blk "${PRIV_NETWORK_IPV6}${lease_add}" | sudo tee /tmp/input.dhcp.lease && sudo sed -i \
+    systemctl restart isc-dhcp-server
+    [ -n "${lease}" ] && lease_blk "${PRIV_NETWORK_IPV6}${lease_add}" > /tmp/input.dhcp.lease && sed -i \
 -e \$s/\}// -e \$r/tmp/input.dhcp.lease -e \$a\} \
 /etc/dhcp/dhcpd6.conf && grep -B4 "fixed-address" < /etc/dhcp/dhcpd6.conf
-    sudo systemctl restart isc-dhcp-server6
+    systemctl restart isc-dhcp-server6
     exit 0;;
   --dns)
     nameservers=$(nameservers "$nameservers" "$2")
@@ -90,7 +90,7 @@ ${routers}
 option subnet-mask ${PRIV_NETWORK_MASK};
 option broadcast-address ${PRIV_NETWORK}.255; # dhcpd
 range ${PRIV_NETWORK}.${PRIV_RANGE_START} ${PRIV_NETWORK}.${PRIV_RANGE_END};
-}" | sudo tee /etc/dhcp/dhcpd.conf
+}" > /etc/dhcp/dhcpd.conf
 # shellcheck disable=SC2154
 echo -e "option dhcp6.name-servers ${nameservers6};
 
@@ -102,17 +102,17 @@ subnet6 ${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} {
 authoritative;
 option dhcp6.domain-name \"wifi.localhost\";
 range6 ${PRIV_NETWORK_IPV6}${PRIV_RANGE_START} ${PRIV_NETWORK_IPV6}${PRIV_RANGE_END};
-}" | sudo tee /etc/dhcp/dhcpd6.conf
-sudo sed -i -e "s/INTERFACESv4=\".*\"/INTERFACESv4=\"${PRIV_INT}\"/" /etc/default/isc-dhcp-server
-sudo sed -i -e "s/INTERFACESv6=\".*\"/INTERFACESv6=\"${PRIV_INT}\"/" /etc/default/isc-dhcp-server
+}" > /etc/dhcp/dhcpd6.conf
+sed -i -e "s/INTERFACESv4=\".*\"/INTERFACESv4=\"${PRIV_INT}\"/" /etc/default/isc-dhcp-server
+sed -i -e "s/INTERFACESv6=\".*\"/INTERFACESv6=\"${PRIV_INT}\"/" /etc/default/isc-dhcp-server
 #delete empty strings '', and ''
-sudo sed -i -e s/\'\',//g -e s/\'\'//g /etc/dhcp/dhcpd6.conf
-sudo cat /etc/default/isc-dhcp-server
+sed -i -e s/\'\',//g -e s/\'\'//g /etc/dhcp/dhcpd6.conf
+cat /etc/default/isc-dhcp-server
 sleep 1
 slogger -st dhcpd "start DHCP server"
-sudo systemctl unmask isc-dhcp-server
-sudo systemctl enable isc-dhcp-server
-sudo systemctl start isc-dhcp-server
-sudo systemctl unmask isc-dhcp-server6
-sudo systemctl enable isc-dhcp-server6
-sudo systemctl start isc-dhcp-server6
+systemctl unmask isc-dhcp-server
+systemctl enable isc-dhcp-server
+systemctl start isc-dhcp-server
+systemctl unmask isc-dhcp-server6
+systemctl enable isc-dhcp-server6
+systemctl start isc-dhcp-server6

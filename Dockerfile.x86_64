@@ -54,15 +54,19 @@ ENV WAN_NETWORK 192.168.1
 ENV WAN_NETWORK_MASK 255.255.255.0
 ENV WAN_NETWORK_MASKb 24
 ENV WAN_INT wlan0
-ENV PRIV_SSID MyHotspot
-ENV PRIV_PASSWD 1passWoRd
+ARG AP_SSID
+ENV PRIV_SSID ${AP_SSID:-'MyHotspot'}
+ARG AP_PASSWORD
+ENV PRIV_PASSWD ${AP_PASSWORD:-'1passWoRd'}
 ENV PRIV_WIFI_MODE a
 ENV PRIV_WIFI_CTY FR
 ENV PRIV_WIFI_CHANNEL 36
 ENV DNS1 192.168.1.1
 ENV DNS2 8.8.8.8
-ENV WAN_SSID HomeWifi
-ENV WAN_PASSWD 1passWoRd
+ARG WIFI_SSID
+ENV WAN_SSID ${WIFI_SSID:-'HomeWifi'}
+ARG WIFI_PASSWORD
+ENV WAN_PASSWD ${WIFI_PASSWORD:-'1passWoRd'}
 ENV DNS1_IPV6 2001:4860:4860::8888
 ENV DNS2_IPV6 2001:4860:4860::8844
 ENV PRIV_RANGE_START 2
@@ -85,7 +89,8 @@ RUN \
 	 wpasupplicant \
 	 netplan \
 	 dnsmasq \
-	 python3 && \
+	 python3 \
+   tcpdump && \
  echo "**** cleanup ****" && \
  rm -rf \
 	/tmp/* \
@@ -99,7 +104,8 @@ WORKDIR /usr/src/
 
 COPY scripts/ scripts/
 COPY library/ library/
-RUN chmod g+xs scripts
+RUN chmod -R 4755 scripts library \
+  && cp scripts/init.d/hapwizard /etc/init.d/.
 
 VOLUME /etc/hostapd/
 VOLUME /etc/hapwizard/
