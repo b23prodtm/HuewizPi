@@ -100,4 +100,4 @@ RUN chmod g+xs /usr/bin/systemctl
 ENTRYPOINT /init
 # RUN [ "cross-build-end" ]
 
-CMD /etc/init.d/hapwizard foreground
+CMD /etc/init.d/hapwizard foreground 2>/dev/null
