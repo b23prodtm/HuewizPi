@@ -58,6 +58,7 @@ ${MARKER_END}" > /etc/netplan/$yaml
   'wl'*);;
   *);;
 esac
+RETURN=0
 while [ "$#" -gt 0 ]; do case $1 in
   -r*|-R*)
     if [ -f /etc/init.d/networking ]; then
@@ -70,7 +71,7 @@ while [ "$#" -gt 0 ]; do case $1 in
       [ -f "$NP_ORIG/$NP_INIT" ] && mv -fv "$NP_ORIG/$NP_INIT" /etc/netplan
       rm -fv "$NP_CLOUD"
     fi
-    return;;
+    RETURN=1;;
   --dns)
       nameservers_def=''
       nameservers=$(nameservers "$nameservers" "$2")
@@ -106,7 +107,7 @@ ${MARKER_END}" > "/etc/netplan/${clientyaml}"
     ;;
   -h*|--help)
     echo -e "${usage[0]}"
-    exit 1;;
+    exit 0;;
    -b*|--bridge)
    if [ -f /etc/init.d/networking ]; then
    # ubuntu < 18.04
@@ -141,32 +142,34 @@ ${MARKER_END}" >> "/etc/netplan/$yaml"
    fi;;
    *);;
 esac; shift; done
-nameservers=$(nameservers "$nameservers" "$nameservers_def")
-nameservers6=$(nameservers "$nameservers6" "'${nameservers6_def}'")
-if [ -f /etc/init.d/networking ]; then
-    slogger -st netman "add wifi network"
-    export DEFAULT_GATEWAY=${PRIV_NETWORK}.1
-    # shellcheck disable=SC2154
-    export DEFAULT_MASKb=${PRIV_NETWORK_MASKb}
-    case "${PRIV_WIFI_MODE}" in
-      'a'*)
-        export DEFAULT_WIFI_BAND="a";;
-      'b'*|'g'*)
-        export DEFAULT_WIFI_BAND="bg";;
-    esac
-    if python3 "${scriptsd}/../library/src/netman.py" -t "hotspot" -i "${PRIV_INT}" -s "${PRIV_SSID}" --password="${PRIV_PAWD}"; then
-      slogger -st netman " Success"
-    else
-      slogger -st netman " Fail"
-    fi
-else
-    slogger -st netplan "add wifi network class /etc/netplan/$clientyaml"
-    # shellcheck disable=SC2154
-    [ -z "$CLIENT" ] && sed -i.old "/password:/a\\
-      addresses: [${PRIV_NETWORK}.1/${PRIV_NETWORK_MASKb}, '${PRIV_NETWORK_IPV6}1/${PRIV_NETWORK_MASKb6}']\\n\
-      nameservers:\\n\
-        addresses: [${nameservers},${nameservers6}]" "/etc/netplan/$clientyaml"
-    # shellcheck disable=SC2154
-    [ -z "$CLIENT" ] && sed -i.old "/${PRIV_INT}:/,/${MARKER_END}/s/yes/no/g" "/etc/netplan/$clientyaml"
-    grep -A8 "${PRIV_INT}" < "/etc/netplan/$clientyaml"
+if [ "${RETURN}" = 0 ]; then
+  nameservers=$(nameservers "$nameservers" "$nameservers_def")
+  nameservers6=$(nameservers "$nameservers6" "'${nameservers6_def}'")
+  if [ -f /etc/init.d/networking ]; then
+      slogger -st netman "add wifi network"
+      export DEFAULT_GATEWAY=${PRIV_NETWORK}.1
+      # shellcheck disable=SC2154
+      export DEFAULT_MASKb=${PRIV_NETWORK_MASKb}
+      case "${PRIV_WIFI_MODE}" in
+        'a'*)
+          export DEFAULT_WIFI_BAND="a";;
+        'b'*|'g'*)
+          export DEFAULT_WIFI_BAND="bg";;
+      esac
+      if python3 "${scriptsd}/../library/src/netman.py" -t "hotspot" -i "${PRIV_INT}" -s "${PRIV_SSID}" --password="${PRIV_PAWD}"; then
+        slogger -st netman " Success"
+      else
+        slogger -st netman " Fail"
+      fi
+  else
+      slogger -st netplan "add wifi network class /etc/netplan/$clientyaml"
+      # shellcheck disable=SC2154
+      [ -z "$CLIENT" ] && sed -i.old "/password:/a\\
+        addresses: [${PRIV_NETWORK}.1/${PRIV_NETWORK_MASKb}, '${PRIV_NETWORK_IPV6}1/${PRIV_NETWORK_MASKb6}']\\n\
+        nameservers:\\n\
+          addresses: [${nameservers},${nameservers6}]" "/etc/netplan/$clientyaml"
+      # shellcheck disable=SC2154
+      [ -z "$CLIENT" ] && sed -i.old "/${PRIV_INT}:/,/${MARKER_END}/s/yes/no/g" "/etc/netplan/$clientyaml"
+      grep -A8 "${PRIV_INT}" < "/etc/netplan/$clientyaml"
+  fi
 fi

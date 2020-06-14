@@ -127,7 +127,7 @@ fragm_threshold=2346
 [ -z "$CLIENT" ] && chmod +x /etc/init.d/hapwizard
 [ -z "$CLIENT" ] && [ "$DEBIAN_FRONTEND" != 'noninteractive' ] && read -rp "Do you wish to install Bridge Mode \
 [PRESS ENTER TO START in Router mode now / no to use DNSMasq (old) / yes for Bridge mode] ?" MYNET_SHARING
-[ "$DEBIAN_FRONTEND" = 'noninteractive' ] && MYNET_SHARING='N'
+[ "$DEBIAN_FRONTEND" = 'noninteractive' ] && MYNET_SHARING='Y'
 function init_net_if() {
     case "$WAN_INT" in
       'eth'*)

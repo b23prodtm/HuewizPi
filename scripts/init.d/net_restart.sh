@@ -10,11 +10,11 @@ if [ "$DEBIAN_FRONTEND" = 'noninteractive' ]; then
   REBOOT=N
 fi
 slogger -st bash "profile boot script"
-bash -c "sed -i.old -e ${MARKERS}d /home/${SUDO_USER}/.bash_profile"
-[ -z "$CLIENT" ] && printf "%s\n" "${MARKER_BEGIN}" | tee -a "/home/$SUDO_USER/.bash_profile"
+[ -n "${SUDO_USER}" ] && bash -c "sed -i.old -e ${MARKERS}d /home/${SUDO_USER}/.bash_profile"
+[ -n "${SUDO_USER}" ] && [ -z "$CLIENT" ] && printf "%s\n" "${MARKER_BEGIN}" | tee -a "/home/$SUDO_USER/.bash_profile"
 # shellcheck source=../bash_profile
-[ -z "$CLIENT" ] && tee -a "/home/$SUDO_USER/.bash_profile" < "${scriptsd}/bash_profile"
-[ -z "$CLIENT" ] && printf "%s\n" "${MARKER_END}" | tee -a "/home/$SUDO_USER/.bash_profile"
+[ -n "${SUDO_USER}" ] && [ -z "$CLIENT" ] && tee -a "/home/$SUDO_USER/.bash_profile" < "${scriptsd}/bash_profile"
+[ -n "${SUDO_USER}" ] && [ -z "$CLIENT" ] && printf "%s\n" "${MARKER_END}" | tee -a "/home/$SUDO_USER/.bash_profile"
 systemctl daemon-reload
 slogger -st dpkg "installing dpkg auto_reboot.service"
 # shellcheck source=auto_reboot.sh

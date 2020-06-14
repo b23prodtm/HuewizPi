@@ -11,10 +11,10 @@ usage=("" \
 # https://github.com/koalaman/shellcheck/wiki/SC2207
 # shellcheck source=../deploy.sh
 mapfile -t dock < <(find "${work_dir}/../deployment/images" -name "Dockerfile.x86_64")
-[ "$#" -lt 1 ] && printf "Usage: $0 <repository>" && exit 0
+[ "$#" -lt 1 ] && printf "Usage: %s <repository>" "$0" && exit 0
 for d in "${dock[@]}"; do
-  dir=$(dirname $d)
-  docker_build "$dir" "." "$1/$(basename $dir)" "$(arch)"
+  dir=$(dirname "$d")
+  docker_build "$dir" "." "$1/$(basename "$dir")" "$(arch)"
 done
 sed -e "/custom_checkout:/s/\"\"/\"\/tmp\/_circleci_local_build_repo\"/g" "${work_dir}/config.yml" | circleci config process - > "${work_dir}/config-compat.yml"
 circleci local execute -c "${work_dir}/config-compat.yml" || echo -e "${usage[0]}"

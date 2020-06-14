@@ -1,5 +1,5 @@
 ARG PRIMARY_HUB
-FROM ${PRIMARY_HUB:-balenalib/intel-nuc-ubuntu-python:3.6-bionic}
+FROM ${PRIMARY_HUB:-balenalib/intel-nuc-ubuntu-node:bionic-build}
 ARG DBUS_SYSTEM_BUS_ADDRESS
 ENV DBUS_SYSTEM_BUS_ADDRESS ${DBUS_SYSTEM_BUS_ADDRESS:-unix:path=/host/run/dbus/system_bus_socket}
 
@@ -8,52 +8,18 @@ ENV DBUS_SYSTEM_BUS_ADDRESS ${DBUS_SYSTEM_BUS_ADDRESS:-unix:path=/host/run/dbus/
 # ENV INITSYSTEM On
 # RUN [ "cross-build-start" ]
 
-# ADD S6 Overlay
-ARG S6_ARCH
-ENV S6_ARCH ${S6_ARCH:-amd64}
-ARG S6_RELEASE
-ENV S6_RELEASE ${S6_RELEASE:-v2.0.0.1}
-ENV S6_REPO https://github.com/just-containers/s6-overlay/releases/download
-ADD ${S6_REPO}/${S6_RELEASE}/s6-overlay-${S6_ARCH}.tar.gz /tmp/
-ADD ${S6_REPO}/${S6_RELEASE}/s6-overlay-${S6_ARCH}.tar.gz.sig /tmp/
-RUN curl https://keybase.io/justcontainers/key.asc | gpg --import
-WORKDIR /
-RUN gunzip -c /tmp/s6-overlay-${S6_ARCH}.tar.gz | tar -xf - -C / && \
-    gpg --verify /tmp/s6-overlay-${S6_ARCH}.tar.gz.sig /tmp/s6-overlay-${S6_ARCH}.tar.gz
-# RUN tar xvzf /tmp/s6-overlay-${S6_ARCH}.tar.gz -C / --exclude="./bin" && \
-#    tar xvzf /tmp/s6-overlay-${S6_ARCH}.tar.gz -C /usr ./bin
-
-ENV UDEV on
-# Install Systemd
-RUN \
- echo "**** install systemd ****" && \
- apt-get update && \
- apt-get install -y \
- 		systemd \
-    systemd-sysv && \
- echo "**** cleanup ****" && \
- rm -rf \
-	/tmp/* \
-	/var/lib/apt/lists/* \
-	/var/tmp/*
-
-# docker systemctl replacement - allows to deploy to systemd-controlled containers without starting an actual systemd daemon (e.g. centos7, ubuntu16)
-# https://github.com/gdraheim/docker-systemctl-replacement/blob/master/INIT-DAEMON.md
-COPY scripts/systemctl3.py /usr/bin/systemctl
-RUN chmod g+xs /usr/bin/systemctl
-
 ENV DEBIAN_FRONTEND noninteractive
 ARG DEBUG
 ENV DEBUG ${DEBUG:-0}
 
-ENV PRIV_INT wlan1
+ENV PRIV_INT wlan0
 ENV PRIV_NETWORK 10.3.0
 ENV PRIV_NETWORK_MASK 255.255.255.0
 ENV PRIV_NETWORK_MASKb 24
 ENV WAN_NETWORK 192.168.1
 ENV WAN_NETWORK_MASK 255.255.255.0
 ENV WAN_NETWORK_MASKb 24
-ENV WAN_INT wlan0
+ENV WAN_INT wlan1
 ARG AP_SSID
 ENV PRIV_SSID ${AP_SSID:-'MyHotspot'}
 ARG AP_PASSWORD
@@ -78,8 +44,7 @@ ENV WAN_NETWORK_MASKb6 64
 
 RUN \
  echo "**** install runtime packages ****" && \
- apt-get update && \
- apt-get install -y \
+ install_packages \
    network-manager \
 	 hostapd \
 	 bridge-utils \
@@ -89,13 +54,10 @@ RUN \
 	 wpasupplicant \
 	 netplan \
 	 dnsmasq \
-	 python3 \
-   tcpdump && \
- echo "**** cleanup ****" && \
- rm -rf \
-	/tmp/* \
-	/var/lib/apt/lists/* \
-	/var/tmp/*
+   tcpdump \
+   python3 \
+   python3-pip \
+   python3-networkmanager
 
 # add local files
 COPY root/ /
@@ -107,8 +69,33 @@ COPY library/ library/
 RUN chmod -R 4755 scripts library \
   && cp scripts/init.d/hapwizard /etc/init.d/.
 
+# Python modules
+RUN python3 -m pip install --upgrade pip setuptools wheel \
+  && python3 -m pip install -r library/requirements.txt
+
+# Node node_modules
+RUN npm update && npm link balena-cloud
+
 VOLUME /etc/hostapd/
 VOLUME /etc/hapwizard/
+
+# ADD S6 Overlay
+ARG S6_ARCH
+ENV S6_ARCH ${S6_ARCH:-amd64}
+ARG S6_RELEASE
+ENV S6_RELEASE ${S6_RELEASE:-v2.0.0.1}
+ENV S6_REPO https://github.com/just-containers/s6-overlay/releases/download
+ADD ${S6_REPO}/${S6_RELEASE}/s6-overlay-${S6_ARCH}.tar.gz /tmp/
+ADD ${S6_REPO}/${S6_RELEASE}/s6-overlay-${S6_ARCH}.tar.gz.sig /tmp/
+RUN curl https://keybase.io/justcontainers/key.asc | gpg --import
+WORKDIR /
+RUN gunzip -c /tmp/s6-overlay-${S6_ARCH}.tar.gz | tar -xf - -C / && \
+    gpg --verify /tmp/s6-overlay-${S6_ARCH}.tar.gz.sig /tmp/s6-overlay-${S6_ARCH}.tar.gz
+
+ENV UDEV on
+
+ADD "https://raw.githubusercontent.com/b23prodtm/docker-systemctl-replacement/master/files/docker/systemctl3.py" /usr/bin/systemctl
+RUN chmod g+xs /usr/bin/systemctl
 
 ENTRYPOINT /init
 # RUN [ "cross-build-end" ]
