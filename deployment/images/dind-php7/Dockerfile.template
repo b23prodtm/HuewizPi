@@ -47,6 +47,11 @@ RUN apk update \
     make \
     mariadb-client \
     mariadb-connector-c \
+    \
+    python3 \
+    git \
+    make \
+    g++ \
     && apk del build-base \
     && rm -rf /var/cache/apk/*
 # Make sure the nginx and php-fpm7 (FASTCGI server) starts when system reboots
