@@ -84,7 +84,7 @@ while [ "$#" -gt 0 ]; do case $1 in
     shift
     if [ -f /etc/init.d/networking ]; then
       # shellcheck source=init_wpa_ctl.sh
-      "${scriptsd}/init.d/init_wpa_ctl.sh $*"
+      "${scriptsd}/init.d/init_wpa_ctl.sh" "$@"
     else
       clientyaml="$(echo ${clientyaml} | cut -d. -f1)-${1}.yaml"
       slogger -st netplan "/etc/netplan/$clientyaml was created"
