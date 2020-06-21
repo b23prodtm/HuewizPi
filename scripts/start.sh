@@ -143,7 +143,7 @@ function init_net_if() {
         ;;
     esac
 }
-if [ -z "$CLIENT" ]; then case $MYNET_SHARING in
+if [ -z "$CLIENT" ]; then systemctl unmask hostapd; case $MYNET_SHARING in
 #
 # Bridge Mode
 #

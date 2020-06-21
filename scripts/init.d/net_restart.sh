@@ -22,11 +22,13 @@ slogger -st dpkg "installing dpkg auto_reboot.service"
 slogger -st ufw  "enable ip forwarding (internet connectivity)"
 # shellcheck source=init_ufw.sh
 [ -z "$CLIENT" ] && "${scriptsd}/init.d/init_ufw.sh"
-[ -z "$CLIENT" ] && slogger -st systemctl "restarting Access Point /home/$SUDO_USER"
+[ -n "${SUDO_USER}" ] && [ -z "$CLIENT" ] && slogger -st systemctl "restarting Access Point /home/$SUDO_USER"
 case $REBOOT in
   'y'|'Y'*) reboot;;
   *)
-   # shellcheck disable=SC1090
-   if [ -z "$CLIENT" ]; then . "/home/$SUDO_USER/.bash_profile"; else netplan try; fi
+    # shellcheck disable=SC1090
+    if [ -n "${SUDO_USER}" ]; then
+      if [ -z "$CLIENT" ]; then . "/home/$SUDO_USER/.bash_profile"; else netplan try; fi
+    fi
   ;;
 esac

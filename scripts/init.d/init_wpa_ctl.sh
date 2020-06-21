@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 usage=("" \
 "Usage: $0 [interface] <ssid> <passphrase>" \
+"" \
+"Obsolete script, use instead ./init_net_if.sh --wifi [wl*] <ssid> <passphrase>" \
 "")
 [ "$#" -lt 2 ] && printf "%s\n" "${usage[0]}"
 [ -z "${scriptsd:-}" ] && scriptsd="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
 banner=("" "[$0] BUILD RUNNING ${BASH_SOURCE[0]}" ""); printf "%s\n" "${banner[@]}"
 [ ! -f "${scriptsd}/../configure" ] && bash -c "python ${scriptsd}/../library/configure.py $*"
 # shellcheck disable=SC1090
-source "${scriptsd}/../configure"
+. "${scriptsd}/../configure"
 function cfrm_act () {
   def_go=$2
   y='y'
@@ -33,12 +35,12 @@ function prompt_arrgs () {
     desc=$2
     desc_precise=$3
     while [[ -z $ARRGS ]]; do
-    	read -rp "
+      read -rp "
   Please type in $desc...: (CTRL-C to exit) " -a arrgs
-    	if [[ ${#arrgs[@]} -ge $size ]]; then
-      	if [[ $(cfrm_act "you've entered $desc ${arrgs[0]} ${arrgs[1]} ${arrgs[2]}.." 'n') ]]; then
-      		ARRGS="${arrgs[*]}"
-      	fi
+      if [[ ${#arrgs[@]} -ge $size ]]; then
+        if [[ $(cfrm_act "you've entered $desc ${arrgs[0]} ${arrgs[1]} ${arrgs[2]}.." 'n') ]]; then
+          ARRGS="${arrgs[*]}"
+        fi
       else
           echo -e "
   Enter $size values : $desc $desc_precise"
@@ -53,7 +55,7 @@ password=''
 INTERFACE='wlan0'
 while [ "$#" -gt 0 ]; do case $1 in
   wl*)
-    INTERFACE=$1;;
+    INTERFACE="$1";;
   *)
     ssid="$1"
     password="$2"
@@ -62,7 +64,7 @@ esac; shift; done
 slogger -st init_wpa_ctl "Add Wifi password access"
 [ -z "$ssid" ] && ssid=$(prompt_arrgs 1 'a Wifi SSID' 'e.g. MyWifiNetwork')
 [ -z "$ssid" ] && exit 1
-[ -z "$password" ] && ssid=$(prompt_arrgs 1 'a Wifi passphrase' 'e.g. myWip+Swod')
+[ -z "$password" ] && password=$(prompt_arrgs 1 'a Wifi passphrase' 'e.g. myWip+Swod')
 [ -z "$password" ] && exit 1
 slogger -st netman "set Wifi SSID connection"
 if python3 "${scriptsd}/../library/src/netman.py" -t "PASSWORD" -i "$INTERFACE" --ssid="${ssid}" --password="${password}"; then

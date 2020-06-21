@@ -7,10 +7,7 @@ _term() {
 
 trap _term SIGTERM
 
-/etc/init.d/hapwizard install \
-&& /etc/init.d/hapwizard start
-
-# s6-setuidgid abc /etc/init.d/hapwizard foreground &
-/etc/init.d/hapwizard foreground &
+# s6-setuidgid abc /etc/init.d/hapwizard start &
+/etc/init.d/hapwizard start &
 
 wait

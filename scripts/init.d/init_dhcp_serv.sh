@@ -22,7 +22,7 @@ usage=("" \
 banner=("" "[$0] BUILD RUNNING ${BASH_SOURCE[0]}" ""); printf "%s\n" "${banner[@]}"
 [ ! -f "${scriptsd}/../configure" ] && bash -c "python ${scriptsd}/../library/configure.py $*"
 # shellcheck disable=SC1090
-source "${scriptsd}/../configure"
+. "${scriptsd}/../configure"
 # shellcheck source=../dns-lookup.sh
 . "${scriptsd}/dns-lookup.sh" || true
 routers="option routers ${PRIV_NETWORK}.1; #hostapd ${PRIV_INT}"

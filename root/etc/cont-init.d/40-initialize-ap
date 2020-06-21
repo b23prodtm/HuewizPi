@@ -13,3 +13,5 @@ exec scripts/start.sh "$PRIV_INT" \
 "${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6}" \
 "${WAN_NETWORK_IPV6}0/${WAN_NETWORK_MASKb6}" \
 "$DNS1_IPV6" "$DNS2_IPV6"
+
+/etc/init.d/hapwizard install

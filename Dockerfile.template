@@ -52,7 +52,7 @@ RUN \
 	 iptables \
 	 ufw \
 	 wpasupplicant \
-	 netplan \
+	 netplan.io \
 	 dnsmasq \
    tcpdump \
    python3 \
@@ -94,10 +94,10 @@ RUN gunzip -c /tmp/s6-overlay-${S6_ARCH}.tar.gz | tar -xf - -C / && \
 
 ENV UDEV on
 
-ADD "https://raw.githubusercontent.com/b23prodtm/docker-systemctl-replacement/master/files/docker/systemctl3.py" /usr/bin/systemctl
-RUN chmod g+xs /usr/bin/systemctl
+ADD "https://raw.githubusercontent.com/b23prodtm/docker-systemctl-replacement/master/files/docker/systemctl3.py" /bin/systemctl
+RUN chmod g+xs /bin/systemctl
 
 ENTRYPOINT /init
 # RUN [ "cross-build-end" ]
 
-CMD /etc/init.d/hapwizard foreground 2>/dev/null
+CMD tcpdump -v -i ${PRIV_INT} -z ${$USER} 2>/dev/null
