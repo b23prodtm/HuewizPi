@@ -63,9 +63,9 @@ if [ "${RETURN}" = 0 ]; then
   slogger -st ufw "allow ${PRIV_NETWORK}.0"
   ufw allow from "${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb}"
   ufw allow from "${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6}"
-  slogger -st "ufw Balena makes use of the following ports:"
+  slogger -st ufw "Balena makes use of the following ports:"
   ufw allow https
   ufw allow ntp
   ufw allow 53
-  ufw --force enable
+  ufw --force enable || log_warning_msg "Modeprobe failed, reboot before to do ufw-init."
 fi

@@ -126,35 +126,38 @@ def format_argv(var):
     return var
 
 
-def main(argv):
-    parse_args(argv)
-    while myenv["PRIV_SSID"] == "":
-        myenv["PRIV_SSID"] = input("Please set a name for the Wifi Network: ")
-    while len(myenv["PRIV_PASSWD"]) < 8 or len(myenv["PRIV_PASSWD"]) > 63:
-        text = "%s password (8..63 chars): " % myenv["PRIV_SSID"]
-        myenv["PRIV_PASSWD"] = input(text)
-    while myenv["PRIV_WIFI_MODE"] not in ['a', 'b', 'g']:
+def panel_wifi(pf="PRIV_"):
+    while myenv["%sSSID" % pf] == "":
+        text = "Please set a name for the Wifi Network: "
+        myenv["%sSSID" % pf] = input(text)
+    while len(myenv["%sPASSWD" % pf]) < 8 or len(myenv["%sPASSWD" % pf]) > 63:
+        text = "%s password (8..63 chars): " % myenv["%sSSID"]
+        myenv["%sPASSWD" % pf] = input(text)
+    while myenv["%sWIFI_MODE" % pf] not in ['a', 'b', 'g']:
         text = "(a = IEEE 802.11ac, g = IEEE 802.11n; b = IEEE 802.11b) [a]"
-        myenv["PRIV_WIFI_MODE"] = input("WIFI mode %s: " % text)
-        if myenv["PRIV_WIFI_MODE"] == "":
-            myenv["PRIV_WIFI_MODE"] = 'a'
-    while myenv["PRIV_WIFI_CTY"] == "":
+        myenv["%sWIFI_MODE" % pf] = input("WIFI mode %s: " % text)
+        if myenv["%sWIFI_MODE" % pf] == "":
+            myenv["%sWIFI_MODE" % pf] = 'a'
+    while myenv["%sWIFI_CTY" % pf] == "":
         cty_code = re.match(".*_([A-Z]*)", lc.getlocale()[0]).group(1)
         if not cty_code:
             cty_code = re.match("[A-Z]*", lc.getlocale()).group()
         text = "Country code to use [%s]: " % cty_code
-        myenv["PRIV_WIFI_CTY"] = input(text)
-        if myenv["PRIV_WIFI_CTY"] == "":
-            myenv["PRIV_WIFI_CTY"] = cty_code
-    while myenv["PRIV_WIFI_CHANNEL"] == "":
+        myenv["%sWIFI_CTY" % pf] = input(text)
+        if myenv["%sWIFI_CTY" % pf] == "":
+            myenv["%sWIFI_CTY" % pf] = cty_code
+    while myenv["%sWIFI_CHANNEL" % pf] == "":
         text = ['0 = ACS tuning',
                 '36,40,..,140 = 5GHz (US,EU)',
                 '149,153,161,165 = 5Ghz (US,CN)',
                 '1-14 = 2,4Ghz']
-        s = ', '
-        myenv["PRIV_WIFI_CHANNEL"] = input('Channel (%s) [0]:' % s.join(text))
-        if myenv["PRIV_WIFI_CHANNEL"] == "":
-            myenv["PRIV_WIFI_CHANNEL"] = "0"
+        text = ', '.join(text)
+        myenv["%sWIFI_CHANNEL" % pf] = input('Channel (%s) [0]:' % text)
+        if myenv["%sWIFI_CHANNEL" % pf] == "":
+            myenv["%sWIFI_CHANNEL" % pf] = "0"
+
+
+def panel_dns():
     while myenv["DNS1"] == "":
         dns1 = input("DNS server [ENTER = %s]: " % str(defdns1))
         try:
@@ -165,15 +168,17 @@ def main(argv):
         except ValueError as err:
             print("Oops! Please set a valid IPv4 address".format(err))
             sys.exit(1)
-    wl = re.compile("wl.*");
-    if wl.match(myenv["WAN_INT"]):
-        while myenv["WAN_SSID"] == "":
-            myenv["WAN_SSID"] = input("%s SSID: " % myenv["WAN_INT"])
-        while len(myenv["WAN_PASSWD"]) < 8 or len(myenv["WAN_PASSWD"]) > 63:
-            text = "%s password (8..63 chars): " % myenv["WAN_SSID"]
-            myenv["WAN_PASSWD"] = input(text)
-    os.environ.update(myenv)
-    write_exports(myenv)
+
+
+def panel_wan(pf="WAN_"):
+    wl = re.compile("wl.*")
+    if wl.match(myenv["%sINT" % pf]):
+        while myenv["%sSSID" % pf] == "":
+            myenv["%sSSID" % pf] = input("%s SSID: " % myenv["%sINT" % pf])
+        plen = len(myenv["%sPASSWD" % pf])
+        while plen < 8 or plen > 63:
+            text = "%s password (8..63 chars): " % myenv["%sSSID" % pf]
+            myenv["%sPASSWD" % pf] = input(text)
 
 
 def write_exports(envdict):
@@ -192,6 +197,15 @@ def write_exports(envdict):
     f.write("}\n")
     f.close()
     os.chmod(path, 0o755)
+
+
+def main(argv):
+    parse_args(argv)
+    panel_wifi()
+    panel_dns()
+    panel_wan()
+    os.environ.update(myenv)
+    write_exports(myenv)
 
 
 if __name__ == '__main__':

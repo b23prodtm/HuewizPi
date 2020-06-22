@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-auto_reboot . "$@"
+auto_reboot "$@"

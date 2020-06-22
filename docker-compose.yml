@@ -17,6 +17,9 @@ services:
       - hostapd:/etc/hostapd
       - hapwizard:/etc/hapwizard
       - wifi-connect:/usr/src/python-wifi-connect/
+      - netplan:/etc/netplan
+    depends_on:
+      - wifi-box
   wifi-box:
     network_mode: host
     build:
@@ -35,3 +38,4 @@ volumes:
   hostapd:
   hapwizard:
   wifi-connect:
+  netplan:

@@ -18,7 +18,7 @@ SVC_NAME=hapwizard
 DAEMON_SBIN=/usr/sbin/tcpdump
 DAEMON_CF="/etc/$SVC_NAME/$SVC_NAME.conf"
 DAEMON_SVC="/usr/lib/systemd/system/$SVC_NAME.service.d/"
-PIDFILE=/run/hapwizard.pid
+PIDFILE="/run/$SVC_NAME.pid"
 DESC="Start a Host Access point"
 # shellcheck disable=SC1091
 . /lib/lsb/init-functions
@@ -81,8 +81,20 @@ function start() {
       systemctl start systemd-resolved isc-dhcp-server6
     fi
   fi
+  "$DAEMON_SBIN" "$DAEMON_OPTS" &
+  echo $! > "$PIDFILE"
+}
+function status() {
+  if [ -e "$PIDFILE" ]; then
+    echo "$SVC_NAME is running, pid=$(cat "$PIDFILE")"
+  else
+    echo "$SVC_NAME is NOT running"
+    exit 1
+  fi
 }
 function stop() {
+  kill "$(cat "$PIDFILE")"
+  rm "$PIDFILE"
   if ! systemctl stop hostapd isc-dhcp-server; then
     systemctl stop dnsmasq
   else
@@ -108,33 +120,22 @@ case "$1" in
     start)
         log_daemon_msg "Starting $DESC" "${SVC_NAME}"
         start
-        start-stop-daemon --start --oknodo --quiet --exec "$DAEMON_SBIN" \
-               --pidfile "$PIDFILE" -- $DAEMON_OPTS >/dev/null
         log_end_msg "$?"
         ;;
     stop)
         log_daemon_msg "Stopping $DESC" "${SVC_NAME}"
         stop
-        start-stop-daemon --stop --oknodo --quiet --exec "$DAEMON_SBIN" \
-               --pidfile "$PIDFILE"
         log_end_msg "$?"
         ;;
-    reload)
-        log_daemon_msg "Reloading $DESC" "${SVC_NAME}"
-        start-stop-daemon --stop --signal HUP --exec "$DAEMON_SBIN" \
-                --pidfile "$PIDFILE"
-        log_end_msg "$?"
-        ;;
-    restart|force-reload)
+    reload|restart|force-reload)
         $0 stop
         sleep 8
         $0 start
         ;;
     status)
-        status_of_proc "$DAEMON_SBIN" "${SVC_NAME}"
         log_daemon_msg "${SVC_NAME} Read Hotspot Access Point status..."
         systemctl status hapwizard hostapd isc-dhcp-server dnsmasq systemd-resolved
-        exit $?
+        status
         ;;
     *)
         log_daemon_msg "${usage[@]}" >&2
