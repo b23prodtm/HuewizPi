@@ -12,6 +12,13 @@ banner=("" "[$0] BUILD RUNNING ${BASH_SOURCE[0]}" ""); printf "%s\n" "${banner[@
 cp -f "${scriptsd}"/../backup/etc/ufw/before.rules /etc/ufw/before.rules
 RETURN=0
 while [ "$#" -gt 0 ]; do case $1 in
+  -0|--legacy)
+    slogger -st ufw "Switching to the legacy version"
+    update-alternatives --set iptables /usr/sbin/iptables-legacy
+    update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+    update-alternatives --set arptables /usr/sbin/arptables-legacy
+    update-alternatives --set ebtables /usr/sbin/ebtables-legacy
+    ;;
   -r*|-R*)
     sed -i -e "${MARKERS}d" /etc/ufw/before.rules
     ufw disable

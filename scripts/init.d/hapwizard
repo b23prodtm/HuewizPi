@@ -34,7 +34,7 @@ for cnf in $DAEMON_CF; do
   # shellcheck disable=SC1090
   . "$cnf"
 done
-DAEMON_OPTS="-v -i ${PRIV_INT} -z ${2:-$USER}"
+DAEMON_OPTS="-v -i ${PRIV_INT}"
 
 [ -z "${scriptsd:-}" ] && scriptsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
