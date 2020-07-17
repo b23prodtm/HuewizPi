@@ -143,7 +143,7 @@ function init_net_if() {
         ;;
     esac
 }
-if [ -z "$CLIENT" ]; then systemctl unmask hostapd; case $MYNET_SHARING in
+if [ -z "$CLIENT" ]; then systemctl unmask hostapd; case "$MYNET_SHARING" in
 #
 # Bridge Mode
 #
@@ -207,4 +207,4 @@ else
   "${scriptsd}/init.d/init_net_if.sh" --wifi "$PRIV_INT" "$PRIV_SSID" "$PRIV_PASSWD"
 fi
 # shellcheck source=init.d/net_restart.sh
-"${scriptsd}/init.d/net_restart.sh" "$CLIENT"
+[ "$MYNET_SHARING" != 'Y' ] && "${scriptsd}/init.d/net_restart.sh" "$CLIENT"

@@ -5,14 +5,14 @@ services:
     restart: always
     build:
       context: .
-      dockerfile: Dockerfile.armhf
-    image: betothreeprod/hapwizpy-intel-nuc
+      dockerfile: Dockerfile.template
+    image: betothreeprod/hapwizpy-%%BALENA_MACHINE_NAME%%
     env_file:
       - common.env
       - .env
     privileged: true
     labels:
-      io.balena.features.dbus: 1
+      io.balena.features.dbus: "1"
     volumes:
       - hostapd:/etc/hostapd
       - hapwizard:/etc/hapwizard
@@ -20,15 +20,17 @@ services:
       - netplan:/etc/netplan
     depends_on:
       - wifi-box
+    cap_add:
+      - ALL
   wifi-box:
     network_mode: host
     build:
       context: ./python-wifi-connect
-      dockerfile: Dockerfile.armhf
-    image: betothreeprod/python-wifi-connect-intel-nuc
+      dockerfile: Dockerfile.template
+    image: betothreeprod/python-wifi-connect-%%BALENA_MACHINE_NAME%%
     labels:
-      io.balena.features.dbus: 1
-      io.balena.features.supervisor-api: 1
+      io.balena.features.dbus: "1"
+      io.balena.features.supervisor-api: "1"
     privileged: true
     ports:
       - "80:80"
