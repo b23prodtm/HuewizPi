@@ -1,74 +1,38 @@
 ARG PRIMARY_HUB
-FROM ${PRIMARY_HUB:-lsiobase/ubuntu:bionic}
+FROM ${PRIMARY_HUB:-balenalib/intel-nuc-ubuntu-node:bionic-build}
 ARG DBUS_SYSTEM_BUS_ADDRESS
 ENV DBUS_SYSTEM_BUS_ADDRESS ${DBUS_SYSTEM_BUS_ADDRESS:-unix:path=/host/run/dbus/system_bus_socket}
 
 # Deprecated INITSYSTEM as of balenalib major changes
 # https://www.balena.io/docs/reference/base-images/base-images/#major-changes
 # ENV INITSYSTEM On
-ENV UDEV on
-# Install Systemd
-RUN \
- echo "**** install systemd ****" && \
- apt-get update && \
- apt-get install -y \
- 		systemd \
-    systemd-sysv && \
- echo "**** cleanup ****" && \
- rm -rf \
-	/tmp/* \
-	/var/lib/apt/lists/* \
-	/var/tmp/*
-
-# add local files
-COPY root/ /
-# ENV container docker
-
-# We never want these to run in a container
-# Feel free to edit the list but this is the one we used
-# RUN systemctl mask \
-#    dev-hugepages.mount \
-#    sys-fs-fuse-connections.mount \
-#    sys-kernel-config.mount \
-#\
-#    display-manager.service \
-#    getty@.service \
-#    systemd-logind.service \
-#    systemd-remount-fs.service \
-#\
-#    getty.target \
-#    graphical.target \
-#    kmod-static-nodes.service
-
-# COPY scripts/entry.sh /usr/bin/entry.sh
-# COPY scripts/balena.service /etc/systemd/system/balena.service
-
-# docker systemctl replacement - allows to deploy to systemd-controlled containers without starting an actual systemd daemon (e.g. centos7, ubuntu16)
-# https://github.com/gdraheim/docker-systemctl-replacement/blob/master/INIT-DAEMON.md
-COPY scripts/systemctl3.py /usr/bin/systemctl
-RUN chmod g+xs /usr/bin/systemctl
+# RUN [ "cross-build-start" ]
 
 ENV DEBIAN_FRONTEND noninteractive
 ARG DEBUG
 ENV DEBUG ${DEBUG:-0}
 
-ENV PRIV_INT wlan1
-ENV PRIV_NETWORK 10.233.2
+ENV PRIV_INT wlan0
+ENV PRIV_NETWORK 10.3.0
 ENV PRIV_NETWORK_MASK 255.255.255.0
 ENV PRIV_NETWORK_MASKb 24
-ENV WAN_NETWORK 10.233.1
+ENV WAN_NETWORK 192.168.1
 ENV WAN_NETWORK_MASK 255.255.255.0
 ENV WAN_NETWORK_MASKb 24
-ENV WAN_INT wlan0
-ENV PRIV_SSID MyHotspot
-ENV PRIV_PASSWD 1passWoRd
+ENV WAN_INT wlan1
+ARG AP_SSID
+ENV PRIV_SSID ${AP_SSID:-'MyHotspot'}
+ARG AP_PASSWORD
+ENV PRIV_PASSWD ${AP_PASSWORD:-'1passWoRd'}
 ENV PRIV_WIFI_MODE a
 ENV PRIV_WIFI_CTY FR
 ENV PRIV_WIFI_CHANNEL 36
 ENV DNS1 192.168.1.1
 ENV DNS2 8.8.8.8
-ENV WAN_SSID HomeWifi
-ENV WAN_PASSWD 1passWoRd
+ARG WIFI_SSID
+ENV WAN_SSID ${WIFI_SSID:-'HomeWifi'}
+ARG WIFI_PASSWORD
+ENV WAN_PASSWD ${WIFI_PASSWORD:-'1passWoRd'}
 ENV DNS1_IPV6 2001:4860:4860::8888
 ENV DNS2_IPV6 2001:4860:4860::8844
 ENV PRIV_RANGE_START 2
@@ -80,27 +44,60 @@ ENV WAN_NETWORK_MASKb6 64
 
 RUN \
  echo "**** install runtime packages ****" && \
- apt-get update && \
- apt-get install -y \
+ install_packages \
+   network-manager \
 	 hostapd \
 	 bridge-utils \
 	 isc-dhcp-server \
 	 iptables \
 	 ufw \
 	 wpasupplicant \
-	 netplan \
+	 netplan.io \
 	 dnsmasq \
-	 python3 && \
- echo "**** cleanup ****" && \
- rm -rf \
-	/tmp/* \
-	/var/lib/apt/lists/* \
-	/var/tmp/*
+   tcpdump \
+   python3 \
+   python3-pip \
+   python3-networkmanager
+
+# add local files
+COPY root/ /
 
 WORKDIR /usr/src/
 
 COPY scripts/ scripts/
 COPY library/ library/
-RUN chmod g+xs scripts
+RUN chmod -R 4755 scripts library \
+  && cp scripts/init.d/hapwizard /etc/init.d/.
+
+# Python modules
+RUN python3 -m pip install --upgrade pip setuptools wheel \
+  && python3 -m pip install -r library/requirements.txt
+
+# Node node_modules
+RUN npm update && npm link balena-cloud
 
 VOLUME /etc/hostapd/
+VOLUME /etc/hapwizard/
+
+# ADD S6 Overlay
+ARG S6_ARCH
+ENV S6_ARCH ${S6_ARCH:-amd64}
+ARG S6_RELEASE
+ENV S6_RELEASE ${S6_RELEASE:-v2.0.0.1}
+ENV S6_REPO https://github.com/just-containers/s6-overlay/releases/download
+ADD ${S6_REPO}/${S6_RELEASE}/s6-overlay-${S6_ARCH}.tar.gz /tmp/
+ADD ${S6_REPO}/${S6_RELEASE}/s6-overlay-${S6_ARCH}.tar.gz.sig /tmp/
+RUN curl https://keybase.io/justcontainers/key.asc | gpg --import
+WORKDIR /
+RUN gunzip -c /tmp/s6-overlay-${S6_ARCH}.tar.gz | tar -xf - -C / && \
+    gpg --verify /tmp/s6-overlay-${S6_ARCH}.tar.gz.sig /tmp/s6-overlay-${S6_ARCH}.tar.gz
+
+ENV UDEV on
+
+ADD "https://raw.githubusercontent.com/b23prodtm/docker-systemctl-replacement/master/files/docker/systemctl3.py" /bin/systemctl
+RUN chmod g+xs /bin/systemctl
+
+ENTRYPOINT /init
+# RUN [ "cross-build-end" ]
+
+CMD tcpdump -v -i ${PRIV_INT} -z ${$USER} 2>/dev/null

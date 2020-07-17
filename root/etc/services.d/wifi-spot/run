@@ -1,0 +1,13 @@
+#!/usr/bin/with-contenv bash
+# shellcheck shell=bash
+_term() {
+  echo "Caught SIGTERM signal!"
+  /etc/init.d/hapwizard stop
+}
+
+trap _term SIGTERM
+
+# s6-setuidgid abc /etc/init.d/hapwizard start &
+/etc/init.d/hapwizard start &
+
+wait

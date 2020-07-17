@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+
+### BEGIN INIT INFO
+# Provides:          HAP Wizard
+# Required-Start:
+# Required-Stop:
+# Should-Start:
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: Hostapd Wizard Service
+# Description:       Intended to start a Hotspot on system startup.
+### END INIT INFO
+
+set -eu
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+SVC_NAME=hapwizard
+DAEMON_SBIN=/usr/sbin/tcpdump
+DAEMON_CF="/etc/$SVC_NAME/$SVC_NAME.conf"
+DAEMON_SVC="/usr/lib/systemd/system/$SVC_NAME.service.d/"
+PIDFILE="/run/$SVC_NAME.pid"
+DESC="Start a Host Access point"
+# shellcheck disable=SC1091
+. /lib/lsb/init-functions
+
+[ -f $DAEMON_CF ] || mkdir -p "$(dirname $DAEMON_CF)"
+[ -f $DAEMON_CF ] || touch "$DAEMON_CF"
+[ -d $DAEMON_SVC ] || mkdir -p "$DAEMON_SVC"
+
+banner=("" "[services.d] $DAEMON_SVC" ""); log_daemon_msg "%s\n" "${banner[@]}"
+
+DAEMON_CF="$DAEMON_CF $(find "$DAEMON_SVC" -name "*.conf")"
+for cnf in $DAEMON_CF; do
+  # shellcheck disable=SC1090
+  . "$cnf"
+done
+DAEMON_OPTS="-v -i ${PRIV_INT}"
+
+[ -z "${scriptsd:-}" ] && scriptsd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+usage=("" \
+"Usage: $0 {start|stop|status|restart|fore-reload|install|uninstall}" \
+"" \
+"Definition: Intended to start a Hotspot Access point on system startup." \
+"")
+
+function list_phy_net() {
+  filter="state UP"
+  [ "$#" -gt 0 ] && filter=$1
+  # list physical network ip
+  ip link show | grep "$filter" | grep qlen | awk '{ print $2 }' | cut -d: -f1 | xargs
+}
+function install() {
+  systemctl unmask hostapd isc-dhcp-server \
+  systemd-resolved "netplan-wpa-${PRIV_INT}"
+  systemctl daemon-reload
+  systemctl enable "netplan-wpa-${PRIV_INT}"
+  list_phy_net "state"
+  sleep 2
+  if [ -z "${CLIENT:-}" ]; then
+    systemctl enable hostapd
+    if ! systemctl enable isc-dhcp-server; then
+      systemctl enable dnsmasq
+    else
+      systemctl enable systemd-resolved isc-dhcp-server6
+    fi
+  fi
+}
+function start() {
+  list_phy_net
+  netplan --debug apply
+  systemctl start "netplan-wpa-${PRIV_INT}"
+  dhclient -r "${WAN_INT}"
+  dhclient "${WAN_INT}"
+  list_phy_net "state"
+  sleep 2
+  if [ -z "${CLIENT:-}" ]; then
+    if ! systemctl start hostapd isc-dhcp-server; then
+      systemctl start dnsmasq
+    else
+      systemctl start systemd-resolved isc-dhcp-server6
+    fi
+  fi
+  "$DAEMON_SBIN" "$DAEMON_OPTS" &
+  echo $! > "$PIDFILE"
+}
+function status() {
+  if [ -e "$PIDFILE" ]; then
+    echo "$SVC_NAME is running, pid=$(cat "$PIDFILE")"
+  else
+    echo "$SVC_NAME is NOT running"
+    exit 1
+  fi
+}
+function stop() {
+  kill "$(cat "$PIDFILE")"
+  rm "$PIDFILE"
+  if ! systemctl stop hostapd isc-dhcp-server; then
+    systemctl stop dnsmasq
+  else
+    systemctl stop isc-dhcp-server6
+  fi
+}
+function uninstall() {
+  if ! systemctl disable hostapd isc-dhcp-server; then
+    systemctl disable dnsmasq
+  else
+    systemctl disable isc-dhcp-server6
+  fi
+}
+case "$1" in
+    install)
+        log_daemon_msg "$SVC_NAME Will be enabled..."
+        install
+        ;;
+    uninstall)
+        log_daemon_msg "${SVC_NAME} Will be disabled..."
+        uninstall
+        ;;
+    start)
+        log_daemon_msg "Starting $DESC" "${SVC_NAME}"
+        start
+        log_end_msg "$?"
+        ;;
+    stop)
+        log_daemon_msg "Stopping $DESC" "${SVC_NAME}"
+        stop
+        log_end_msg "$?"
+        ;;
+    reload|restart|force-reload)
+        $0 stop
+        sleep 8
+        $0 start
+        ;;
+    status)
+        log_daemon_msg "${SVC_NAME} Read Hotspot Access Point status..."
+        systemctl status hapwizard hostapd isc-dhcp-server dnsmasq systemd-resolved
+        status
+        ;;
+    *)
+        log_daemon_msg "${usage[@]}" >&2
+        exit 3
+        ;;
+esac
+exit 0

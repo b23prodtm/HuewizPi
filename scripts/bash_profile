@@ -1,5 +1,4 @@
-sudo systemctl daemon-reload
-sudo systemctl enable --now rc-local
-sudo systemctl status rc-local
+# shellcheck disable=SC2148
+systemctl status hapwizard hostapd
 service --status-all
-dhcp-lease-list 
+dhcp-lease-list

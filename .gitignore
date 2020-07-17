@@ -1,17 +1,21 @@
 # cache files
-.hap-wiz-*
+configure
 *.old
 Dockerfile.*
 !Dockerfile.template
-!Dockerfile.aarch64
+!Dockerfile.armhf
 !Dockerfile.x86_64
 docker-compose.*
 !docker-compose.yml
+!docker-compose.x86_64
 .circleci/config-compat.yml
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+node_modules
+init_functions
+*.log.*
 
 # C extensions
 *.so

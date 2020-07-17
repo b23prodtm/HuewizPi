@@ -1,130 +1,89 @@
-# PHP CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-php/ for more details
-#
 version: 2.1
+aliases:
+  - &deps
+    run:
+      name: Install dependencies
+      command: |
+        apk update \
+          && apk add \
+            npm \
+          && apk del build-base \
+          && rm -rf /var/cache/apk/*
+        rm node_modules/balena-cloud || true
+        rm node_modules/balena-cli || true
+        npm update
+        npm link balena-cloud
+        npm link balena-cli
+orbs:
+  shellcheck: circleci/shellcheck@1.3.16
 jobs:
   build:
     docker:
-      # using custom image, see .circleci/images/primary/Dockerfile
-      - image: betothreeprod/dind-php7
-    #An image that’s based on Alpine Linux (like docker), uses the ash shell.
-    shell: /bin/sh -leo pipefail
+    - image: betothreeprod/intel-nuc-node-php7
+    shell: /bin/bash -leo pipefail
     environment:
-      BASH_ENV: /etc/profile
-    working_directory: /usr/src/
-    parameters:
-      custom_checkout:
-        description: use custom local checkout fix in CLI
-        type: string
-        default: ""
+    - BASH_ENV: /etc/profile
+    - DKR_ARCH: x86_64
     steps:
-      - when:
-          condition: << parameters.custom_checkout >>
-          steps:
-            - run: mkdir -p $CIRCLE_WORKING_DIRECTORY && cd << parameters.custom_checkout >> && git ls-files | tar -T - -c | tar -x -C $CIRCLE_WORKING_DIRECTORY && cp -a << parameters.custom_checkout >>/.git $CIRCLE_WORKING_DIRECTORY
-      - unless:
-          condition: <<parameters.custom_checkout>>
-          steps:
-            - checkout
-      - run: git submodule sync
-      - run: git submodule update --init --recursive
-      # Persist the specified paths (workspace/echo-output) into the workspace for use in downstream job.
-      - persist_to_workspace:
-          root: .
-        # Must be relative path from root
-          paths:
-            - .
-      - run:
-          name: Setup Environment Variables
-          command: |
-            echo $(cat amd64.env | awk  '{printf "export %s\n", $1}') >> $BASH_ENV
-            echo $(cat common.env | awk  '{printf "export %s\n", $1}') >> $BASH_ENV
-      # Download and cache dependencies
-      # - restore_cache:
-      #     keys:
-      #       # "composer.lock" can be used if it is committed to the repo
-      #       - v1-dependencies-{{ checksum "composer.lock" }}
-      #       # fallback to using the latest cache if no exact match is found
-      #       - v1-dependencies-
-      - setup_remote_docker:   # (2)
-          docker_layer_caching: false # (3)
-      - run:
-          name: Set architecture
-          command: |
-            set -x
-            ./deploy.sh $DKR_ARCH --nobuild --exit
-      # - run:
-      #     command: |
-      #       set -x
-      #       ./test.sh
-      #     when: always
-      # - save_cache:
-      #     key: v1-dependencies-{{ checksum "composer.lock" }}
-      #     paths:
-      #       - ./bluetooth-audio
+    - checkout
+    - run:
+        command: git submodule sync
+    - run:
+        command: git submodule update --init --recursive
+    - restore_cache:
+        key: v1-dependencies-{{ checksum "package-lock.json" }}
+    - setup_remote_docker:
+        docker_layer_caching: false
+    - *deps
+    - save_cache:
+        key: v1-dependencies-{{ checksum "package-lock.json" }}
+        paths:
+        - node_modules
+    - run:
+        name: Set architecture and Setup Environment Variables
+        command: |
+          balena_deploy . $DKR_ARCH --nobuild --exit
+    - persist_to_workspace:
+        root: .
+        paths:
+        - node_modules
   compose:
     docker:
-      # use a primary image that already has Docker (recommended)
-      - image: betothreeprod/dind-php7
-        environment:
-          DOCKER_TLS_CERTDIR: /certs
-    #An image that’s based on Alpine Linux (like docker), uses the ash shell.
-    working_directory: /usr/src/
-    shell: /bin/sh -leo pipefail
+    - image: betothreeprod/dind-php7
+    shell: /bin/bash -leo pipefail
     environment:
-      BASH_ENV: /etc/profile
-    parameters:
-      custom_checkout:
-        description: use custom local checkout fix in CLI
-        type: string
-        default: ""
+    - BASH_ENV: /etc/profile
+    - DKR_ARCH: x86_64
     steps:
-      - when:
-          condition: << parameters.custom_checkout >>
-          steps:
-            - run: mkdir -p $CIRCLE_WORKING_DIRECTORY && cd << parameters.custom_checkout >> && git ls-files | tar -T - -c | tar -x -C $CIRCLE_WORKING_DIRECTORY && cp -a << parameters.custom_checkout >>/.git $CIRCLE_WORKING_DIRECTORY
-      - unless:
-          condition: <<parameters.custom_checkout>>
-          steps:
-            - checkout
-      - run: git submodule sync
-      - run: git submodule update --init --recursive
-      - attach_workspace:
-          at: .
-      - run:
-          name: Setup Environment Variables
-          command: |
-            echo $(cat amd64.env | awk  '{printf "export %s\n", $1}') >> $BASH_ENV
-            echo $(cat common.env | awk  '{printf "export %s\n", $1}') >> $BASH_ENV
-      # Download and cache dependencies
-      # - restore_cache:
-      #     keys:
-      #       # "composer.lock" can be used if it is committed to the repo
-      #       - v1-dependencies-{{ checksum "composer.lock" }}
-      #       # fallback to using the latest cache if no exact match is found
-      #       - v1-dependencies-
-      - setup_remote_docker:   # (2)
-          docker_layer_caching: false # (3)
-      - run:
-          name: Set architecture
-          command: |
-            set -x
-            ./deploy.sh $DKR_ARCH --nobuild --exit
-      # build and push Docker image
-      - run: |
+    - checkout
+    - run:
+        command: git submodule sync
+    - run:
+        command: git submodule update --init --recursive
+    - attach_workspace:
+        at: node_modules
+    - setup_remote_docker:
+        docker_layer_caching: false
+    - *deps
+    - run:
+        name: Set architecture and Setup Environment Variables
+        command: |
+          balena_deploy . $DKR_ARCH --nobuild --exit
+    - run:
+        command: |
           set -u
           TAG=0.1.$CIRCLE_BUILD_NUM
-          sudo docker-compose build
-      # docker login -u $DOCKER_USER -p $DOCKER_PASS
-      # docker push $DOCKER_USER/balena-sound:$TAG
+          docker-compose -f docker-compose.$DKR_ARCH build
 workflows:
+  cleanup:
+    jobs:
+    - shellcheck/check:
+        ignore: 'SC1091'
   build-and-compose:
     jobs:
-      - build:
-          custom_checkout: ""
-      - compose:
-          custom_checkout: ""
-          context: Info-b23prodtm
-          requires:
-            - build
+    - build
+    - compose:
+        requires:
+        - build
+        context: Info-b23prodtm
+  version: 2

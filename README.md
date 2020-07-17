@@ -4,20 +4,20 @@
 # Usage
 Basically, this script's made for linux machines that have got a wireless card or chipset and an ethernet interface connected to the internet. Following the wizard script to install hostapd and its dependencies on the machine :
 ```
-scripts/hap-wiz-bionic.sh optional:	[-c,--client]
+scripts/start.sh optional:	[-c,--client]
     required:	<priv_interface> <priv-network-x.x.x.0/len>
 		required:	<wan-network-x.x.x.0/len> <wan-interface>
 		user input:	[ssid passphrase [mode] [country_code channel]
 		user input:	[dns1 dns2]
 		w/ wan wlan1:	[wan_ssid wan_passphrase]
-		optional:	[dns1-ipv6 dns2-ipv6]
 		optional:	[net-range-start net-range-end]
 		optional:	[priv-network-ipv6/mask-length wan-network-ipv6/mask-length]
+		optional:	[dns1-ipv6 dns2-ipv6]
 ```
 
 Here follows a sample command line of a host access point acting as a router on the local network 192.168.0.0/24 (ISP router setup). Routing Broadband Internet Connection (eth0/wlan1) via Wireless Card (wlan0): ip adresses 10.0.1.x) and open a HomeWifiNet WPA-PSK secured Wifi network, try :
 
-  ```scripts/hap-wiz-bionic.sh wlan0 10.0.1.0/24 192.168.0.0/24 eth0 HomeWifiNet OneWPAssword a US 36```
+  ```scripts/start.sh wlan0 10.0.1.0/24 192.168.0.0/24 eth0 HomeWifiNet 1ApassWoRd a US 36```
 
 For instance, use channel 6 for b/g/n 2,4GHz or channel 36 for ac 5GHz. Usually set to an automatic channel selection [0] doesn't work with some wifi chipsets (see manufacturer's specifications).
 
@@ -35,7 +35,7 @@ If you don't know the DNS IP addresses of your ISP, ask your administrator for t
 
 Then add them to your home wifi network:
 
-   ```scripts/hap-wiz-bionic.sh 10.0.1.0/24 192.168.1.0/24 eth0 HomeWifiNet OneWPAssword a US 36 80.10.246.2 80.10.246.129```
+   ```scripts/start.sh 10.0.1.0/24 192.168.1.0/24 eth0 HomeWifiNet OneWPAssword a US 36 80.10.246.2 80.10.246.129```
 
 ### Fixed IP address client
 Host Access Point's able to define a fixed IP for a specific host. To list the current leases in DHCP service, run dhcp-lease-list :
@@ -55,14 +55,6 @@ A few minutes later, *clientmachine* will be permanently fixed to the IP address
   Is that maybe linked to an error in the DHCPd process ?
 
   > Choose either way: if you can connect to the host machine with ssh or from host keyboard, restart the DHCP server : ```sudo netplan apply && sudo systemctl restart isc-dhcp-server```, check status then ```sudo systemctl status isc-dhcp-server```from host machine (which runs hostapd).
-
-  > A custom profile script may be added to the user shell, so it can reload it anytime when you login with ssh. Paste in _~/.bash_profile_:
-
-      sudo systemctl daemon-reload
-      sudo systemctl restart rc-local
-      sudo systemctl status rc-local
-
-  Next time just connect and login to the machine that's got _hostapd_ running e.g. `ssh ubuntu@node1` and the network service will restart itself and you can see the status on Terminal, you see that the isc-dhcp-server is down (-).
 
   - The Wifi machines never get an IP Address on 10.233.1.x after they connected to the private Wifi network, or they have to wait for several minutes to get an answer.
 

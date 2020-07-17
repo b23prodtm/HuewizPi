@@ -1,11 +1,17 @@
 #!/usr/bin/with-contenv bash
-exec /usr/src/scripts/hap-wiz-bionic.sh ${PRIV_INT} \
-${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb} \
-${WAN_NETWORK}.0/${WAN_NETWORK_MASKb} ${WAN_INT} \
-${PRIV_SSID} ${PRIV_PASSWD} \
-${PRIV_WIFI_MODE} ${PRIV_WIFI_CTY} ${PRIV_WIFI_CHANNEL} \
-${DNS1} ${DNS2} \
-${WAN_SSID} ${WAN_PASSWD} \
-${DNS1_IPV6} ${DNS2_IPV6} ${PRIV_RANGE_START} ${PRIV_RANGE_END} \
-${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6} \
-${WAN_NETWORK_IPV6}0/${WAN_NETWORK_MASKb6} 2>&1 | tee hapwizpy.log
+# shellcheck shell=bash
+cd /usr/src/ || exit 1
+# shellcheck disable=SC2154
+exec scripts/start.sh "$PRIV_INT" \
+"$PRIV_NETWORK.0/$PRIV_NETWORK_MASKb" \
+"${WAN_NETWORK}.0/${WAN_NETWORK_MASKb}" "$WAN_INT" \
+"$PRIV_SSID" "$PRIV_PASSWD" \
+"$PRIV_WIFI_MODE" "$PRIV_WIFI_CTY" "$PRIV_WIFI_CHANNEL" \
+"$DNS1" "$DNS2" \
+"$WAN_SSID" "$WAN_PASSWD" \
+"$PRIV_RANGE_START" "$PRIV_RANGE_END" \
+"${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6}" \
+"${WAN_NETWORK_IPV6}0/${WAN_NETWORK_MASKb6}" \
+"$DNS1_IPV6" "$DNS2_IPV6"
+
+/etc/init.d/hapwizard install

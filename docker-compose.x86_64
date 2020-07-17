@@ -5,7 +5,7 @@ services:
     restart: always
     build:
       context: .
-      dockerfile: Dockerfile.armhf
+      dockerfile: Dockerfile.x86_64
     image: betothreeprod/hapwizpy-intel-nuc
     env_file:
       - common.env
@@ -24,7 +24,7 @@ services:
     network_mode: host
     build:
       context: ./python-wifi-connect
-      dockerfile: Dockerfile.armhf
+      dockerfile: Dockerfile.x86_64
     image: betothreeprod/python-wifi-connect-intel-nuc
     labels:
       io.balena.features.dbus: 1
