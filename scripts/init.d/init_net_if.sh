@@ -37,8 +37,30 @@ renderer='networkd'
 if [ -f /etc/init.d/networking ]; then
   renderer='NetworkManager'
 fi
+function list_phy_net() {
+  filter="state UP"
+  [ "$#" -gt 0 ] && filter=$1
+  # list physical network ip
+  ip link show | grep "$filter" | grep qlen | awk '{ print $2 }' | cut -d: -f1 | xargs
+}
+function phy_net_match() {
+  mapfile -t phy_net < <(list_phy_net "state")
+  for i in "$@"; do
+    match=""
+    for n in "${phy_net[@]}"; do
+      [ "$n" = "$i" ] && match="$n"
+    done
+    if "$match" != "$i"; then
+      printf "Unable to match %s in %s with %s backend" "$i" "${phy_net[*]}" "$renderer"
+    else
+      # print macaddress
+      ip link show "$match" | awk '/ether/ {print $2}'
+    fi
+  done
+}
+if [ "$(phy_net_match "$WAN_INT" "$PRIV_INT")" = "" ]; then phy_net_match; exit 1; fi
 slogger -st netplan "disable cloud-init"
-[ -f "/etc/netplan/$NP_INIT" ] && mv -fv "/etc/netplan/$NP$NP_INIT" "$NP_ORIG"
+[ -f "/etc/netplan/$NP_INIT" ] && mv -fv "/etc/netplan/$NP_INIT" "$NP_ORIG"
 echo -e "network: { config: disabled }" > "${NP_CLOUD}"
 case "${WAN_INT}" in
   'eth'*)
@@ -48,6 +70,7 @@ network:
   renderer: ${renderer}
   ethernets:
     ${WAN_INT}:
+      macaddress: $(phy_net_match "$WAN_INT")
       dhcp4: yes
       dhcp6: yes
 ${MARKER_END}" > /etc/netplan/$yaml
@@ -83,6 +106,7 @@ network:
   renderer: ${renderer}
   wifis:
     ${1}:
+      macaddress: $(phy_net_match "$1")
       dhcp4: yes
       dhcp6: yes
       access-points:
@@ -102,6 +126,7 @@ ${MARKER_END}" > "/etc/netplan/${clientyaml}"
     echo -e "${MARKER_BEGIN}
   bridges:
     br0:
+      macaddress: $(phy_net_match "$WAN_INT")
       dhcp4: yes
       dhcp6: yes
       addresses: [10.33.0.1/24, '2001:db8:1:46::1/64']
@@ -120,9 +145,9 @@ if [ "${RETURN}" = 0 ]; then
   slogger -st netplan "add wifi network class /etc/netplan/$clientyaml"
   # shellcheck disable=SC2154
   [ -z "$CLIENT" ] && sed -i.old "/password:/a\\
-    addresses: [${PRIV_NETWORK}.1/${PRIV_NETWORK_MASKb}, '${PRIV_NETWORK_IPV6}1/${PRIV_NETWORK_MASKb6}']\\n\
-    nameservers:\\n\
-      addresses: [${nameservers},${nameservers6}]" "/etc/netplan/$clientyaml"
+      addresses: [${PRIV_NETWORK}.1/${PRIV_NETWORK_MASKb}, '${PRIV_NETWORK_IPV6}1/${PRIV_NETWORK_MASKb6}']\\n\
+      nameservers:\\n\
+        addresses: [${nameservers},${nameservers6}]" "/etc/netplan/$clientyaml"
   # shellcheck disable=SC2154
   [ -z "$CLIENT" ] && sed -i.old "/${PRIV_INT}:/,/${MARKER_END}/s/yes/no/g" "/etc/netplan/$clientyaml"
   grep -A8 "${PRIV_INT}" < "/etc/netplan/$clientyaml"

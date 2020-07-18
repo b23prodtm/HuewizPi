@@ -69,7 +69,7 @@ function install() {
 function start() {
   list_phy_net
   netplan --debug apply
-  systemctl start "netplan-wpa-${PRIV_INT}"
+  systemctl start "netplan-wpa-${PRIV_INT}" || true
   dhclient -r "${WAN_INT}"
   dhclient "${WAN_INT}"
   list_phy_net "state"
@@ -81,7 +81,7 @@ function start() {
       systemctl start systemd-resolved isc-dhcp-server6
     fi
   fi
-  "$DAEMON_SBIN" "$DAEMON_OPTS" &
+  "$DAEMON_SBIN $DAEMON_OPTS" &
   echo $! > "$PIDFILE"
 }
 function status() {
