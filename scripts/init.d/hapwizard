@@ -85,6 +85,7 @@ function start() {
   echo $! > "$PIDFILE"
 }
 function status() {
+  systemctl status hapwizard hostapd isc-dhcp-server dnsmasq systemd-resolved
   if [ -e "$PIDFILE" ]; then
     echo "$SVC_NAME is running, pid=$(cat "$PIDFILE")"
   else
@@ -134,7 +135,6 @@ case "$1" in
         ;;
     status)
         log_daemon_msg "${SVC_NAME} Read Hotspot Access Point status..."
-        systemctl status hapwizard hostapd isc-dhcp-server dnsmasq systemd-resolved
         status
         ;;
     *)

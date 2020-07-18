@@ -58,7 +58,7 @@ ssh -J $USER@$(ip a | grep  "${WAN_INT}" | grep 'inet ' | awk '{ print $2 }' | c
 "
 [ -z "$CLIENT" ] && sleep 3
 [ -z "$CLIENT" ] && log_progress_msg "Configure Access Point $PRIV_SSID"
-PSK_FILE=/etc/hostapd-psk
+PSK_FILE=/etc/hostapd/hostapd.wpa_psk
 [ -z "$CLIENT" ] && echo -e "interface=${PRIV_INT}       # the interface used by the AP
 driver=nl80211
 ssid=${PRIV_SSID}
