@@ -7,7 +7,8 @@ _term() {
 
 trap _term SIGTERM
 
-# s6-setuidgid abc /etc/init.d/hapwizard start &
-/etc/init.d/hapwizard start &
+# s6-setuidgid abc /etc/init.d/hapwizard start
+/etc/init.d/hapwizard start && sleep infinity &
 
+# until all background processes finish or SIGTERM
 wait

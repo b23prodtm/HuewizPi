@@ -43,22 +43,24 @@ function list_phy_net() {
   # list physical network ip
   ip link show | grep "$filter" | grep qlen | awk '{ print $2 }' | cut -d: -f1 | xargs
 }
-function phy_net_match() {
-  mapfile -t phy_net < <(list_phy_net "state")
+function print_hwaddr() {
+  mapfile -d ' ' phy_net < <(list_phy_net "state")
   for i in "$@"; do
     match=""
     for n in "${phy_net[@]}"; do
-      [ "$n" = "$i" ] && match="$n"
+      [ "$n" = "$i" ] && match="$i"
     done
-    if "$match" != "$i"; then
-      printf "Unable to match %s in %s with %s backend" "$i" "${phy_net[*]}" "$renderer"
+    if [ "$match" != "$i" ]; then
+      printf "Unable to match %s in %s with %s backend\n" "$i" "${phy_net[*]}" "$renderer"
+      log_failure_msg "HWAddr was not found: $match"
+      exit 1
     else
       # print macaddress
-      ip link show "$match" | awk '/ether/ {print $2}'
+      ip link show "$i" | awk '/ether/ {print $2}'
     fi
   done
 }
-if [ "$(phy_net_match "$WAN_INT" "$PRIV_INT")" = "" ]; then phy_net_match; exit 1; fi
+print_hwaddr "$WAN_INT" "$PRIV_INT"
 slogger -st netplan "disable cloud-init"
 [ -f "/etc/netplan/$NP_INIT" ] && mv -fv "/etc/netplan/$NP_INIT" "$NP_ORIG"
 echo -e "network: { config: disabled }" > "${NP_CLOUD}"
@@ -70,7 +72,7 @@ network:
   renderer: ${renderer}
   ethernets:
     ${WAN_INT}:
-      macaddress: $(phy_net_match "$WAN_INT")
+      macaddress: $(print_hwaddr "$WAN_INT")
       dhcp4: yes
       dhcp6: yes
 ${MARKER_END}" > /etc/netplan/$yaml
@@ -106,7 +108,7 @@ network:
   renderer: ${renderer}
   wifis:
     ${1}:
-      macaddress: $(phy_net_match "$1")
+      macaddress: $(print_hwaddr "$1")
       dhcp4: yes
       dhcp6: yes
       access-points:
@@ -126,7 +128,7 @@ ${MARKER_END}" > "/etc/netplan/${clientyaml}"
     echo -e "${MARKER_BEGIN}
   bridges:
     br0:
-      macaddress: $(phy_net_match "$WAN_INT")
+      macaddress: $(print_hwaddr "$WAN_INT")
       dhcp4: yes
       dhcp6: yes
       addresses: [10.33.0.1/24, '2001:db8:1:46::1/64']

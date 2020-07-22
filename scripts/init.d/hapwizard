@@ -15,7 +15,7 @@ set -eu
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 SVC_NAME=hapwizard
-DAEMON_SBIN=/usr/sbin/tcpdump
+DAEMON_SBIN=tcpdump
 DAEMON_CF="/etc/$SVC_NAME/$SVC_NAME.conf"
 DAEMON_SVC="/usr/lib/systemd/system/$SVC_NAME.service.d/"
 PIDFILE="/run/$SVC_NAME.pid"
@@ -70,8 +70,8 @@ function start() {
   list_phy_net
   netplan --debug apply
   systemctl start "netplan-wpa-${PRIV_INT}" || true
-  dhclient -r "${WAN_INT}"
-  dhclient "${WAN_INT}"
+  dhclient -r "${WAN_INT}" || true
+  dhclient "${WAN_INT}" || true
   list_phy_net "state"
   sleep 2
   if [ -z "${CLIENT:-}" ]; then
@@ -81,7 +81,7 @@ function start() {
       systemctl start systemd-resolved isc-dhcp-server6
     fi
   fi
-  "$DAEMON_SBIN $DAEMON_OPTS" &
+  exec "$DAEMON_SBIN" "$DAEMON_OPTS" &
   echo $! > "$PIDFILE"
 }
 function status() {
