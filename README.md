@@ -25,7 +25,7 @@ The host must have access to the Internet in order to share its connection to th
 
 ### DNS probe URL on the internet
 If you encounter difficulties by connecting to the internet through thewifi hotspot, it's because of an incorrect DNS setup.
-Run the folloying command on the host machine, it should return a valid dns from your ISP:
+Run the folloying command on the host machine, it should return a valid dns from your ISP, in a (docker) shell instance:
 
    ```systemd-resolve --status```
 
@@ -33,9 +33,10 @@ If you don't know the DNS IP addresses of your ISP, ask your administrator for t
 
    ```nslookup ns1.your-isp.com ns2.your-isp.com```
 
-Then add them to your home wifi network:
-
-   ```scripts/start.sh 10.0.1.0/24 192.168.1.0/24 eth0 HomeWifiNet OneWPAssword a US 36 80.10.246.2 80.10.246.129```
+Then add them to your home wifi network, either reset environment variable, e.g. ns1.orange.fr, ns2.orange.fr:
+   
+   ```DNS1=80.10.201.224 DNS2_IPV6=2a01:cb14:2040::1#53  
+   scripts/start.sh wlan0 10.0.1.0/24 192.168.1.0/24 eth0 HomeWifiNet OneWPAssword a FR 36 $DNS1 $DNS1 "NOT_SSID" "NOT_PASS" $DNS2_IPV6 $DNS2_IPV6```
 
 ### Fixed IP address client
 Host Access Point's able to define a fixed IP for a specific host. To list the current leases in DHCP service, run dhcp-lease-list :
