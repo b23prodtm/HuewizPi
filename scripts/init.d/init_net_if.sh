@@ -46,12 +46,12 @@ function list_phy_net() {
 function print_hwaddr() {
   mapfile -d ' ' phy_net < <(list_phy_net "state")
   for i in "$@"; do
-    if printf "%s\n" "${phy_net[@]}" | grep -q -P "^$i\$"; then
+    # shellcheck disable=SC2068
+    if printf "%s\n" ${phy_net[@]} | grep -q -P "^$i\$"; then
       # print macaddress
       ip link show "$i" | awk '/ether/ {print $2}'
     else
       printf "00:00:00:00:00:00\n"
-      log_failure_msg "HWAddr was not found: $i"
     fi
   done
 }
