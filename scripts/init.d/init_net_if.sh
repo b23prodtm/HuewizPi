@@ -34,9 +34,6 @@ NP_ORIG=/usr/share/netplan && mkdir -p "$NP_ORIG"
 NP_CLOUD=/etc/cloud/cloud.cfg.d//99-disable-network-config.cfg && mkdir -p "$(dirname "$NP_CLOUD")"
 NP_INIT=50-cloud-init.yaml
 renderer='networkd'
-if [ -f /etc/init.d/networking ]; then
-  renderer='NetworkManager'
-fi
 function list_phy_net() {
   filter="state UP"
   [ "$#" -gt 0 ] && filter=$1

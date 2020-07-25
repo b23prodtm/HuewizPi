@@ -206,5 +206,7 @@ else
   # shellcheck source=init.d/init_net_if.sh
   "${scriptsd}/init.d/init_net_if.sh" --wifi "$PRIV_INT" "$PRIV_SSID" "$PRIV_PASSWD"
 fi
+systemctl daemon-reload
+systemctl enable --now hapwizard
 # shellcheck source=init.d/net_restart.sh
 [ "$MYNET_SHARING" != 'Y' ] && "${scriptsd}/init.d/net_restart.sh" "$CLIENT"

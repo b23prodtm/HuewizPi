@@ -47,6 +47,7 @@ RUN \
  install_packages \
    network-manager \
 	 hostapd \
+   haveged \
 	 bridge-utils \
 	 isc-dhcp-server \
 	 iptables \
@@ -100,4 +101,4 @@ RUN chmod g+xs /bin/systemctl
 ENTRYPOINT /init
 # RUN [ "cross-build-end" ]
 
-CMD tcpdump -v -i ${PRIV_INT} -z ${$USER} 2>/dev/null
+CMD tcpdump -v -i ${PRIV_INT} -Z ${USER} 2>/dev/null
