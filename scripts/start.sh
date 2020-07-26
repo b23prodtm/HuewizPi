@@ -155,10 +155,10 @@ if [ -z "$CLIENT" ]; then systemctl unmask hostapd; case "$MYNET_SHARING" in
       systemctl unmask isc-dhcp-server
       systemctl unmask isc-dhcp-server6
       systemctl mask dnsmasq
-      #shellcheck source=init.d/init_dhcp_serv.sh
-      "${scriptsd}/init.d/init_dhcp_serv.sh" --dns "${DNS1}" --dns "${DNS2}" \
-      --dns6 "${DNS1_IPV6}" --dns6 "${DNS2_IPV6}" \
-      --listen "br0" --router "${PRIV_NETWORK}.1"
+      ## shellcheck source=init.d/init_dhcp_serv.sh
+      # "${scriptsd}/init.d/init_dhcp_serv.sh" --dns "${DNS1}" --dns "${DNS2}" \
+      # --dns6 "${DNS1_IPV6}" --dns6 "${DNS2_IPV6}" \
+      # --listen "br0" --router "${PRIV_NETWORK}.1"
       ;;
   'n'*|'N'*)
     [ -z "$(command -v dnsmasq)" ] && apt-get -y install dnsmasq
@@ -167,21 +167,6 @@ if [ -z "$CLIENT" ]; then systemctl unmask hostapd; case "$MYNET_SHARING" in
     GATEWAY="${PRIV_NETWORK}.1"
     DHCP_RANGE="${PRIV_NETWORK}.${PRIV_RANGE_START},${PRIV_NETWORK}.${PRIV_RANGE_END}"
     INTERFACE="${PRIV_INT}"
-    #     echo -e "bogus-priv
-    # filterwin2k
-    # # no-resolv
-    # interface=${PRIV_INT}    # Use the require wireless interface - usually ${PRIV_INT}
-    # #no-dhcp-interface=${PRIV_INT}
-    # dhcp-range=${PRIV_NETWORK}.15,${PRIV_NETWORK}.100,${PRIV_NETWORK_MASK},${PRIV_NETWORK_MASKb}
-    # " > /etc/dnsmasq.conf
-    # sed -E -i.$(date +%Y-%m-%d_%H:%M:%S) -e "s/^(domain .*)/#\\1/g" \
-    # -e "s/^(nameserver .*)/#\\1/g" -e "s/^(search .*)/#\\1/g" /etc/resolv.conf
-    # echo -e "
-    # domain wifi.local
-    # search wifi.local
-    # nameserver ${DNS1}
-    # nameserver ${DNS2}
-    # " >> /etc/resolv.conf
     logger -st dnsmasq "start DNS server"
     python3 "${scriptsd}/../library/src/dnsmasq.py" -a "$GATEWAY" -r "$DHCP_RANGE "-i "$INTERFACE"
     sleep 2

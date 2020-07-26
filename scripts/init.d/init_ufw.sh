@@ -74,5 +74,5 @@ if [ "${RETURN}" = 0 ]; then
   ufw allow https
   ufw allow ntp
   ufw allow 53
-  ufw --force enable || log_warning_msg "The firewall kernel module was not found."
+  ufw --force enable || log_warning_msg "The firewall isn't well configured."
 fi
