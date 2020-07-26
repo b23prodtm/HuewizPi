@@ -65,17 +65,20 @@ COPY root/ /
 
 WORKDIR /usr/src/
 
-COPY scripts/ scripts/
-COPY library/ library/
-RUN chmod -R 4755 scripts library \
-  && cp scripts/init.d/hapwizard /etc/init.d/.
-
 # Python modules
+COPY library/ library/
+RUN chmod -R 4755 library
+
 RUN python3 -m pip install --upgrade pip setuptools wheel \
   && python3 -m pip install -r library/requirements.txt
 
 # Node node_modules
 RUN npm update && npm link balena-cloud
+
+# Bash scripts
+COPY scripts/ scripts/
+RUN chmod -R 4755 scripts \
+  && cp scripts/init.d/hapwizard /etc/init.d/.
 
 VOLUME /etc/hostapd/
 VOLUME /etc/hapwizard/

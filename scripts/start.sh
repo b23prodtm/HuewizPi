@@ -42,9 +42,7 @@ log_progress_msg "remove bridge (br0) to ${PRIV_INT}"
 # shellcheck source=init.d/init_net_if.sh
 "${scriptsd}/init.d/init_net_if.sh" -r
 log_progress_msg "shutdown services"
-systemctl stop wpa_supplicant
 systemctl stop hostapd
-systemctl disable wpa_supplicant
 # shellcheck source=init.d/init_dhcp_serv.sh
 "${scriptsd}/init.d/init_dhcp_serv.sh" -r
 # shellcheck source=init.d/init_ufw.sh
@@ -75,18 +73,20 @@ ieee80211n=1          # 802.11n (HT 40 MHz) support
 hw_mode=${PRIV_WIFI_MODE}
 channel=${PRIV_WIFI_CHANNEL}  # 0 means the AP will search for the channel with the least interferences
 #bridge=br0
-ieee80211d=1          # limit the frequencies used to those allowed in the country
+#ieee80211d=1          # limit the frequencies used to those allowed in the country
 country_code=${PRIV_WIFI_CTY}       # the country code
-wmm_enabled=1         # QoS support
+wmm_enabled=1         # QoS support, also required for full speed on 802.11n/ac/ax
+disassoc_low_ack=1    # Disassoc very unstable stations
 
-#source: IBM https://www.ibm.com/developerworks/library/l-wifiencrypthostapd/index.html
+#source: IBM https://www.themsphub.com/wireless-encryption-protocols-the-complete-guide/
 auth_algs=1
 wpa=2
+# If there are quotes, they are assumed to be part of the passphrase
 wpa_psk_file=${PSK_FILE}
 #wpa_passphrase=
 wpa_key_mgmt=WPA-PSK
 # Windows client may use TKIP
-wpa_pairwise=CCMP TKIP
+wpa_pairwise=TKIP CCMP
 rsn_pairwise=CCMP
 
 # Station MAC address -based authentication (driver=hostap or driver=nl80211)
@@ -100,7 +100,7 @@ macaddr_acl=0
 deny_mac_file=/etc/hostapd/hostapd.deny
 
 # Beacon interval in kus (1.024 ms)
-beacon_int=100
+beacon_int=50
 
 # DTIM (delivery trafic information message)
 dtim_period=2
@@ -150,10 +150,15 @@ if [ -z "$CLIENT" ]; then systemctl unmask hostapd; case "$MYNET_SHARING" in
    'y'*|'Y'*)
       slogger -st brctl "share internet connection from ${WAN_INT} to ${PRIV_INT} over bridge"
       sed -i /bridge=br0/s/^\#// /etc/hostapd/hostapd.conf
-      init_net_if --dns "${DNS1}" --dns "${DNS2}" --dns6 "${DNS1_IPV6}" --dns6 "${DNS2_IPV6}" --bridge
+      init_net_if --dns "${DNS1}" --dns "${DNS2}" --dns6 "${DNS1_IPV6}" \
+      --dns6 "${DNS2_IPV6}" --bridge
       systemctl unmask isc-dhcp-server
       systemctl unmask isc-dhcp-server6
       systemctl mask dnsmasq
+      #shellcheck source=init.d/init_dhcp_serv.sh
+      "${scriptsd}/init.d/init_dhcp_serv.sh" --dns "${DNS1}" --dns "${DNS2}" \
+      --dns6 "${DNS1_IPV6}" --dns6 "${DNS2_IPV6}" \
+      --listen "br0" --router "${PRIV_NETWORK}.1"
       ;;
   'n'*|'N'*)
     [ -z "$(command -v dnsmasq)" ] && apt-get -y install dnsmasq
@@ -194,12 +199,14 @@ if [ -z "$CLIENT" ]; then systemctl unmask hostapd; case "$MYNET_SHARING" in
   *)
     slogger -st network "rendering configuration for router mode"
     init_net_if --dns "${DNS1}" --dns "${DNS2}" --dns6 "${DNS1_IPV6}" --dns6 "${DNS2_IPV6}"
-    slogger -st dhcpd  "configure dynamic dhcp addresses ${PRIV_NETWORK}.${PRIV_RANGE_START}-${PRIV_RANGE_END}"
+    slogger -st dhcpd "configure dynamic dhcp addresses ${PRIV_NETWORK}.${PRIV_RANGE_START}-${PRIV_RANGE_END}"
     systemctl unmask isc-dhcp-server
     systemctl unmask isc-dhcp-server6
     systemctl mask dnsmasq
     #shellcheck source=init.d/init_dhcp_serv.sh
-    "${scriptsd}/init.d/init_dhcp_serv.sh" --dns "${DNS1}" --dns "${DNS2}" --dns6 "${DNS1_IPV6}" --dns6 "${DNS2_IPV6}" --router "${PRIV_NETWORK}.1"
+    "${scriptsd}/init.d/init_dhcp_serv.sh" --dns "${DNS1}" --dns "${DNS2}" \
+    --dns6 "${DNS1_IPV6}" --dns6 "${DNS2_IPV6}" \
+    --router "${PRIV_NETWORK}.1"
   ;;
 esac;
 else
@@ -208,5 +215,8 @@ else
 fi
 systemctl daemon-reload
 systemctl enable --now hapwizard
+[ "$MYNET_SHARING" != 'Y' ] && [ -z "$CLIENT" ] && slogger -st ufw  "enable ip forwarding (internet connectivity)"
+# shellcheck source=init_ufw.sh
+[ "$MYNET_SHARING" != 'Y' ] && [ -z "$CLIENT" ] && "${scriptsd}/init.d/init_ufw.sh"
 # shellcheck source=init.d/net_restart.sh
 [ "$MYNET_SHARING" != 'Y' ] && "${scriptsd}/init.d/net_restart.sh" "$CLIENT"
