@@ -38,7 +38,7 @@ slogger -st start "Config MARKERS ${MARKERS}"
 [ -z "$CLIENT" ] && [ -z "$(command -v hostapd)" ] && apt-get -y install hostapd
 [ -z "$CLIENT" ] && [ -z "$(command -v brctl)" ] && apt-get -y install bridge-utils
 [ -z "$CLIENT" ] && [ -z "$(command -v dhcpd)" ] && apt-get -y install isc-dhcp-server
-log_progress_msg "remove bridge (br0) to ${PRIV_INT}"
+log_progress_msg "reset netplan"
 # shellcheck source=init.d/init_net_if.sh
 "${scriptsd}/init.d/init_net_if.sh" -r
 log_progress_msg "shutdown services"

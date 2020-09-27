@@ -64,7 +64,7 @@ network:
   renderer: ${renderer}
   ethernets:
     ${WAN_INT}:
-      macaddress: $(print_hwaddr "$WAN_INT")
+      # macaddress: $(print_hwaddr "$WAN_INT")
       dhcp4: yes
       dhcp6: yes
 ${MARKER_END}" > /etc/netplan/$yaml
@@ -78,9 +78,14 @@ while [ "$#" -gt 0 ]; do case $1 in
       # ubuntu server
       slogger -st netplan "move configuration to $NP_ORIG"
       mv -fv /etc/netplan/* $NP_ORIG
-      slogger -st netplan "reset configuration to cloud-init"
-      [ -f "$NP_ORIG/$NP_INIT" ] && mv -fv "$NP_ORIG/$NP_INIT" /etc/netplan
-      rm -fv "$NP_CLOUD"
+      slogger -st netplan "reset configuration to NetworkManager"
+      renderer="NetworkManager"
+      # ubuntu desktop
+      echo -e "${MARKER_BEGIN}
+network:
+  version: 2
+  renderer: ${renderer}
+${MARKER_END}" > "/etc/netplan/$NP_INIT"
     RETURN=1;;
   --dns)
       nameservers_def=''
@@ -100,7 +105,7 @@ network:
   renderer: ${renderer}
   wifis:
     ${1}:
-      macaddress: $(print_hwaddr "$1")
+      # macaddress: $(print_hwaddr "$1")
       dhcp4: yes
       dhcp6: yes
       access-points:
@@ -118,9 +123,11 @@ ${MARKER_END}" > "/etc/netplan/${clientyaml}"
     # new 18.04 netplan server (DHCPd set to bridge)
     slogger -st netplan "/etc/netplan/$yaml was created"
     echo -e "${MARKER_BEGIN}
+network:
+  version: 2
+  renderer: ${renderer}
   bridges:
     br0:
-      macaddress: $(print_hwaddr "$WAN_INT")
       dhcp4: yes
       dhcp6: yes
       addresses: [10.33.0.1/24, '2001:db8:1:46::1/64']
