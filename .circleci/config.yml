@@ -12,6 +12,7 @@ aliases:
           && apk del build-base \
           && rm -rf /var/cache/apk/*
           npm ci
+          npm link balena-cloud-apps
 orbs:
   shellcheck: circleci/shellcheck@1.3.16
 jobs:
@@ -27,8 +28,6 @@ jobs:
     - restore_cache:
         keys:
            - node_modules-2-{{ checksum "package.json" }}-{{ checksum "package-lock.json"}}
-           - node_modules-2-{{ checksum "package.json" }}
-           - node_modules-2-
     - setup_remote_docker:
         docker_layer_caching: false
     - *deps
@@ -40,10 +39,6 @@ jobs:
         name: Set architecture and Setup Environment Variables
         command: |
           balena_deploy . $DKR_ARCH --nobuild --exit
-    - persist_to_workspace:
-        root: .
-        paths:
-          - $HOME/.npm
   compose:
     docker:
     - image: betothreeprod/dind-php7
@@ -53,8 +48,9 @@ jobs:
     - DKR_ARCH: x86_64
     steps:
     - checkout
-    - attach_workspace:
-        at: $HOME/.npm
+    - restore_cache:
+        keys:
+           - node_modules-2-{{ checksum "package.json" }}-{{ checksum "package-lock.json"}}
     - setup_remote_docker:
         docker_layer_caching: false
     - *deps
