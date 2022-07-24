@@ -1,5 +1,16 @@
 version: '2'
 services:
+  homebridge:
+    image: oznu/homebridge:latest
+    restart: always
+    network_mode: host
+    logging:
+      driver: json-file
+      options:
+        max-size: "10mb"
+        max-file: "1"
+    volumes:
+      - homebridge:/homebridge
   wifi-spot:
     network_mode: host
     restart: always
@@ -43,3 +54,4 @@ volumes:
   hapwizard:
   wifi-connect:
   netplan:
+  homebridge:

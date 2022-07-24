@@ -61,17 +61,16 @@ RUN \
    python3-networkmanager
 
 # ADD S6 Overlay
-ARG S6_ARCH
-ENV S6_ARCH ${S6_ARCH:-armhf}
-ARG S6_RELEASE
-ENV S6_RELEASE ${S6_RELEASE:-v2.0.0.1}
-ENV S6_REPO https://github.com/just-containers/s6-overlay/releases/download
-ADD ${S6_REPO}/${S6_RELEASE}/s6-overlay-${S6_ARCH}.tar.gz /tmp/
-ADD ${S6_REPO}/${S6_RELEASE}/s6-overlay-${S6_ARCH}.tar.gz.sig /tmp/
-RUN curl https://keybase.io/justcontainers/key.asc | gpg --import
-WORKDIR /
-RUN gunzip -c /tmp/s6-overlay-${S6_ARCH}.tar.gz | tar -xf - -C / && \
-    gpg --verify /tmp/s6-overlay-${S6_ARCH}.tar.gz.sig /tmp/s6-overlay-${S6_ARCH}.tar.gz
+ARG S6_OVERLAY_VERSION=3.1.0.1
+
+RUN apt-get update && apt-get install -y nginx xz-utils
+RUN echo "daemon off;" >> /etc/nginx/nginx.conf
+CMD ["/usr/sbin/nginx"]
+
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
 
 ENV UDEV on
 

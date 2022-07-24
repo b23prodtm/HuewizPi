@@ -1,6 +1,19 @@
 # HapwizPY
- Host access point Wizard script for Debian/Ubuntu
+Host access point Wizard script for Debian/Ubuntu and RaspberryPI devices
+#### NodeJs dependencies
 
+  This project depends on npmjs [balena-cloud](https://www.npmjs.com/package/balena-cloud). Please call
+  `npm update`
+  whenever the system complains about `balena_deploy` not found.
+After npm install succeeded, HapwizPy can be dbuilt and optionally deployed to the device
+### Git dependencies
+
+  The docker files contains a submodule folder that needs to be initialized first
+  `git submodule update --init`
+It can safely be updated with Git submodule command lines
+  `cd python-wifi-connect && git commit -a && git push`
+If git cannot pull or update first remove the folder to reinitialize the submodule
+  `rm -rf python-wifi-connect`
 # Usage
 Basically, this script's made for linux machines that have got a wireless card or chipset and an ethernet interface connected to the internet. Following the wizard script to install hostapd and its dependencies on the machine :
 ```
@@ -25,7 +38,7 @@ The host must have access to the Internet in order to share its connection to th
 
 ### DNS probe URL on the internet
 If you encounter difficulties by connecting to the internet through thewifi hotspot, it's because of an incorrect DNS setup.
-Run the folloying command on the host machine, it should return a valid dns from your ISP:
+Run the folloying command on the host machine, it should return a valid dns from your ISP, in a (docker) shell instance:
 
    ```systemd-resolve --status```
 
@@ -33,9 +46,10 @@ If you don't know the DNS IP addresses of your ISP, ask your administrator for t
 
    ```nslookup ns1.your-isp.com ns2.your-isp.com```
 
-Then add them to your home wifi network:
+Then add them to your home wifi network, either reset environment variable, e.g. ns1.orange.fr, ns2.orange.fr:
 
-   ```scripts/start.sh 10.0.1.0/24 192.168.1.0/24 eth0 HomeWifiNet OneWPAssword a US 36 80.10.246.2 80.10.246.129```
+   ```DNS1=80.10.201.224 DNS2_IPV6=2a01:cb14:2040::1#53  
+   scripts/start.sh wlan0 10.0.1.0/24 192.168.1.0/24 eth0 HomeWifiNet OneWPAssword a FR 36 $DNS1 $DNS1 "NOT_SSID" "NOT_PASS" $DNS2_IPV6 $DNS2_IPV6```
 
 ### Fixed IP address client
 Host Access Point's able to define a fixed IP for a specific host. To list the current leases in DHCP service, run dhcp-lease-list :
@@ -60,7 +74,7 @@ A few minutes later, *clientmachine* will be permanently fixed to the IP address
 
   > Obviously the DHCP server (isc-dhcp-server) is getting a lot of DHCPREQUEST and reading leases from _/var/lib/dhcp/dhcpd.leases_ takes some time. Remove obsolete hosts from this _lease_ file.
 
-# Copyright 2018 www.b23prodtm.info
+### Copyright 2018 www.b23prodtm.info - https://github.com/b23prodtm/HapwizPY
 
 Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.

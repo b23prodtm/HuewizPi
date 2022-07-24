@@ -8,6 +8,8 @@ Dockerfile.*
 docker-compose.*
 !docker-compose.yml
 !docker-compose.x86_64
+!docker-compose.aarch64
+!docker-compose.armhf
 .circleci/config-compat.yml
 # Byte-compiled / optimized / DLL files
 __pycache__/
