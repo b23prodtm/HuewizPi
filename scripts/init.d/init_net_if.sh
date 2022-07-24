@@ -34,11 +34,27 @@ NP_ORIG=/usr/share/netplan && mkdir -p "$NP_ORIG"
 NP_CLOUD=/etc/cloud/cloud.cfg.d//99-disable-network-config.cfg && mkdir -p "$(dirname "$NP_CLOUD")"
 NP_INIT=50-cloud-init.yaml
 renderer='networkd'
-if [ -f /etc/init.d/networking ]; then
-  renderer='NetworkManager'
-fi
+function list_phy_net() {
+  filter="state UP"
+  [ "$#" -gt 0 ] && filter=$1
+  # list physical network ip
+  ip link show | grep "$filter" | grep qlen | awk '{ print $2 }' | cut -d: -f1 | xargs
+}
+function print_hwaddr() {
+  mapfile -d ' ' phy_net < <(list_phy_net "state")
+  for i in "$@"; do
+    # shellcheck disable=SC2068
+    if printf "%s\n" ${phy_net[@]} | grep -q -P "^$i\$"; then
+      # print macaddress
+      ip link show "$i" | awk '/ether/ {print $2}'
+    else
+      printf "00:00:00:00:00:00\n"
+    fi
+  done
+}
+print_hwaddr "$WAN_INT" "$PRIV_INT"
 slogger -st netplan "disable cloud-init"
-[ -f "/etc/netplan/$NP_INIT" ] && mv -fv "/etc/netplan/$NP$NP_INIT" "$NP_ORIG"
+[ -f "/etc/netplan/$NP_INIT" ] && mv -fv "/etc/netplan/$NP_INIT" "$NP_ORIG"
 echo -e "network: { config: disabled }" > "${NP_CLOUD}"
 case "${WAN_INT}" in
   'eth'*)
@@ -48,6 +64,7 @@ network:
   renderer: ${renderer}
   ethernets:
     ${WAN_INT}:
+      # macaddress: $(print_hwaddr "$WAN_INT")
       dhcp4: yes
       dhcp6: yes
 ${MARKER_END}" > /etc/netplan/$yaml
@@ -61,9 +78,14 @@ while [ "$#" -gt 0 ]; do case $1 in
       # ubuntu server
       slogger -st netplan "move configuration to $NP_ORIG"
       mv -fv /etc/netplan/* $NP_ORIG
-      slogger -st netplan "reset configuration to cloud-init"
-      [ -f "$NP_ORIG/$NP_INIT" ] && mv -fv "$NP_ORIG/$NP_INIT" /etc/netplan
-      rm -fv "$NP_CLOUD"
+      slogger -st netplan "reset configuration to NetworkManager"
+      renderer="NetworkManager"
+      # ubuntu desktop
+      echo -e "${MARKER_BEGIN}
+network:
+  version: 2
+  renderer: ${renderer}
+${MARKER_END}" > "/etc/netplan/$NP_INIT"
     RETURN=1;;
   --dns)
       nameservers_def=''
@@ -83,6 +105,7 @@ network:
   renderer: ${renderer}
   wifis:
     ${1}:
+      # macaddress: $(print_hwaddr "$1")
       dhcp4: yes
       dhcp6: yes
       access-points:
@@ -100,6 +123,9 @@ ${MARKER_END}" > "/etc/netplan/${clientyaml}"
     # new 18.04 netplan server (DHCPd set to bridge)
     slogger -st netplan "/etc/netplan/$yaml was created"
     echo -e "${MARKER_BEGIN}
+network:
+  version: 2
+  renderer: ${renderer}
   bridges:
     br0:
       dhcp4: yes
@@ -120,9 +146,9 @@ if [ "${RETURN}" = 0 ]; then
   slogger -st netplan "add wifi network class /etc/netplan/$clientyaml"
   # shellcheck disable=SC2154
   [ -z "$CLIENT" ] && sed -i.old "/password:/a\\
-    addresses: [${PRIV_NETWORK}.1/${PRIV_NETWORK_MASKb}, '${PRIV_NETWORK_IPV6}1/${PRIV_NETWORK_MASKb6}']\\n\
-    nameservers:\\n\
-      addresses: [${nameservers},${nameservers6}]" "/etc/netplan/$clientyaml"
+      addresses: [${PRIV_NETWORK}.1/${PRIV_NETWORK_MASKb}, '${PRIV_NETWORK_IPV6}1/${PRIV_NETWORK_MASKb6}']\\n\
+      nameservers:\\n\
+        addresses: [${nameservers},${nameservers6}]" "/etc/netplan/$clientyaml"
   # shellcheck disable=SC2154
   [ -z "$CLIENT" ] && sed -i.old "/${PRIV_INT}:/,/${MARKER_END}/s/yes/no/g" "/etc/netplan/$clientyaml"
   grep -A8 "${PRIV_INT}" < "/etc/netplan/$clientyaml"

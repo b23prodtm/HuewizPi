@@ -74,5 +74,5 @@ if [ "${RETURN}" = 0 ]; then
   ufw allow https
   ufw allow ntp
   ufw allow 53
-  ufw --force enable || log_warning_msg "Modeprobe failed, reboot before to do ufw-init."
+  ufw --force enable || log_warning_msg "The firewall isn't well configured."
 fi

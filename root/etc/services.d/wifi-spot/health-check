@@ -1,0 +1,22 @@
+#!/usr/bin/with-contenv bash
+function blink_() {
+  [ "$#" -lt 2 ] && printf "Usage: %s 0|1 ..." "${FUNCNAME[0]}" && exit 1
+  ACT="$1"
+  echo "$2" > "/sys/class/leds/led${ACT}/brightness"
+  sleep 0.3
+  [ "$#" -gt 2 ] && shift 2 && blink_ "$ACT" "$@"
+}
+function blink_ACT() {
+  blink_ 0 "$@"
+}
+function blink_PWR() {
+  blink_ 1 "$@"
+}
+function health_check() {
+  if ! /etc/init.d/hapwizard status; then
+    # hostapd hasn't been started
+    blink_ACT 0 1 0 1 0 1 0
+  fi
+  sleep 3
+}
+while true; do health_check; done

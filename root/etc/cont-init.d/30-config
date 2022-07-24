@@ -1,6 +1,18 @@
 #!/usr/bin/with-contenv bash
 # shellcheck shell=bash
-groupadd -r abc \
-   && useradd -m -r -g abc abc
+if grep abc < /etc/group; then
+  id abc
+else
+  groupadd -r abc
+fi
+if grep abc < /etc/passwd; then
+  id abc
+else
+  useradd -m -r -g abc abc
+fi
 chown -R abc:abc /usr/src/
 chmod -R g+s /etc/hapwizard/
+# Fixes: ERROR:systemctl: systemd-networkd.service: Executable path is not absolute
+sed -i.old "/ExecStart/s/\!//g" /lib/systemd/system/systemd-timesyncd.service
+sed -i.old "/ExecStart/s/\!//g" /lib/systemd/system/systemd-resolved.service
+sed -i.old "/ExecStart/s/\!//g" /lib/systemd/system/systemd-networkd.service

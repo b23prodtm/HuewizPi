@@ -23,7 +23,9 @@ services:
       - .env
     privileged: true
     labels:
-      io.balena.features.dbus: 1
+      io.balena.features.dbus: "1"
+      io.balena.features.kernel-modules: "1"
+      io.balena.features.firmware: "1"
     volumes:
       - hostapd:/etc/hostapd
       - hapwizard:/etc/hapwizard
@@ -31,6 +33,8 @@ services:
       - netplan:/etc/netplan
     depends_on:
       - wifi-box
+    cap_add:
+      - ALL
   wifi-box:
     network_mode: host
     build:
@@ -38,8 +42,8 @@ services:
       dockerfile: Dockerfile.x86_64
     image: betothreeprod/python-wifi-connect-intel-nuc
     labels:
-      io.balena.features.dbus: 1
-      io.balena.features.supervisor-api: 1
+      io.balena.features.dbus: "1"
+      io.balena.features.supervisor-api: "1"
     privileged: true
     ports:
       - "80:80"

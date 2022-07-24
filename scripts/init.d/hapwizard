@@ -15,7 +15,7 @@ set -eu
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 SVC_NAME=hapwizard
-DAEMON_SBIN=/usr/sbin/tcpdump
+DAEMON_SBIN=tcpdump
 DAEMON_CF="/etc/$SVC_NAME/$SVC_NAME.conf"
 DAEMON_SVC="/usr/lib/systemd/system/$SVC_NAME.service.d/"
 PIDFILE="/run/$SVC_NAME.pid"
@@ -29,8 +29,10 @@ DESC="Start a Host Access point"
 
 banner=("" "[services.d] $DAEMON_SVC" ""); log_daemon_msg "%s\n" "${banner[@]}"
 
-DAEMON_CF="$DAEMON_CF $(find "$DAEMON_SVC" -name "*.conf")"
-for cnf in $DAEMON_CF; do
+# shellcheck disable=SC1090
+. "$DAEMON_CF"
+mapfile -t DAEMON_CFs < <(find "$DAEMON_SVC" -name "*.conf")
+for cnf in "${DAEMON_CFs[@]}"; do
   # shellcheck disable=SC1090
   . "$cnf"
 done
@@ -46,16 +48,14 @@ usage=("" \
 
 function list_phy_net() {
   filter="state UP"
-  [ "$#" -gt 0 ] && filter=$1
   # list physical network ip
   ip link show | grep "$filter" | grep qlen | awk '{ print $2 }' | cut -d: -f1 | xargs
 }
 function install() {
   systemctl unmask hostapd isc-dhcp-server \
-  systemd-resolved "netplan-wpa-${PRIV_INT}"
-  systemctl daemon-reload
-  systemctl enable "netplan-wpa-${PRIV_INT}"
-  list_phy_net "state"
+  systemd-resolved || true
+  systemctl daemon-reload || true
+  list_phy_net
   sleep 2
   if [ -z "${CLIENT:-}" ]; then
     systemctl enable hostapd
@@ -68,11 +68,12 @@ function install() {
 }
 function start() {
   list_phy_net
-  netplan --debug apply
-  systemctl start "netplan-wpa-${PRIV_INT}"
-  dhclient -r "${WAN_INT}"
-  dhclient "${WAN_INT}"
-  list_phy_net "state"
+  netplan --debug apply || true
+  # netplan creates wpa_supplicant service
+  systemctl enable --now "netplan-wpa-${PRIV_INT}" || true
+  dhclient -r "${WAN_INT}" || true
+  dhclient "${WAN_INT}" || true
+  list_phy_net
   sleep 2
   if [ -z "${CLIENT:-}" ]; then
     if ! systemctl start hostapd isc-dhcp-server; then
@@ -81,10 +82,12 @@ function start() {
       systemctl start systemd-resolved isc-dhcp-server6
     fi
   fi
-  "$DAEMON_SBIN" "$DAEMON_OPTS" &
+  # shellcheck disable=SC2086
+  exec "$DAEMON_SBIN" $DAEMON_OPTS &
   echo $! > "$PIDFILE"
 }
 function status() {
+  systemctl status hapwizard hostapd isc-dhcp-server dnsmasq
   if [ -e "$PIDFILE" ]; then
     echo "$SVC_NAME is running, pid=$(cat "$PIDFILE")"
   else
@@ -118,9 +121,13 @@ case "$1" in
         uninstall
         ;;
     start)
-        log_daemon_msg "Starting $DESC" "${SVC_NAME}"
-        start
-        log_end_msg "$?"
+        log_daemon_msg "Starting $DESC ${SVC_NAME}"
+        if ! grep "NOT running" <(status); then
+          log_daemon_msg "$DESC already started ${SVC_NAME}"
+        else
+          start
+          log_end_msg "$?"
+        fi
         ;;
     stop)
         log_daemon_msg "Stopping $DESC" "${SVC_NAME}"
@@ -134,7 +141,6 @@ case "$1" in
         ;;
     status)
         log_daemon_msg "${SVC_NAME} Read Hotspot Access Point status..."
-        systemctl status hapwizard hostapd isc-dhcp-server dnsmasq systemd-resolved
         status
         ;;
     *)
