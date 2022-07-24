@@ -4,6 +4,8 @@ aliases:
     run:
       name: Install dependencies
       command: |
+        git submodule sync
+        git submodule update --init --recursive
         apk update \
           && apk add \
             npm \
@@ -22,12 +24,8 @@ jobs:
     - DKR_ARCH: x86_64
     steps:
     - checkout
-    - run:
-        command: git submodule sync
-    - run:
-        command: git submodule update --init --recursive
     - restore_cache:
-        key:
+        keys:
            - node_modules-2-{{ checksum "package.json" }}-{{ checksum "package-lock.json"}}
            - node_modules-2-{{ checksum "package.json" }}
            - node_modules-2-
@@ -45,7 +43,7 @@ jobs:
     - persist_to_workspace:
         root: .
         paths:
-        - node_modules
+          - $HOME/.npm
   compose:
     docker:
     - image: betothreeprod/dind-php7
@@ -55,12 +53,8 @@ jobs:
     - DKR_ARCH: x86_64
     steps:
     - checkout
-    - run:
-        command: git submodule sync
-    - run:
-        command: git submodule update --init --recursive
     - attach_workspace:
-        at: node_modules
+        at: $HOME/.npm
     - setup_remote_docker:
         docker_layer_caching: false
     - *deps
