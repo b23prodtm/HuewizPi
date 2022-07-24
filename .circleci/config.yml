@@ -9,11 +9,7 @@ aliases:
             npm \
           && apk del build-base \
           && rm -rf /var/cache/apk/*
-        rm node_modules/balena-cloud-apps || true
-        rm node_modules/balena-cli-apps || true
         npm update
-        npm link balena-cloud-apps
-        npm link balena-cli
 orbs:
   shellcheck: circleci/shellcheck@1.3.16
 jobs:
