@@ -3,10 +3,6 @@
   "version": "1.0.0",
   "description": "Host access point Wizard script for Debian/Ubuntu",
   "main": "index.js",
-  "dependencies": {
-    "balena-cloud": "stable"
-  },
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -20,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/b23prodtm/HapwizPY/issues"
   },
-  "homepage": "https://github.com/b23prodtm/HapwizPY#readme"
+  "homepage": "https://github.com/b23prodtm/HapwizPY#readme",
+  "dependencies": {
+    "balena-cloud-apps": "^1.0.34"
+  }
 }
