@@ -15,9 +15,9 @@ aliases:
 orbs:
   shellcheck: circleci/shellcheck@1.3.16
 jobs:
-  machine: true
-  resource_class: b23prodtm/runner
   build:
+    machine: true
+    resource_class: b23prodtm/runner
     docker:
     - image: betothreeprod/intel-nuc-node-php7
     shell: /bin/bash -leo pipefail
