@@ -18,8 +18,6 @@ jobs:
   build:
     machine: true
     resource_class: b23prodtm/runner
-    docker:
-    - image: betothreeprod/intel-nuc-node-php7
     shell: /bin/bash -leo pipefail
     environment:
     - BASH_ENV: /etc/profile
