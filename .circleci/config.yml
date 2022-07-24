@@ -19,71 +19,73 @@ orbs:
 jobs:
   build:
     docker:
-    - image: betothreeprod/intel-nuc-node-php7
+      - image: betothreeprod/intel-nuc-node-php7
     shell: /bin/bash -leo pipefail
     environment:
-    - BASH_ENV: /etc/profile
-    - DKR_ARCH: x86_64
+      - BASH_ENV: /etc/profile
+      - DKR_ARCH: x86_64
     steps:
-    - checkout
-    - run:
-        command: git submodule sync
-    - run:
-        command: git submodule update --init --recursive
-    - restore_cache:
-        key: v1-dependencies-{{ checksum "package-lock.json" }}
-    - setup_remote_docker:
-        docker_layer_caching: false
-    - *deps
-    - save_cache:
-        key: v1-dependencies-{{ checksum "package-lock.json" }}
-        paths:
-        - node_modules
-    - run:
-        name: Set architecture and Setup Environment Variables
-        command: |
-          balena_deploy . $DKR_ARCH --nobuild --exit
-    - persist_to_workspace:
-        root: .
-        paths:
-        - node_modules
+      - checkout
+      - run:
+          command: git submodule sync
+      - run:
+          command: git submodule update --init --recursive
+      - restore_cache:
+          key: v1-dependencies-{{ checksum "package-lock.json" }}
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - *deps
+      - save_cache:
+          key: v1-dependencies-{{ checksum "package-lock.json" }}
+          paths:
+            - node_modules
+      - run:
+          name: Set architecture and Setup Environment Variables
+          command: |
+            balena_deploy . $DKR_ARCH --nobuild --exit
+      - persist_to_workspace:
+          root: .
+          paths:
+            - node_modules
+    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+    resource_class: large
   compose:
     docker:
-    - image: betothreeprod/dind-php7
+      - image: betothreeprod/dind-php7
     shell: /bin/bash -leo pipefail
     environment:
-    - BASH_ENV: /etc/profile
-    - DKR_ARCH: x86_64
+      - BASH_ENV: /etc/profile
+      - DKR_ARCH: x86_64
     steps:
-    - checkout
-    - run:
-        command: git submodule sync
-    - run:
-        command: git submodule update --init --recursive
-    - attach_workspace:
-        at: node_modules
-    - setup_remote_docker:
-        docker_layer_caching: false
-    - *deps
-    - run:
-        name: Set architecture and Setup Environment Variables
-        command: |
-          balena_deploy . $DKR_ARCH --nobuild --exit
-    - run:
-        command: |
-          set -u
-          TAG=0.1.$CIRCLE_BUILD_NUM
-          docker-compose -f docker-compose.$DKR_ARCH build
+      - checkout
+      - run:
+          command: git submodule sync
+      - run:
+          command: git submodule update --init --recursive
+      - attach_workspace:
+          at: node_modules
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - *deps
+      - run:
+          name: Set architecture and Setup Environment Variables
+          command: |
+            balena_deploy . $DKR_ARCH --nobuild --exit
+      - run:
+          command: |
+            set -u
+            TAG=0.1.$CIRCLE_BUILD_NUM
+            docker-compose -f docker-compose.$DKR_ARCH build
 workflows:
   cleanup:
     jobs:
-    - shellcheck/check:
-        ignore: 'SC1091'
+      - shellcheck/check:
+          ignore: 'SC1091'
   build-and-compose:
     jobs:
-    - build
-    - compose:
-        requires:
-        - build
-        context: Info-b23prodtm
+      - build
+      - compose:
+          requires:
+            - build
+          context: Info-b23prodtm
   version: 2
