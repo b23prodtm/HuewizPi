@@ -1,10 +1,10 @@
 # HapwizPY
 Host access point Wizard script for Debian/Ubuntu and RaspberryPI devices
-# NodeJS package Dependencies
-This application depends on [balena-cloud](https://github.com/b23prodtm/balena-cloud) package from NPM
-```
-npm i balena-cloud
-```
+#### NodeJs dependencies
+
+  This project depends on npmjs [balena-cloud](https://www.npmjs.com/package/balena-cloud). Please call
+  `npm update`
+  whenever the system complains about `balena_deploy` not found.
 After npm install succeeded, HapwizPy can be dbuilt and optionally deployed to the device
 # Usage
 Basically, this script's made for linux machines that have got a wireless card or chipset and an ethernet interface connected to the internet. Following the wizard script to install hostapd and its dependencies on the machine :
@@ -66,7 +66,7 @@ A few minutes later, *clientmachine* will be permanently fixed to the IP address
 
   > Obviously the DHCP server (isc-dhcp-server) is getting a lot of DHCPREQUEST and reading leases from _/var/lib/dhcp/dhcpd.leases_ takes some time. Remove obsolete hosts from this _lease_ file.
 
-# Copyright 2018 www.b23prodtm.info - https://github.com/b23prodtm/HapwizPY
+### Copyright 2018 www.b23prodtm.info - https://github.com/b23prodtm/HapwizPY
 
 Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
