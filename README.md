@@ -1,6 +1,11 @@
 # HapwizPY
- Host access point Wizard script for Debian/Ubuntu
-
+Host access point Wizard script for Debian/Ubuntu and RaspberryPI devices
+# NodeJS package Dependencies
+This application depends on [balena-cloud](https://github.com/b23prodtm/balena-cloud) package from NPM
+```
+npm i balena-cloud
+```
+After npm install succeeded, HapwizPy can be dbuilt and optionally deployed to the device
 # Usage
 Basically, this script's made for linux machines that have got a wireless card or chipset and an ethernet interface connected to the internet. Following the wizard script to install hostapd and its dependencies on the machine :
 ```
