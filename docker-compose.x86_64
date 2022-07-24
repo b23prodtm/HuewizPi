@@ -50,4 +50,4 @@ volumes:
   hapwizard:
   wifi-connect:
   netplan:
-  ./volumes/homebridge:
+  homebridge:
