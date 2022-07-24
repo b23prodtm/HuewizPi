@@ -42,7 +42,7 @@ jobs:
         command: |
           balena_deploy . $DKR_ARCH --nobuild --exit
     - persist_to_workspace:
-        root: .
+        root: $HOME
         paths:
           - $HOME/.npm
   compose:
@@ -54,8 +54,11 @@ jobs:
     - DKR_ARCH: x86_64
     steps:
     - checkout
-    - attach_workspace:
-        at: $HOME/.npm
+    - restore_cache:
+        keys:
+           - node_modules-2-{{ checksum "package.json" }}-{{ checksum "package-lock.json"}}
+           - node_modules-2-{{ checksum "package.json" }}
+           - node_modules-2-
     - setup_remote_docker:
         docker_layer_caching: false
     - *deps
