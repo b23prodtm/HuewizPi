@@ -22,9 +22,9 @@ jobs:
     environment:
     - BASH_ENV: /etc/profile
     - DKR_ARCH: x86_64
-    steps:
-      machine: true
-      resource_class: b23prodtm/runner
+    machine: true
+    resource_class: b23prodtm/runner
+    steps:      
     - checkout
     - restore_cache:
         keys:
