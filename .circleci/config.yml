@@ -41,10 +41,6 @@ jobs:
         name: Set architecture and Setup Environment Variables
         command: |
           balena_deploy . $DKR_ARCH --nobuild --exit
-    - persist_to_workspace:
-        root: $HOME
-        paths:
-          - $HOME/.npm
   compose:
     docker:
     - image: betothreeprod/dind-php7
