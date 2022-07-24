@@ -61,7 +61,7 @@ A few minutes later, *clientmachine* will be permanently fixed to the IP address
 
   > Obviously the DHCP server (isc-dhcp-server) is getting a lot of DHCPREQUEST and reading leases from _/var/lib/dhcp/dhcpd.leases_ takes some time. Remove obsolete hosts from this _lease_ file.
 
-# Copyright 2018 www.b23prodtm.info
+# Copyright 2018 www.b23prodtm.info - https://github.com/b23prodtm/HapwizPY
 
 Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
