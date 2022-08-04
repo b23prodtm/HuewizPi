@@ -10,8 +10,10 @@ usage=("" \
 "              A fixed address option will be added to /etc/dhcpd/dhcp.conf, " \
 "              /etc/dhcpd/dhcp6.conf." \
 "              Activate it by commenting out the host option." \
-"          --router" \
+"          --router <${PRIV_NETWORK}.1>" \
 "              Sets up router ip address for ${PRIV_NETWORK}.0/${PRIV_NETWORK_MASKb}" \
+"          --listen <wlan0, wlan1 or br0>" \
+"              Sets up listen INTERFACESv4 and INTERFACESv6"
 "          --dns" \
 "              Add a public custom DNS address (e.g. --dns 8.8.8.8 --dns 9.9.9.9)" \
 "          --dns6" \
@@ -38,6 +40,8 @@ function lease_blk() {
 ${MARKER_END}"
 }
 RETURN=0
+INTERFACESv4="${PRIV_INT}"
+INTERFACESv6="${PRIV_INT}"
 while [ "$#" -gt 0 ]; do case $1 in
   -r*|-R*)
     systemctl disable dnsmasq
@@ -71,7 +75,11 @@ while [ "$#" -gt 0 ]; do case $1 in
   --router)
     routers="option routers $2;"
     shift;;
-    *)
+  --listen)
+    INTERFACESv4=$2
+    INTERFACESv6=$2
+    shift;;
+  *)
     echo -e "$0: Unknown option $1"
     exit 1;;
 esac; shift; done
@@ -106,8 +114,8 @@ if [ "${RETURN}" = 0 ]; then
   option dhcp6.domain-name \"wifi.localhost\";
   range6 ${PRIV_NETWORK_IPV6}${PRIV_RANGE_START} ${PRIV_NETWORK_IPV6}${PRIV_RANGE_END};
   }" > /etc/dhcp/dhcpd6.conf
-  sed -i -e "s/INTERFACESv4=\".*\"/INTERFACESv4=\"${PRIV_INT}\"/" /etc/default/isc-dhcp-server
-  sed -i -e "s/INTERFACESv6=\".*\"/INTERFACESv6=\"${PRIV_INT}\"/" /etc/default/isc-dhcp-server
+  sed -i -e "s/INTERFACESv4=\".*\"/INTERFACESv4=\"${INTERFACESv4}\"/" /etc/default/isc-dhcp-server
+  sed -i -e "s/INTERFACESv6=\".*\"/INTERFACESv6=\"${INTERFACESv6}\"/" /etc/default/isc-dhcp-server
   #delete empty strings '', and ''
   sed -i -e s/\'\',//g -e s/\'\'//g /etc/dhcp/dhcpd6.conf
   cat /etc/default/isc-dhcp-server

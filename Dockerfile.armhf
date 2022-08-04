@@ -47,6 +47,7 @@ RUN \
  install_packages \
    network-manager \
 	 hostapd \
+   haveged \
 	 bridge-utils \
 	 isc-dhcp-server \
 	 iptables \
@@ -58,26 +59,6 @@ RUN \
    python3 \
    python3-pip \
    python3-networkmanager
-
-# add local files
-COPY root/ /
-
-WORKDIR /usr/src/
-
-COPY scripts/ scripts/
-COPY library/ library/
-RUN chmod -R 4755 scripts library \
-  && cp scripts/init.d/hapwizard /etc/init.d/.
-
-# Python modules
-RUN python3 -m pip install --upgrade pip setuptools wheel \
-  && python3 -m pip install -r library/requirements.txt
-
-# Node node_modules
-RUN npm update && npm link balena-cloud
-
-VOLUME /etc/hostapd/
-VOLUME /etc/hapwizard/
 
 # ADD S6 Overlay
 ARG S6_OVERLAY_VERSION=3.1.0.1
@@ -96,7 +77,29 @@ ENV UDEV on
 ADD "https://raw.githubusercontent.com/b23prodtm/docker-systemctl-replacement/master/files/docker/systemctl3.py" /bin/systemctl
 RUN chmod g+xs /bin/systemctl
 
-ENTRYPOINT /init
+WORKDIR /usr/src/
+
+# Python modules
+COPY library/ library/
+RUN chmod -R 4755 library
+
+RUN python3 -m pip install --upgrade pip setuptools wheel \
+  && python3 -m pip install -r library/requirements.txt
+
+# Node node_modules
+RUN npm update && npm link balena-cloud
+
+# Bash scripts
+COPY root/ /
+
+COPY scripts/ scripts/
+RUN chmod -R 4755 scripts \
+  && cp scripts/init.d/hapwizard /etc/init.d/.
+
+VOLUME /etc/hostapd/
+VOLUME /etc/hapwizard/
+
+ENTRYPOINT /usr/bin/entry.sh true && /init
 # RUN [ "cross-build-end" ]
 
-CMD tcpdump -v -i ${PRIV_INT} -z ${$USER} 2>/dev/null
+CMD tcpdump -v -i ${PRIV_INT} -Z ${USER} 2>/dev/null

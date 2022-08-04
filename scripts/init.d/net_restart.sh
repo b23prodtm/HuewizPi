@@ -15,13 +15,9 @@ slogger -st bash "profile boot script"
 # shellcheck source=../bash_profile
 [ -n "${SUDO_USER}" ] && [ -z "$CLIENT" ] && tee -a "/home/$SUDO_USER/.bash_profile" < "${scriptsd}/bash_profile"
 [ -n "${SUDO_USER}" ] && [ -z "$CLIENT" ] && printf "%s\n" "${MARKER_END}" | tee -a "/home/$SUDO_USER/.bash_profile"
-systemctl daemon-reload
 slogger -st dpkg "installing dpkg auto_reboot.service"
 # shellcheck source=auto_reboot.sh
 "${scriptsd}/init.d/auto_reboot.sh" install &
-slogger -st ufw  "enable ip forwarding (internet connectivity)"
-# shellcheck source=init_ufw.sh
-[ -z "$CLIENT" ] && "${scriptsd}/init.d/init_ufw.sh"
 [ -n "${SUDO_USER}" ] && [ -z "$CLIENT" ] && slogger -st systemctl "restarting Access Point /home/$SUDO_USER"
 case $REBOOT in
   'y'|'Y'*) reboot;;

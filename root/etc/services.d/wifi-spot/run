@@ -7,7 +7,9 @@ _term() {
 
 trap _term SIGTERM
 
-# s6-setuidgid abc /etc/init.d/hapwizard start &
-/etc/init.d/hapwizard start &
+# shellcheck disable=SC1091
+/etc/init.d/hapwizard start
 
+"$(dirname "${BASH_SOURCE[0]}")/health-check" &
+# until all background processes finish or SIGTERM
 wait
