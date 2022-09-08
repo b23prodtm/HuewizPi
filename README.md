@@ -2,18 +2,24 @@
 Host access point Wizard script for Debian/Ubuntu and RaspberryPI devices
 #### NodeJs dependencies
 
-  This project depends on npmjs [balena-cloud](https://www.npmjs.com/package/balena-cloud). Please call
+  This project depends on npmjs [balena-cloud-apps](https://www.npmjs.com/package/balena-cloud-apps). Please call
   `npm update`
   whenever the system complains about `balena_deploy` not found.
 After npm install succeeded, HapwizPy can be dbuilt and optionally deployed to the device
 ### Git dependencies
 
-  The docker files contains a submodule folder that needs to be initialized first
-  `git submodule update --init`
-It can safely be updated with Git submodule command lines
-  `cd python-wifi-connect && git commit -a && git push`
 If git cannot pull or update first remove the folder to reinitialize the submodule
   `rm -rf python-wifi-connect`
+The docker files contains a submodule folder that needs to be initialized first
+  `git submodule update --init`
+Update balena apps after committing changes `git commit -a && git push`
+  `. deploy.sh`
+### Deconz Raspbee container
+[Read dconz community README](https://github.com/deconz-community/deconz-docker#readme) Serial BT UART must be swapped to GPIO.
+  > Define DT overlays
+"pi3-miniuart-bt"
+In devices fleet configuration dashboard, *Define DT overlays "pi3-miniuart-bt"*
+
 # Usage
 Basically, this script's made for linux machines that have got a wireless card or chipset and an ethernet interface connected to the internet. Following the wizard script to install hostapd and its dependencies on the machine :
 ```
