@@ -47,6 +47,7 @@ RUN \
  install_packages \
    network-manager \
 	 hostapd \
+   haveged \
 	 bridge-utils \
 	 isc-dhcp-server \
 	 iptables \
@@ -59,45 +60,46 @@ RUN \
    python3-pip \
    python3-networkmanager
 
-# add local files
-COPY root/ /
-
-WORKDIR /usr/src/
-
-COPY scripts/ scripts/
-COPY library/ library/
-RUN chmod -R 4755 scripts library \
-  && cp scripts/init.d/hapwizard /etc/init.d/.
-
-# Python modules
-RUN python3 -m pip install --upgrade pip setuptools wheel \
-  && python3 -m pip install -r library/requirements.txt
-
-# Node node_modules
-RUN npm update && npm link balena-cloud
-
-VOLUME /etc/hostapd/
-VOLUME /etc/hapwizard/
-
 # ADD S6 Overlay
-ARG S6_ARCH
-ENV S6_ARCH ${S6_ARCH:-aarch64}
-ARG S6_RELEASE
-ENV S6_RELEASE ${S6_RELEASE:-v2.0.0.1}
-ENV S6_REPO https://github.com/just-containers/s6-overlay/releases/download
-ADD ${S6_REPO}/${S6_RELEASE}/s6-overlay-${S6_ARCH}.tar.gz /tmp/
-ADD ${S6_REPO}/${S6_RELEASE}/s6-overlay-${S6_ARCH}.tar.gz.sig /tmp/
-RUN curl https://keybase.io/justcontainers/key.asc | gpg --import
-WORKDIR /
-RUN gunzip -c /tmp/s6-overlay-${S6_ARCH}.tar.gz | tar -xf - -C / && \
-    gpg --verify /tmp/s6-overlay-${S6_ARCH}.tar.gz.sig /tmp/s6-overlay-${S6_ARCH}.tar.gz
+ARG S6_OVERLAY_VERSION=3.1.0.1
+
+RUN apt-get update && apt-get install -y nginx xz-utils
+RUN echo "daemon off;" >> /etc/nginx/nginx.conf
+CMD ["/usr/sbin/nginx"]
+
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
 
 ENV UDEV on
 
 ADD "https://raw.githubusercontent.com/b23prodtm/docker-systemctl-replacement/master/files/docker/systemctl3.py" /bin/systemctl
 RUN chmod g+xs /bin/systemctl
 
-ENTRYPOINT /init
+WORKDIR /usr/src/
+
+# Python modules
+COPY library/ library/
+RUN chmod -R 4755 library
+
+RUN python3 -m pip install --upgrade pip setuptools wheel \
+  && python3 -m pip install -r library/requirements.txt
+
+# Node node_modules
+RUN npm update && npm link balena-cloud
+
+# Bash scripts
+COPY root/ /
+
+COPY scripts/ scripts/
+RUN chmod -R 4755 scripts \
+  && cp scripts/init.d/hapwizard /etc/init.d/.
+
+VOLUME /etc/hostapd/
+VOLUME /etc/hapwizard/
+
+ENTRYPOINT /usr/bin/entry.sh true && /init
 # RUN [ "cross-build-end" ]
 
-CMD tcpdump -v -i ${PRIV_INT} -z ${$USER} 2>/dev/null
+CMD tcpdump -v -i ${PRIV_INT} -Z ${USER} 2>/dev/null
