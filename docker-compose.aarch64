@@ -1,5 +1,25 @@
 version: '2'
 services:
+  raspbee-deconz-hue:
+    image: deconzcommunity/deconz
+    container_name: deconz
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /opt/deconz:/opt/deCONZ
+    devices:
+      - /dev/ttyAMA0
+    environment:
+      - DECONZ_WEB_PORT=80
+      - DECONZ_WS_PORT=443
+      - DEBUG_INFO=1
+      - DEBUG_APS=0
+      - DEBUG_ZCL=0
+      - DEBUG_ZDP=0
+      - DEBUG_OTA=0
+
   homebridge:
     image: oznu/homebridge:latest
     restart: always
@@ -51,3 +71,4 @@ volumes:
   wifi-connect:
   netplan:
   homebridge:
+  /opt/deconz:
