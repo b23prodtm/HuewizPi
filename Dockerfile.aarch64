@@ -6,7 +6,7 @@ ENV DBUS_SYSTEM_BUS_ADDRESS ${DBUS_SYSTEM_BUS_ADDRESS:-unix:path=/host/run/dbus/
 # Deprecated INITSYSTEM as of balenalib major changes
 # https://www.balena.io/docs/reference/base-images/base-images/#major-changes
 # ENV INITSYSTEM On
-RUN [ "cross-build-start" ]
+# RUN [ "cross-build-start" ]
 
 ENV DEBIAN_FRONTEND noninteractive
 ARG DEBUG
@@ -100,6 +100,6 @@ VOLUME /etc/hostapd/
 VOLUME /etc/hapwizard/
 
 ENTRYPOINT /usr/bin/entry.sh true && /init
-RUN [ "cross-build-end" ]
+# RUN [ "cross-build-end" ]
 
 CMD tcpdump -v -i ${PRIV_INT} -Z ${USER} 2>/dev/null
