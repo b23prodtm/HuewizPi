@@ -4,7 +4,7 @@ services:
     image: deconzcommunity/deconz
     container_name: deconz
     restart: always
-    ports: 
+    ports:
       - 80:80
       - 443:443
     volumes:
