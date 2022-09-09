@@ -8,7 +8,7 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - /opt/deconz:/opt/deCONZ
+      - deconz:/opt/deCONZ
     devices:
       - /dev/ttyAMA0
     environment:
@@ -74,4 +74,4 @@ volumes:
   wifi-connect:
   netplan:
   homebridge:
-  /opt/deconz:
+  deconz:
