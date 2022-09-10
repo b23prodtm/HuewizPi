@@ -6,14 +6,19 @@ Host access point Wizard script for Debian/Ubuntu and RaspberryPI devices
   `npm update`
   whenever the system complains about `balena_deploy` not found.
 After npm install succeeded, HapwizPy can be dbuilt and optionally deployed to the device
-### Git dependencies
+#### About submodule dependencies
 
 If git cannot pull or update first remove the folder to reinitialize the submodule
   `rm -rf python-wifi-connect`
 The docker files contains a submodule folder that needs to be initialized first
-  `git submodule update --init`
+  `git submodule update --init python-wifi-connect/`
+If any changes occur in the submodule, push refs to Github, as needed:
+  `cd python-wifi-connect && git commit -a && git push`
+
+### Deploy to balena
 Update balena apps after committing changes `git commit -a && git push`
   `. deploy.sh`
+
 ### Deconz Raspbee container
 [Read dconz community README](https://github.com/deconz-community/deconz-docker#readme) Serial BT UART must be swapped to GPIO.
   > Define DT overlays
