@@ -12,6 +12,8 @@ ENV DEBIAN_FRONTEND noninteractive
 ARG DEBUG
 ENV DEBUG ${DEBUG:-0}
 
+ARG DKR_ARCH
+ENV S6_ARCH ${DKR_ARCH:%%DKR_ARCH%%}
 ENV PRIV_INT wlan0
 ENV PRIV_NETWORK 10.3.0
 ENV PRIV_NETWORK_MASK 255.255.255.0
@@ -69,8 +71,8 @@ CMD ["/usr/sbin/nginx"]
 
 ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
 RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
-ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz /tmp
-RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${S6_ARCH}.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-${S6_ARCH}.tar.xz
 
 ENV UDEV on
 
