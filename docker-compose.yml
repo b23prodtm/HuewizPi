@@ -35,7 +35,7 @@ services:
     restart: always
     build:
       context: .
-      dockerfile: Dockerfile.%%DKR_ARCH%%
+      dockerfile: Dockerfile.aarch64
     image: betothreeprod/hapwizpy-generic-%%DKR_ARCH%%
     env_file:
       - common.env
@@ -58,7 +58,7 @@ services:
     network_mode: host
     build:
       context: ./python-wifi-connect
-      dockerfile: Dockerfile.%%DKR_ARCH%%
+      dockerfile: Dockerfile.aarch64
     image: betothreeprod/python-wifi-connect-generic-%%DKR_ARCH%%
     labels:
       io.balena.features.dbus: "1"
