@@ -47,6 +47,22 @@ For instance, use channel 6 for b/g/n 2,4GHz or channel 36 for ac 5GHz. Usually 
 
 The host must have access to the Internet in order to share its connection to the Wireless clients. A reboot is needed to allow system services to restart in the correct order (system-resolved isc-dhcp-server hostapd).
 
+### Flow diagram
+```flow
+wifi=>start: wifi-spot
+net=>operation: Wifi network (wifi-box)
+cond=>condition: Device connected ?
+cond2=>condition: Gateway found ?
+hb=>operation: Homebridge Hue Plugin
+zb=>end: Light bulb on/off
+
+wifi->net->cond->hb->cond2
+cond(yes)->hb
+cond(no)->net
+cond2(yes)->zb
+cond2(no)->hb
+```
+
 ### DNS probe URL on the internet
 If you encounter difficulties by connecting to the internet through thewifi hotspot, it's because of an incorrect DNS setup.
 Run the folloying command on the host machine, it should return a valid dns from your ISP, in a (docker) shell instance:
