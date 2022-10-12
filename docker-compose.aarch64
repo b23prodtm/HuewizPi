@@ -5,7 +5,7 @@ services:
     container_name: deconz
     restart: always
     ports:
-      - 80:80
+      - 80:8080
       - 443:443
     volumes:
       - deconz:/opt/deCONZ
@@ -23,6 +23,8 @@ services:
     image: oznu/homebridge:latest
     restart: always
     network_mode: host
+    ports:
+      - 8581:8581
     logging:
       driver: json-file
       options:
