@@ -89,7 +89,7 @@ RUN python3 -m pip install --upgrade pip setuptools wheel \
   && python3 -m pip install -r library/requirements.txt
 
 # Node node_modules
-RUN npm update && npm link balena-cloud
+RUN npm update && npm link balena-cloud-apps
 
 # Bash scripts
 COPY root/ /

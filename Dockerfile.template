@@ -89,7 +89,7 @@ RUN python3 -m pip install --upgrade pip setuptools wheel \
   && python3 -m pip install -r library/requirements.txt
 
 # Node node_modules
-RUN npm update && npm link balena-cloud
+RUN npm update && npm link balena-cloud-apps
 
 # Bash scripts
 COPY root/ /
@@ -101,7 +101,7 @@ RUN chmod -R 4755 scripts \
 VOLUME /etc/hostapd/
 VOLUME /etc/hapwizard/
 
-ENTRYPOINT /usr/bin/entry.sh true && /init
+ENTRYPOINT /usr/bin/entry.sh true
 # RUN [ "cross-build-end" ]
 
 CMD tcpdump -v -i ${PRIV_INT} -Z ${USER} 2>/dev/null

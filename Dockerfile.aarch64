@@ -101,7 +101,7 @@ RUN chmod -R 4755 scripts \
 VOLUME /etc/hostapd/
 VOLUME /etc/hapwizard/
 
-ENTRYPOINT /usr/bin/entry.sh true && /init
+ENTRYPOINT /usr/bin/entry.sh true
 # RUN [ "cross-build-end" ]
 
 CMD tcpdump -v -i ${PRIV_INT} -Z ${USER} 2>/dev/null
