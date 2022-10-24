@@ -1,6 +1,5 @@
 ARG PRIMARY_HUB
-FROM ${PRIMARY_HUB:-balenalib/raspberrypi3
--ubuntu-node:bionic-build}
+FROM ${PRIMARY_HUB:-balenalib/raspberrypi3-ubuntu-node:bionic-build}
 ARG DBUS_SYSTEM_BUS_ADDRESS
 ENV DBUS_SYSTEM_BUS_ADDRESS ${DBUS_SYSTEM_BUS_ADDRESS:-unix:path=/host/run/dbus/system_bus_socket}
 
@@ -13,9 +12,8 @@ ENV DEBIAN_FRONTEND noninteractive
 ARG DEBUG
 ENV DEBUG ${DEBUG:-0}
 
-ARG DKR_ARCH
-ENV S6_ARCH ${DKR_ARCH:-armhf
-}
+ARG BALENA_ARCH
+ENV S6_ARCH ${BALENA_ARCH:-armhf}
 ENV PRIV_INT wlan0
 ENV PRIV_NETWORK 10.3.0
 ENV PRIV_NETWORK_MASK 255.255.255.0

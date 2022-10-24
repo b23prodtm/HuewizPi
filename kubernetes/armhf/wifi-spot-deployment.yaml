@@ -37,7 +37,7 @@ spec:
           value: (S6_ARCH S6_RELEASE IMG_TAG PRIMARY_HUB)
         - name: DBUS_SYSTEM_BUS_ADDRESS
           value: unix:path=/host/run/dbus/system_bus_socket
-        - name: DKR_ARCH
+        - name: BALENA_ARCH
           value: armhf
         - name: IMG_TAG
           value: latest

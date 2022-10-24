@@ -22,7 +22,7 @@ jobs:
     shell: /bin/bash -leo pipefail
     environment:
     - BASH_ENV: /etc/profile
-    - DKR_ARCH: x86_64
+    - BALENA_ARCH: x86_64
     steps:
     - checkout
     - restore_cache:
@@ -38,14 +38,14 @@ jobs:
     - run:
         name: Set architecture and Setup Environment Variables
         command: |
-          balena_deploy . $DKR_ARCH --nobuild --exit
+          balena_deploy . $BALENA_ARCH --nobuild --exit
   compose:
     docker:
     - image: betothreeprod/dind-php7
     shell: /bin/bash -leo pipefail
     environment:
     - BASH_ENV: /etc/profile
-    - DKR_ARCH: x86_64
+    - BALENA_ARCH: x86_64
     steps:
     - checkout
     - restore_cache:
@@ -57,12 +57,12 @@ jobs:
     - run:
         name: Set architecture and Setup Environment Variables
         command: |
-          balena_deploy . $DKR_ARCH --nobuild --exit
+          balena_deploy . $BALENA_ARCH --nobuild --exit
     - run:
         command: |
           set -u
           TAG=0.1.$CIRCLE_BUILD_NUM
-          docker-compose -f docker-compose.$DKR_ARCH build
+          docker-compose -f docker-compose.$BALENA_ARCH build
 workflows:
   cleanup:
     jobs:
