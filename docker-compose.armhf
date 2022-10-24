@@ -39,7 +39,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.armhf
-    image: betothreeprod/hapwizpy-generic-armhf
+    image: betothreeprod/HuewizPi-generic-armhf
     env_file:
       - common.env
       - .env

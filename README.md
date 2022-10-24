@@ -1,11 +1,11 @@
-# HapwizPY
+# HuewizPi
 Host access point Wizard script for Debian/Ubuntu and RaspberryPI devices
 #### NodeJs dependencies
 
   This project depends on npmjs [balena-cloud-apps](https://www.npmjs.com/package/balena-cloud-apps). Please call
   `npm update`
   whenever the system complains about `balena_deploy` not found.
-After npm install succeeded, HapwizPy can be dbuilt and optionally deployed to the device
+After npm install succeeded, HuewizPi can be dbuilt and optionally deployed to the device
 #### About submodule dependencies
 
 If git cannot pull or update first remove the folder to reinitialize the submodule
@@ -101,7 +101,7 @@ A few minutes later, *clientmachine* will be permanently fixed to the IP address
 
   > Obviously the DHCP server (isc-dhcp-server) is getting a lot of DHCPREQUEST and reading leases from _/var/lib/dhcp/dhcpd.leases_ takes some time. Remove obsolete hosts from this _lease_ file.
 
-### Copyright 2018 www.b23prodtm.info - https://github.com/b23prodtm/HapwizPY
+### Copyright 2018 www.b23prodtm.info - https://github.com/b23prodtm/HuewizPi
 
 Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
