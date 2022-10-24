@@ -1,7 +1,7 @@
 version: '2'
 services:
   raspbee-deconz-hue:
-    image: deconzcommunity/deconz
+    image: deconzcommunity/deconz:2.18.02
     container_name: deconz
     restart: always
     privileged: true
@@ -39,7 +39,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.armhf
-    image: betothreeprod/hapwizpy-generic-aarch64
+    image: betothreeprod/hapwizpy-generic-armhf
     env_file:
       - common.env
       - .env
@@ -62,7 +62,7 @@ services:
     build:
       context: ./python-wifi-connect
       dockerfile: Dockerfile.armhf
-    image: betothreeprod/python-wifi-connect-generic-aarch64
+    image: betothreeprod/python-wifi-connect-generic-armhf
     labels:
       io.balena.features.dbus: "1"
       io.balena.features.supervisor-api: "1"
