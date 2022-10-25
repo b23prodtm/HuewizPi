@@ -47,7 +47,7 @@ spec:
           value: armhf
         - name: S6_RELEASE
           value: v2.0.0.1
-        image: betothreeprod/HuewizPi-intel-nuc
+        image: betothreeprod/huewizpi-intel-nuc
         imagePullPolicy: ""
         name: wifi-spot
         resources: {}

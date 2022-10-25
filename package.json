@@ -1,5 +1,5 @@
 {
-  "name": "HuewizPi",
+  "name": "huewizpi",
   "version": "1.0.0",
   "description": "Host access point Wizard script for Debian/Ubuntu",
   "main": "index.js",
@@ -8,15 +8,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/b23prodtm/HuewizPi.git"
+    "url": "git+https://github.com/b23prodtm/huewizpi.git"
   },
   "keywords": [],
   "author": "Tiana Rakoto Arimanana <b23prodtm@users.sourceforge.net>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/b23prodtm/HuewizPi/issues"
+    "url": "https://github.com/b23prodtm/huewizpi/issues"
   },
-  "homepage": "https://github.com/b23prodtm/HuewizPi#readme",
+  "homepage": "https://github.com/b23prodtm/huewizpi#readme",
   "dependencies": {
     "balena-cloud-apps": "^1.0.34"
   }
