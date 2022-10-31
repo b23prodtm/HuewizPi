@@ -6,7 +6,7 @@ Dockerfile.*
 !Dockerfile.armhf
 !Dockerfile.x86_64
 docker-compose.*
-!docker-compose.yml
+!docker-compose.template
 !docker-compose.x86_64
 !docker-compose.aarch64
 !docker-compose.armhf
