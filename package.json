@@ -19,5 +19,6 @@
   "homepage": "https://github.com/b23prodtm/huewizpi#readme",
   "dependencies": {
     "balena-cloud-apps": "^1.0.38"
-  }
+  },
+  "devDependencies": {}
 }
