@@ -1,7 +1,23 @@
 version: '2'
 services:
+  zigbee2mqtt:
+    hostname: zigbee2mqtt
+    image: koenkk/zigbee2mqtt
+    restart: unless-stopped
+    volumes:
+      - data:/app/data
+      - udev:/run/udev:ro
+    ports:
+      # Frontend port
+      - 8080:8080
+    environment:
+      - TZ=Europe/Berlin
+      - ZIGBEE2MQTT_DATA=./data
+    devices:
+      # Make sure this matched your adapter location in app/data/configuration.yaml
+      - /dev/ttyS0
   homeassistant:
-    container_name: homeassistant
+    hostname: homeassistant.local
     image: "ghcr.io/home-assistant/home-assistant:stable"
     volumes:
       - config:/config
@@ -9,11 +25,8 @@ services:
     restart: unless-stopped
     privileged: true
     network_mode: host
-    devices:
-      - /dev/ttyS0
-      - /dev/ttyAMA0
-      - /dev/ttyACM0
   homebridge:
+    hostname: homebridge.local
     image: oznu/homebridge:latest
     restart: always
     network_mode: host
@@ -28,7 +41,7 @@ services:
       - homebridge:/homebridge
   wifi-spot:
     network_mode: host
-    restart: always
+    restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile.%%BALENA_ARCH%%
@@ -61,7 +74,7 @@ services:
       io.balena.features.supervisor-api: "1"
     privileged: true
     ports:
-      - "80:80"
+      - 80:80
     volumes:
       - wifi-connect:/usr/src/app/
 volumes:
@@ -70,5 +83,7 @@ volumes:
   wifi-connect:
   netplan:
   homebridge:
+  udev:
+  data:
   config:
   localtime:

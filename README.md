@@ -15,6 +15,22 @@ The docker files contains a submodule folder that needs to be initialized first
 If any changes occur in the submodule, push refs to Github, as needed:
   `cd python-wifi-connect && git commit -a && git push`
 
+### Updating Docker service image (Dockerfile.template)
+
+A new service image can be build
+- Check values in `${BALENA_ARCH}.env`, 
+========================================================
+| Node Machine   | `BALENA_MACHINE_NAME` | `BALENA_ARCH`
+| ------------     ---------------------   -------------
+| Raspberry Pi   | raspberrypi           | armhf
+| Raspberry Pi 3 | raspberrypi3-64       | aarch64
+| Mini PC        | intel-nuc             | x86_64
+========================================================
+- Run deploy-don't-build `./deploy.sh [1-3] 3`
+  You can select 1:armhf, 2:aarch64 or 3:x86_64 as the target machine CPU
+- You choose to build FROM a balenalib base image as set in Dockerfile.template, then type `0` or `CTRL-C` to exit the script
+- All template data filters copy to Dockerfile.aarch64, Dockerfile.armhf and Dockerfile.x86_64
+
 ### Deploy to balena
 Update balena apps after committing changes `git commit -a && git push`
   `. deploy.sh`

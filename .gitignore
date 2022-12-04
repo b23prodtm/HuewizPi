@@ -1,15 +1,9 @@
 # cache files
 configure
+!Dockerfile.*
+!docker-compose.*
+*.sed
 *.old
-Dockerfile.*
-!Dockerfile.template
-!Dockerfile.armhf
-!Dockerfile.x86_64
-docker-compose.*
-!docker-compose.template
-!docker-compose.x86_64
-!docker-compose.aarch64
-!docker-compose.armhf
 .circleci/config-compat.yml
 # Byte-compiled / optimized / DLL files
 __pycache__/
