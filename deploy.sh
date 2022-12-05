@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 printf "%s\n" "-- check git mode auto LF"
-cat .gitattributes | grep ".sh"
+grep ".sh" < .gitattributes
 printf "%s\n" "--"
 balena_deploy "${BASH_SOURCE[0]}" "$@"
