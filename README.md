@@ -1,24 +1,29 @@
 # HuewizPi
 Host access point Wizard script for Debian/Ubuntu and RaspberryPI devices
-#### NodeJs dependencies
+## Node Package Manager
 
   This project depends on npmjs [balena-cloud-apps](https://www.npmjs.com/package/balena-cloud-apps). Please call
   `npm update`
   whenever the system complains about `balena_deploy` not found.
 After npm install succeeded, HuewizPi can be dbuilt and optionally deployed to the device
-#### About submodule dependencies
 
-If git cannot pull or update first remove the folder to reinitialize the submodule
-  `rm -rf python-wifi-connect`
-The docker files contains a submodule folder that needs to be initialized first
-  `git submodule update --init python-wifi-connect/`
-If any changes occur in the submodule, push refs to Github, as needed:
-  `cd python-wifi-connect && git commit -a && git push`
+### Update BALENA_ARCH dependent files
+
+When you make changes to `docker*.template` files and environment `*.env` files, you can apply changes to file that the CPU architecture depends on. To do so, run deployment scripts `balena_deploy --nobuild` before pushing to package manager and repository:
+``` Updates armhf files
+./deploy.sh 1 --local [CTRL+C]
+```
+``` Updates aarch64 files
+./deploy.sh 2 --local [CTRL+C]
+```
+```  Updates x86_64 files
+./deploy.sh 3 --local [CTRL+C]
+```
 
 ### Updating Docker service image (Dockerfile.template)
 
 A new service image can be build
-- Check values in `${BALENA_ARCH}.env`, 
+- Check values in `${BALENA_ARCH}.env`,
 ========================================================
 | Node Machine   | `BALENA_MACHINE_NAME` | `BALENA_ARCH`
 | ------------     ---------------------   -------------
@@ -26,7 +31,7 @@ A new service image can be build
 | Raspberry Pi 3 | raspberrypi3-64       | aarch64
 | Mini PC        | intel-nuc             | x86_64
 ========================================================
-- Run deploy-don't-build `./deploy.sh [1-3] 3`
+- Run balena_deploy --nobuild `./deploy.sh [1-3] 3`
   You can select 1:armhf, 2:aarch64 or 3:x86_64 as the target machine CPU
 - You choose to build FROM a balenalib base image as set in Dockerfile.template, then type `0` or `CTRL-C` to exit the script
 - All template data filters copy to Dockerfile.aarch64, Dockerfile.armhf and Dockerfile.x86_64

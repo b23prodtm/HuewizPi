@@ -1,5 +1,30 @@
 version: '2'
 services:
+  raspbee-deconz-hue:
+    image: deconzcommunity/deconz:stable
+    container_name: deconz
+    restart: always
+    privileged: true
+    ports:
+      - 8080:8080
+      - 443:443
+    volumes:
+      - deconz:/opt/deCONZ
+      - localtime:/etc/localtime
+    devices:
+      - /dev/ttyS0
+      - /dev/ttyAMA0
+    environment:
+      - DECONZ_WEB_PORT=8080
+      - DECONZ_WS_PORT=443
+      - DEBUG_INFO=1
+      - DEBUG_APS=0
+      - DEBUG_ZCL=0
+      - DEBUG_ZDP=0
+      - DEBUG_OTA=0
+      - DEBUG_HTTP=0
+      - DECONZ_DEVICE=/dev/ttyAMA0   # This is the USB device that Raspbee/Conbee II is running on.
+      - DECONZ_START_VERBOSE=0
   homeassistant:
     container_name: hass
     image: "ghcr.io/home-assistant/home-assistant:stable"
@@ -51,25 +76,11 @@ services:
       - wifi-box
     cap_add:
       - ALL
-  wifi-box:
-    network_mode: host
-    build:
-      context: ./python-wifi-connect
-      dockerfile: Dockerfile.x86_64
-    image: betothreeprod/python-wifi-connect-intel-nuc
-    labels:
-      io.balena.features.dbus: "1"
-      io.balena.features.supervisor-api: "1"
-    privileged: true
-    ports:
-      - 80:80
-    volumes:
-      - wifi-connect:/usr/src/app/
 volumes:
   hostapd:
   hapwizard:
-  wifi-connect:
   netplan:
   homebridge:
   config:
   localtime:
+  deconz:
