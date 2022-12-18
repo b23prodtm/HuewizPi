@@ -1,12 +1,14 @@
 version: '2'
 services:
   raspbee-deconz-hue:
-    image: deconzcommunity/deconz:stable
+    image: deconzcommunity/deconz:latest
     container_name: deconz
     restart: always
     privileged: true
+    group_add:
+      - dialout
     ports:
-      - 8080:8080
+      - 80:80
       - 443:443
     volumes:
       - deconz:/opt/deCONZ
@@ -15,7 +17,7 @@ services:
       - /dev/ttyS0
       - /dev/ttyAMA0
     environment:
-      - DECONZ_WEB_PORT=8080
+      - DECONZ_WEB_PORT=80
       - DECONZ_WS_PORT=443
       - DEBUG_INFO=1
       - DEBUG_APS=0
@@ -70,10 +72,7 @@ services:
     volumes:
       - hostapd:/etc/hostapd
       - hapwizard:/etc/hapwizard
-      - wifi-connect:/usr/src/python-wifi-connect/
       - netplan:/etc/netplan
-    depends_on:
-      - wifi-box
     cap_add:
       - ALL
 volumes:

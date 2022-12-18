@@ -9,7 +9,7 @@ After npm install succeeded, HuewizPi can be dbuilt and optionally deployed to t
 
 ### Update BALENA_ARCH dependent files
 
-When you make changes to `docker*.template` files and environment `*.env` files, you can apply changes to file that the CPU architecture depends on. To do so, run deployment scripts `balena_deploy --nobuild` before pushing to package manager and repository:
+When you make changes to `docker*.template` files and environment `*.env` files, you can apply changes that the CPU architecture depends on. To do so, run deployment scripts `balena_deploy --nobuild` before to push packages:
 ``` Updates armhf files
 ./deploy.sh 1 --local [CTRL+C]
 ```
@@ -31,7 +31,7 @@ A new service image can be build
 | Raspberry Pi 3 | raspberrypi3-64       | aarch64
 | Mini PC        | intel-nuc             | x86_64
 ========================================================
-- Run balena_deploy --nobuild `./deploy.sh [1-3] 3`
+- Run `./deploy.sh [BALENA_ARCH] --nobuild`
   You can select 1:armhf, 2:aarch64 or 3:x86_64 as the target machine CPU
 - You choose to build FROM a balenalib base image as set in Dockerfile.template, then type `0` or `CTRL-C` to exit the script
 - All template data filters copy to Dockerfile.aarch64, Dockerfile.armhf and Dockerfile.x86_64
