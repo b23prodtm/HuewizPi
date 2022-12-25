@@ -45,7 +45,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.x86_64
-    image: betothreeprod/huewizpi-intel-nuc
+    image: betothreeprod/huewizpi-intel-nuc
     env_file:
       - common.env
       - .env
@@ -66,3 +66,4 @@ volumes:
   netplan:
   config:
   localtime:
+  deconz:
