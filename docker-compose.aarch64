@@ -45,7 +45,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.aarch64
-    image: betothreeprod/huewizpi-raspberrypi3-64
+    image: betothreeprod/huewizpi-raspberrypi3-64
     env_file:
       - common.env
       - .env
@@ -66,3 +66,4 @@ volumes:
   netplan:
   config:
   localtime:
+  deconz:
