@@ -1,21 +1,23 @@
 version: '2'
 services:
   raspbee-deconz-hue:
-    image: deconzcommunity/deconz:stable
+    image: deconzcommunity/deconz:latest
     container_name: deconz
-    restart: always
+    restart: unless-stopped
+    network_mode: host
     privileged: true
+    group_add:
+      - dialout
     ports:
-      - 8080:8080
+      - 80:80
       - 443:443
     volumes:
       - deconz:/opt/deCONZ
       - localtime:/etc/localtime
     devices:
-      - /dev/ttyS0
       - /dev/ttyAMA0
     environment:
-      - DECONZ_WEB_PORT=8080
+      - DECONZ_WEB_PORT=80
       - DECONZ_WS_PORT=443
       - DEBUG_INFO=1
       - DEBUG_APS=0
@@ -24,10 +26,10 @@ services:
       - DEBUG_OTA=0
       - DEBUG_HTTP=0
       - DECONZ_DEVICE=/dev/ttyAMA0   # This is the USB device that Raspbee/Conbee II is running on.
-      - DECONZ_START_VERBOSE=0
+      - DECONZ_START_VERBOSE=1
   homeassistant:
-    container_name: hass
     image: "ghcr.io/home-assistant/home-assistant:stable"
+    container_name: hass
     volumes:
       - config:/config
       - localtime:/etc/localtime:ro
@@ -35,22 +37,7 @@ services:
     privileged: true
     network_mode: host
     devices:
-      - /dev/ttyS0
-      - /dev/AMA0
-  homebridge:
-    container_name: hb
-    image: oznu/homebridge:latest
-    restart: always
-    network_mode: host
-    ports:
-      - 8581:8581
-    logging:
-      driver: json-file
-      options:
-        max-size: "10mb"
-        max-file: "1"
-    volumes:
-      - homebridge:/homebridge
+      - /dev/ttyAMA0
   wifi-spot:
     container_name: hwzpi
     network_mode: host
@@ -70,17 +57,12 @@ services:
     volumes:
       - hostapd:/etc/hostapd
       - hapwizard:/etc/hapwizard
-      - wifi-connect:/usr/src/python-wifi-connect/
       - netplan:/etc/netplan
-    depends_on:
-      - wifi-box
     cap_add:
       - ALL
 volumes:
   hostapd:
   hapwizard:
   netplan:
-  homebridge:
   config:
   localtime:
-  deconz:
