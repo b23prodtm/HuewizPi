@@ -3,7 +3,7 @@ Host access point Wizard script for Debian/Ubuntu and RaspberryPI devices
 ## Node Package Manager
 
   This project depends on npmjs [balena-cloud-apps](https://www.npmjs.com/package/balena-cloud-apps). Please call
-  `npm update`
+  `npm link balena-cloud-apps && npm update`
   whenever the system complains about `balena_deploy` not found.
 After npm install succeeded, HuewizPi can be dbuilt and optionally deployed to the device
 
