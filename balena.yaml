@@ -48,22 +48,6 @@ post-provisioning: >-
   - Host access Point (alpha)
   - Licensed under the Apache License, Version 2.0
 
-  ### Flow diagram
-  ```flow
-  wifi=>start: wifi-spot
-  net=>operation: Wifi network (wifi-box)
-  cond=>condition: Device connected ?
-  cond2=>condition: Gateway found ?
-  hb=>operation: Homebridge Hue Plugin
-  zb=>end: Light bulb on/off
-
-  wifi->net->cond->hb->cond2
-  cond(yes)->hb
-  cond(no)->net
-  cond2(yes)->zb
-  cond2(no)->hb
-  ```
-
   ### How to run this app
 
   Simple click on the Deploy button, and create or use an existing fleet. Once done you can download the video-surveillance Balena Cloud base image and flash it to your device.

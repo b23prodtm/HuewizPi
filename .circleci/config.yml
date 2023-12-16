@@ -11,8 +11,9 @@ aliases:
             npm \
           && apk del build-base \
           && rm -rf /var/cache/apk/*
-          npm ci
-          npm link balena-cloud-apps
+        npm cache clear --force
+        npm install --omit=optional
+        npm link balena-cloud-apps
 orbs:
   shellcheck: circleci/shellcheck@1.3.16
 jobs:
