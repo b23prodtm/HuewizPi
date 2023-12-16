@@ -1,5 +1,7 @@
 # HuewizPi
-Host access point Wizard script for Debian/Ubuntu and RaspberryPI devices
+  A home access point to figure out how to manage lights -Hue-ZigBee- and bridging internet of things
+(IoT) over home network (wifi-box)
+  
 ## Node Package Manager
 
   This project depends on npmjs [balena-cloud-apps](https://www.npmjs.com/package/balena-cloud-apps). Please call
@@ -27,8 +29,8 @@ A new service image can be build
 ========================================================
 | Node Machine   | `BALENA_MACHINE_NAME` | `BALENA_ARCH`
 | ------------     ---------------------   -------------
-| Raspberry Pi   | raspberrypi           | armhf
-| Raspberry Pi 3 | raspberrypi3-64       | aarch64
+| Raspberry Pi 3 | raspberrypi3           | armhf
+| Raspberry Pi 4 | raspberrypi3-64       | aarch64
 | Mini PC        | intel-nuc             | x86_64
 ========================================================
 - Run `./deploy.sh [BALENA_ARCH] --nobuild`
