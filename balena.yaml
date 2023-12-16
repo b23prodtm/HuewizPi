@@ -1,0 +1,93 @@
+name: video-surveillance
+description: >-
+  Kerberos Agent is a cutting edge video surveillance management system 
+  made available as Open Source under the MIT License
+version: 3.0.0
+type: sw.application
+assets:
+  repository:
+    type: blob.asset
+    data:
+      url: 'https://github.com/kerberos-io/agent'
+  logo:
+    type: blob.asset
+    data:
+      url: >-
+        https://raw.githubusercontent.com/kerberos-io/balena-agent/master/logo.png
+data:
+  applicationEnvironmentVariables:
+    - AGENT_MODE: "release"
+    - AGENT_USERNAME: "root"
+    - AGENT_PASSWORD: "root"
+  defaultDeviceType: raspberrypi3
+  supportedDeviceTypes:
+    - fincm3
+    - orange-pi-one
+    - orangepi-plus2
+    - orange-pi-zero
+    - beagleboard-xm
+    - beaglebone-black
+    - beaglebone-green
+    - beaglebone-green-wifi
+    - raspberry-pi
+    - raspberry-pi2
+    - raspberrypi3
+    - raspberrypi3-64
+    - raspberrypi-4
+    - raspberrypi4-64
+    - raspberrypi400-64
+    - intel-nuc
+    - genericx86-64-ext
+    - generic-aarch64
+    - jetson-nano
+    - jetson-nano-emmc
+    - jetson-tx1
+    - jetson-tx2
+    - jetson-xavier
+    - jetson-xavier-nx-devkit
+post-provisioning: >-
+
+  The video-surveillance application is a collection of blocks and other third-party containers to create a 
+state-of-the-art video surveillance system. At the foundation of this app is the [Kerberos.io 
+Agent](https://github.com/kerberos-io/agent), which is a cutting edge modular video surveillance system, made 
+available as Open Source under the MIT License, with a strong focus on user experience, scalability, 
+resilience, extension and integration. The idea of this app is to include more blocks over-time to improve and 
+include new functionalities.
+  
+  # At the core: Home Assistant
+
+  Open source home automation that puts local control and privacy first. Powered by a worldwide community of 
+tinkerers and DIY enthusiasts. Perfect to run on a Raspberry Pi or a local server.
+  
+  ## The most important features
+
+  - [Home Assistant Client](https://www.home-assistant.io)
+  - [Read dconz community README](https://github.com/deconz-community/deconz-docker#readme) Serial BT UART 
+must be swapped to GPIO.
+  > Define DT overlays
+"pi3-miniuart-bt"
+In devices fleet configuration dashboard, *Define DT overlays "pi3-miniuart-bt"*
+  - Host access Point (alpha)
+  - Licensed under the Apache License, Version 2.0
+
+  ### Flow diagram
+```flow
+wifi=>start: wifi-spot
+net=>operation: Wifi network (wifi-box)
+cond=>condition: Device connected ?
+cond2=>condition: Gateway found ?
+hb=>operation: Homebridge Hue Plugin
+zb=>end: Light bulb on/off
+
+wifi->net->cond->hb->cond2
+cond(yes)->hb
+cond(no)->net
+cond2(yes)->zb
+cond2(no)->hb
+```
+
+  ### How to run this app
+
+  Simple click on the Deploy button, and create or use an existing fleet. Once done you can download the 
+video-surveillance Balena Cloud base image and flash it to your device.
+
