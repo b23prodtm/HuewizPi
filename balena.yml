@@ -1,4 +1,4 @@
-name: huewiz-pi
+name: HuewizPi
 description: >-
   A home access point to figure out how to manage lights -Hue-ZigBee- and bridging internet of things 
   (IoT) over home network (wifi-box)
@@ -25,8 +25,6 @@ data:
     - raspberrypi4-64
     - raspberrypi400-64
     - intel-nuc
-    - genericx86-64-ext
-    - generic-aarch64
 post-provisioning: >-
   
   First time release of a home access point to figure out how to manage lights -Hue-ZigBee- and bridging internet of things (IoT) over home network (wifi-box) 
