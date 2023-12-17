@@ -1,6 +1,8 @@
 # HuewizPi
   A home access point to figure out how to manage lights -Hue-ZigBee- and bridging internet of things
 (IoT) over home network (wifi-box)
+
+  [![balena deploy button](https://www.balena.io/deploy.svg)](https://dashboard.balena-cloud.com/deploy?repoUrl=https://github.com/b23prodtm/HuewizPi)
   
 ## Node Package Manager
 
