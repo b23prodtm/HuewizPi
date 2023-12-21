@@ -1,4 +1,4 @@
-FROM node:lts-alpine
+FROM node:current-alpine3.13
 RUN apk update \
     && apk add \
     bash \
@@ -45,7 +45,7 @@ RUN apk update \
     libc-dev \
     make \
     mariadb-client \
-    npm \
+    nodejs \
     \
     python3 \
     git \
@@ -57,3 +57,4 @@ RUN apk update \
 # RUN rc-update add php-fpm7 default
 # RUN rc-service php-fpm7 start
 WORKDIR /var/www/html/
+RUN node -v && npm -v
