@@ -49,23 +49,6 @@ When you make changes to `docker*.template` files and environment `*.env` files,
 ./deploy.sh 3 --local [CTRL+C]
 ```
 
-## Updating
-Docker service image (Dockerfile.template)
-
-A new service image can be build
-- Check values in `${BALENA_ARCH}.env`,
-========================================================
-| Node Machine   | `BALENA_MACHINE_NAME` | `BALENA_ARCH`
-| ------------     ---------------------   -------------
-| Raspberry Pi 3 | raspberrypi3           | armhf
-| Raspberry Pi 4 | raspberrypi3-64       | aarch64
-| Mini PC        | intel-nuc             | x86_64
-========================================================
-- Run `./deploy.sh [BALENA_ARCH] --nobuild`
-  You can select 1:armhf, 2:aarch64 or 3:x86_64 as the target machine CPU
-- You choose to build FROM a balenalib base image as set in Dockerfile.template, then type `0` or `CTRL-C` to exit the script
-- All template data filters copy to Dockerfile.aarch64, Dockerfile.armhf and Dockerfile.x86_64
-
 ### Copyright 2018 www.b23prodtm.info - https://github.com/b23prodtm/HuewizPi
 
 Licensed under the Apache License, Version 2.0 (the "License");
