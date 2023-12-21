@@ -3,10 +3,12 @@
 (IoT) over home network (wifi-box)
 
 # Quickstart (easy)
-After deployment, it's available at https://<Machine-IP>:8123 as the local Home Assistant access point
-Manage [Deconz dongle](https://phoscon.de/en/conbee2/) or [Zigbee gateway](https://phoscon.de/en/raspbee2/) from Phoscon and other manufacturers. 
-Generally uses the UART port (as USB0 or AMA0 in RPi)
-A dashboard appears and it can manage your home devices as if you had installed a home nest. 
+After deployment, it's available at https://<Machine-IP>:8123 as the local Home Assistant access point.
+
+A dashboard appears and it can manage your home devices as if you had installed a real home nest or the homekit. 
+
+Buy a [Zigbee gateway](https://phoscon.de/en/raspbee2/) from Phoscon and other manufacturers to support individual Lights and devices. 
+Generally uses the UART port as AMA0 in RPi but the [Deconz dongle](https://phoscon.de/en/conbee2/) uses USB0.
 
 Credits to [Home-Assistant.io integrations](https://www.home-assistant.io/integrations/)
 
