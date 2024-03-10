@@ -35,9 +35,9 @@ EMAIL_DEFAULT_FROM_NAME	From email username	'Passbolt'
 EMAIL_DEFAULT_FROM	From email address	'you@localhost'
 EMAIL_TRANSPORT_DEFAULT_HOST	Server hostname	'localhost'
 EMAIL_TRANSPORT_DEFAULT_PORT	Server port	25
-EMAIL_TRANSPORT_DEFAULT_USERNAME	Username for email server auth	null
-EMAIL_TRANSPORT_DEFAULT_PASSWORD	Password for email server auth	null
-EMAIL_TRANSPORT_DEFAULT_TLS	Set tls	null
+EMAIL_TRANSPORT_DEFAULT_USERNAME	Username for email server auth	'user@server'
+EMAIL_TRANSPORT_DEFAULT_PASSWORD	Password for email server auth	'password'
+EMAIL_TRANSPORT_DEFAULT_TLS	Set tls	STARTTLS
 For more information on which environment variables are available on passbolt, please check the passbolt environment variable reference.
 
 
@@ -50,6 +50,10 @@ For more information on which environment variables are available on passbolt, p
                                 -l <surname> \
                                 -r admin
                                 ```
+If it's an update, the cake's migration command create or update the database tables:
+```$ balena ssh <device-uuid> passbolt /usr/share/php/passbolt/bin/cake \
+                                                                passbolt migrate
+                                                                ```
 It will output a link similar to the below one that can be pasted on the browser to finalize user registration:
 ```
 https://my.domain.tld/setup/install/1eafab88-a17d-4ad8-97af-77a97f5ff552/f097be64-3703-41e2-8ea2-d59cbe1c15bc
