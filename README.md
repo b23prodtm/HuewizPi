@@ -19,8 +19,9 @@ Browse to balena hub of apps [Huewiz-pi at balenaHub]([www/balena.io](https://hu
 
 If you forked it and want to be committing changes, use `. deploy.sh` to deploy to your own fleet or build new applications
 
-## Passbolt configuration
-###Step 1. Configure environment variables in docker-compose-ce.yaml file to customize your instance.
+## Passbolt
+Added [Passbolt community edition](https://www.passbolt.com/ce/docker)
+### Step 1. Configure environment variables in docker-compose-ce.yaml file to customize your instance.
 
 Notice: By default the docker-compose.yaml file is set to latest. We strongly recommend changing that to the tag for the version you want to install.
 
@@ -41,22 +42,21 @@ EMAIL_TRANSPORT_DEFAULT_TLS	Set tls	STARTTLS
 For more information on which environment variables are available on passbolt, please check the passbolt environment variable reference.
 
 
-###Step 2. Create first admin user
+### Step 2. Create first admin user
 
-```$ balena ssh <device-uuid> passbolt /usr/share/php/passbolt/bin/cake \
+```
+$ balena ssh <device-uuid> passbolt /usr/share/php/passbolt/bin/cake \
                                 passbolt register_user \
                                 -u <your@email.com> \
                                 -f <yourname> \
                                 -l <surname> \
                                 -r admin
-                                ```
-If it's an update, the cake's migration command create or update the database tables:
-```$ balena ssh <device-uuid> passbolt /usr/share/php/passbolt/bin/cake \
-                                                                passbolt migrate
-                                                                ```
-It will output a link similar to the below one that can be pasted on the browser to finalize user registration:
 ```
-https://my.domain.tld/setup/install/1eafab88-a17d-4ad8-97af-77a97f5ff552/f097be64-3703-41e2-8ea2-d59cbe1c15bc
+If it's an update, the cake's migration command create or update the database tables:
+
+```
+$ balena ssh <device-uuid> passbolt /usr/share/php/passbolt/bin/cake \
+                                                                passbolt migrate
 ```
 ### Wireless Access Point
 > WAP in alpha version
