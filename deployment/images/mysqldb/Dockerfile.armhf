@@ -1,0 +1,60 @@
+ARG SECONDARY_HUB
+FROM ${SECONDARY_HUB:-linuxserver/mariadb}:10.6.13
+
+# When using volumes (-v flags) permissions issues can arise
+# between the host OS and the container, we avoid this issue
+# by allowing you to specify the user PUID and group PGID.
+# $ id $USER
+ARG PUID
+ENV PUID ${PUID:-0}
+ARG PGID
+ENV PGID ${PGID:-0}
+ARG MYSQL_ROOT_PASSWORD
+ENV MYSQL_ROOT_PASSWORD ${MYSQL_ROOT_PASSWORD:-'mariadb'}
+ARG MYSQL_HOST
+ENV MYSQL_HOST ${MYSQL_HOST:-'localhost'}
+ENV TZ ${TZ:-'Europe/Paris'}
+# Optional
+ARG MYSQL_DATABASE
+ENV MYSQL_DATABASE ${MYSQL_DATABASE:-'aria_db'}
+# Optional
+ARG MYSQL_USER
+ENV MYSQL_USER ${MYSQL_USER:-'maria'}
+# Optional
+ARG MYSQL_PASSWORD
+ENV MYSQL_PASSWORD ${MYSQL_PASSWORD:-'maria-abc'}
+# Optional
+ARG MYSQL_BIND_ADDRESS
+ENV MYSQL_BIND_ADDRESS ${MYSQL_BIND_ADDRESS:-0.0.0.0}
+
+# The MariaDB/MySQL tools read configuration files in the following order:
+# 1. "/etc/mysql/my.cnf" to set global defaults,
+# 2. "/etc/mysql/conf.d/my.cnf" to set server options.
+# 3. "~/.my.cnf" User
+COPY conf.d/my.cnf /etc/my.cnf.d/my.cnf
+RUN sed -i.bind "/bind-address/s/=.*$/= ${MYSQL_BIND_ADDRESS}/" /etc/my.cnf.d/my.cnf
+RUN sed -i.user "/user/s/=.*$/= ${USER}/" /etc/my.cnf.d/my.cnf
+
+RUN apk update \
+    && apk add \
+      expect \
+      xz \
+    # auth_ed25519 support package \
+    mariadb-client \
+    && apk del build-base \
+    && rm -rf /var/cache/apk/*
+
+COPY mysql_secure_shell .
+RUN chmod 1755 mysql_secure_shell
+RUN ./mysql_secure_shell
+
+RUN echo "***** Fix PASSWORD, PRIVILEGES and CREATE ${MYSQL_USER}..." \
+  && echo "GRANT ALL PRIVILEGES ON *.* TO 'root'@'% WITH GRANT OPTION;" | tee -a p.sql \
+  && echo "CREATE USER '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';" | tee -a p.sql \
+  && echo "FLUSH PRIVILEGES;" | tee -a p.sql \
+  && mkdir -p /config/initdb.d/ && mv p.sql /config/initdb.d/patch.sql
+
+COPY mariadb.ans .
+RUN cat mariadb.ans
+
+VOLUME /var/run/mysqld

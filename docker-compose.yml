@@ -1,32 +1,5 @@
 version: '2'
 services:
-  raspbee-deconz-hue:
-    image: deconzcommunity/deconz:latest
-    container_name: deconz
-    restart: unless-stopped
-    network_mode: host
-    privileged: true
-    group_add:
-      - dialout
-    ports:
-      - 80:80
-      - 443:443
-    volumes:
-      - deconz:/opt/deCONZ
-      - localtime:/etc/localtime
-    devices:
-      - /dev/ttyAMA0
-    environment:
-      - DECONZ_WEB_PORT=80
-      - DECONZ_WS_PORT=443
-      - DEBUG_INFO=1
-      - DEBUG_APS=0
-      - DEBUG_ZCL=0
-      - DEBUG_ZDP=0
-      - DEBUG_OTA=0
-      - DEBUG_HTTP=0
-      - DECONZ_DEVICE=/dev/ttyAMA0   # This is the USB device that Raspbee/Conbee II is running on.
-      - DECONZ_START_VERBOSE=1
   homeassistant:
     image: "ghcr.io/home-assistant/home-assistant:stable"
     container_name: hass
@@ -44,8 +17,8 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: Dockerfile.aarch64
-    image: betothreeprod/huewizpi-raspberrypi3-64
+      dockerfile: Dockerfile.armhf
+    image: betothreeprod/huewizpi-raspberrypi3
     env_file:
       - common.env
       - .env
@@ -60,10 +33,74 @@ services:
       - netplan:/etc/netplan
     cap_add:
       - ALL
+  db:
+    build:
+      context: deployment/images/mysqldb
+      dockerfile: Dockerfile.armhf
+      args:
+        PUID: 0
+        PGID: 0
+        TZ: Europe/Paris
+        MYSQL_ROOT_PASSWORD: mariadb
+        MYSQL_HOST: localhost
+        MYSQL_DATABASE: "passbolt"
+        MYSQL_USER: "passbolt"
+        MYSQL_PASSWORD: "P4ssb0lt"
+    image: betothreeprod/mariadb:latest-armhf
+    volumes:
+      - localtime:/etc/localtime:ro
+      - db-data:/config
+      - db-socket:/var/run/mysqld
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+    networks:
+      - cake
+    env_file:
+      - common.env
+      - .env
+    labels:
+      io.balena.features.dbus: "1"
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "true"
+  passbolt:
+    image: passbolt/passbolt:latest-ce
+    #Alternatively you can use rootless:
+    #image: passbolt/passbolt:latest-ce-non-root
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      APP_FULL_BASE_URL: https://passbolt.local
+      DATASOURCES_DEFAULT_HOST: "db"
+      DATASOURCES_DEFAULT_USERNAME: "passbolt"
+      DATASOURCES_DEFAULT_PASSWORD: "P4ssb0lt"
+      DATASOURCES_DEFAULT_DATABASE: "passbolt"
+    volumes:
+      - gpg_volume:/etc/passbolt/gpg
+      - jwt_volume:/etc/passbolt/jwt
+    command:
+      [
+        "/usr/bin/wait-for.sh",
+        "-t",
+        "0",
+        "db:3306",
+        "--",
+        "/docker-entrypoint.sh",
+      ]
+    ports:
+      - 80:80
+      - 443:443
+    #Alternatively for non-root images:
+    # - 80:8080
+    # - 443:4433
 volumes:
+  localtime:
+  db-data:
+  db-socket:
+  gpg_volume:
+  jwt_volume:
   hostapd:
   hapwizard:
   netplan:
   config:
-  localtime:
-  deconz:

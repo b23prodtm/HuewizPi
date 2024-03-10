@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#https://gist.github.com/Mins/4602864#gistcomment-3118692
+[ ! -e /usr/bin/expect ] && apt-get update && apt-get -y install expect;
+[ -z ${MYSQL_ROOT_PASSWORD:-''} ] \
+&& printf "MYSQL_ALLOW_EMPTY_PASSWORD=%s\n\
+ !!! An empty password was detected !!!" ${MYSQL_ALLOW_EMPTY_PASSWORD}
+SECURE_MYSQL=$(expect -c "
+
+set timeout 10
+spawn mysql_secure_installation
+
+expect \"Enter current password for root (enter for none): \"
+send \"\r\"
+expect \"Switch to unix_socket authentication \[Y/n\] \"
+send \"y\r\"
+expect \"Change the root password? \[Y/n\] \"
+send \"y\r\"
+expect \"New password: \"
+send \"${MYSQL_ROOT_PASSWORD:-''}\r\"
+expect \"Re-enter new password: \"
+send \"${MYSQL_ROOT_PASSWORD:-''}\r\"
+expect \"Remove anonymous users? \[Y/n\] \"
+send \"y\r\"
+expect \"Disallow root login remotely? \[Y/n\] \"
+send \"n\r\"
+expect \"Remove test database and access to it? \[Y/n\] \"
+send \"n\r\"
+expect \"Reload privilege tables now? \[Y/n\] \"
+send \"y\r\"
+expect eof
+")
