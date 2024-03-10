@@ -5,9 +5,9 @@
 # Quickstart (easy)
 After deployment, it's available at https://<Machine-IP>:8123 as the local Home Assistant access point.
 
-A dashboard appears and it can manage your home devices as if you had installed a real home nest or the homekit. 
+A dashboard appears and it can manage your home devices as if you had installed a real home nest or the homekit.
 
-Buy a [Zigbee gateway](https://phoscon.de/en/raspbee2/) from Phoscon and other manufacturers to support individual Lights and devices. 
+Buy a [Zigbee gateway](https://phoscon.de/en/raspbee2/) from Phoscon and other manufacturers to support individual Lights and devices.
 Generally uses the UART port as AMA0 in RPi but the [Deconz dongle](https://phoscon.de/en/conbee2/) uses USB0.
 
 Credits to [Home-Assistant.io integrations](https://www.home-assistant.io/integrations/)
@@ -18,11 +18,46 @@ Browse to balena hub of apps [Huewiz-pi at balenaHub]([www/balena.io](https://hu
   [![balena deploy button](https://www.balena.io/deploy.svg)](https://dashboard.balena-cloud.com/deploy?repoUrl=https://github.com/b23prodtm/HuewizPi)
 
 If you forked it and want to be committing changes, use `. deploy.sh` to deploy to your own fleet or build new applications
-  
-## Deconz Raspbee container (alpha)
-[Read dconz community README](https://github.com/deconz-community/deconz-docker#readme) Serial BT UART must be swapped to GPIO.
-In devices fleet configuration dashboard, *Define DT overlays `pi3-miniuart-bt`
 
+## Passbolt configuration
+###Step 1. Configure environment variables in docker-compose-ce.yaml file to customize your instance.
+
+Notice: By default the docker-compose.yaml file is set to latest. We strongly recommend changing that to the tag for the version you want to install.
+
+The APP_FULL_BASE_URL environment variable is set by default to https://passbolt.local, using a self-signed certificate.
+
+Update this variable with the server name you plan to use. You will find at the bottom of this documentation links about how to set your own SSL certificate.
+
+You must configure also SMTP settings to be able to receive notifications and recovery emails. Please find below the most used environment variables for this purpose:
+
+Variable name	Description	Default value
+EMAIL_DEFAULT_FROM_NAME	From email username	'Passbolt'
+EMAIL_DEFAULT_FROM	From email address	'you@localhost'
+EMAIL_TRANSPORT_DEFAULT_HOST	Server hostname	'localhost'
+EMAIL_TRANSPORT_DEFAULT_PORT	Server port	25
+EMAIL_TRANSPORT_DEFAULT_USERNAME	Username for email server auth	'user@server'
+EMAIL_TRANSPORT_DEFAULT_PASSWORD	Password for email server auth	'password'
+EMAIL_TRANSPORT_DEFAULT_TLS	Set tls	STARTTLS
+For more information on which environment variables are available on passbolt, please check the passbolt environment variable reference.
+
+
+###Step 2. Create first admin user
+
+```$ balena ssh <device-uuid> passbolt /usr/share/php/passbolt/bin/cake \
+                                passbolt register_user \
+                                -u <your@email.com> \
+                                -f <yourname> \
+                                -l <surname> \
+                                -r admin
+                                ```
+If it's an update, the cake's migration command create or update the database tables:
+```$ balena ssh <device-uuid> passbolt /usr/share/php/passbolt/bin/cake \
+                                                                passbolt migrate
+                                                                ```
+It will output a link similar to the below one that can be pasted on the browser to finalize user registration:
+```
+https://my.domain.tld/setup/install/1eafab88-a17d-4ad8-97af-77a97f5ff552/f097be64-3703-41e2-8ea2-d59cbe1c15bc
+```
 ### Wireless Access Point
 > WAP in alpha version
 Basically, this script's made for linux machines that have got a wireless card or chipset and an ethernet interface connected to the internet.
