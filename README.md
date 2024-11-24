@@ -3,7 +3,7 @@
 (IoT) over home network (wifi-box)
 
 # Quickstart (easy)
-After deployment, it's available at https://<Machine-IP>:8123 as the local Home Assistant access point.
+After deployment, it's available at https://'''Machine-IP-or-URL''':8123 as the local Home Assistant access point.
 
 A dashboard appears and it can manage your home devices as if you had installed a real home nest or the homekit.
 
