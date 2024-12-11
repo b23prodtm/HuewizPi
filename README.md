@@ -60,6 +60,8 @@ If it's an update, the cake's migration command create or update the database ta
 $ balena ssh <device-uuid> passbolt /usr/share/php/passbolt/bin/cake \
                                                                 passbolt migrate
 ```
+
+Set ***APP_FULL_BASE_URL*** to https://your-devices-hostname/ and browse to this URL to start setup.
 ### Wireless Access Point
 > WAP in alpha version
 Basically, this script's made for linux machines that have got a wireless card or chipset and an ethernet interface connected to the internet.
