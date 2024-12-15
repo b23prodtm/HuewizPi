@@ -1,4 +1,5 @@
 # HuewizPi
+[![Hue WIZ PI](https://circleci.com/gh/b23prodtm/HuewizPi.svg?style=shield)](https://app.circleci.com/pipelines/github/b23prodtm/HuewizPi)
   A home access point to figure out how to manage lights -Hue-ZigBee- and bridging internet of things
 (IoT) over home network (wifi-box)
 
