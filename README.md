@@ -48,12 +48,16 @@ For more information on which environment variables are available on passbolt, p
 ### Step 2. Create first admin user
 
 ```
-$ balena ssh <device-uuid> passbolt /usr/share/php/passbolt/bin/cake \
+$ balena ssh <device-uuid> passbolt
+```
+for instance, whithin SSH web terminal, must be run by the user www-data:
+```
+$ su -s /bin/bash -c "bin/cake \
                                 passbolt register_user \
                                 -u <your@email.com> \
                                 -f <yourname> \
                                 -l <surname> \
-                                -r admin
+                                -r admin" www-data
 ```
 If it's an update, the cake's migration command create or update the database tables:
 
