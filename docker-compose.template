@@ -72,6 +72,7 @@ services:
         "/docker-entrypoint.sh",
       ]
     ports:
+      - 587:587
       - 80:80
       - 443:443
     #Alternatively for non-root images:
