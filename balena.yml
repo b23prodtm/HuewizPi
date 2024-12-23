@@ -15,13 +15,13 @@ assets:
       url: https://github.com/b23prodtm/HuewizPi/blob/master/Home_Assistant_Logo.svg.png?raw=true
 data:
   applicationEnvironmentVariables:
-   - EMAIL_DEFAULT_FROM_NAME='Passbolt'
-   - EMAIL_DEFAULT_FROM='me@mailersend.net'
-   - EMAIL_TRANSPORT_DEFAULT_HOST='smtp.mailersend.net'
-   - EMAIL_TRANSPORT_DEFAULT_PORT=587
-   - EMAIL_TRANSPORT_DEFAULT_USERNAME='me@mailersend.net'
-   - EMAIL_TRANSPORT_DEFAULT_PASSWORD='password'
-   - EMAIL_TRANSPORT_DEFAULT_TLS='TLS'
+    - EMAIL_DEFAULT_FROM_NAME: 'Passbolt'
+    - EMAIL_DEFAULT_FROM: 'me@mailersend.net'
+    - EMAIL_TRANSPORT_DEFAULT_HOST: 'smtp.mailersend.net'
+    - EMAIL_TRANSPORT_DEFAULT_PORT: 587
+    - EMAIL_TRANSPORT_DEFAULT_USERNAME: 'me@mailersend.net'
+    - EMAIL_TRANSPORT_DEFAULT_PASSWORD: 'password'
+    - EMAIL_TRANSPORT_DEFAULT_TLS: 'TLS'
   defaultDeviceType: raspberrypi3
   supportedDeviceTypes:
     - raspberrypi3
