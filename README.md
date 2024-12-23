@@ -1,4 +1,5 @@
 # HuewizPi
+[![Hue WIZ PI](https://circleci.com/gh/b23prodtm/HuewizPi.svg?style=shield)](https://app.circleci.com/pipelines/github/b23prodtm/HuewizPi)
   A home access point to figure out how to manage lights -Hue-ZigBee- and bridging internet of things
 (IoT) over home network (wifi-box)
 
@@ -47,12 +48,16 @@ For more information on which environment variables are available on passbolt, p
 ### Step 2. Create first admin user
 
 ```
-$ balena ssh <device-uuid> passbolt /usr/share/php/passbolt/bin/cake \
+$ balena ssh <device-uuid> passbolt
+```
+for instance, whithin SSH web terminal, must be run by the user www-data:
+```
+$ su -s /bin/bash -c "bin/cake \
                                 passbolt register_user \
                                 -u <your@email.com> \
                                 -f <yourname> \
                                 -l <surname> \
-                                -r admin
+                                -r admin" www-data
 ```
 If it's an update, the cake's migration command create or update the database tables:
 
@@ -60,6 +65,8 @@ If it's an update, the cake's migration command create or update the database ta
 $ balena ssh <device-uuid> passbolt /usr/share/php/passbolt/bin/cake \
                                                                 passbolt migrate
 ```
+
+Set ***APP_FULL_BASE_URL*** to https://your-devices-hostname/ and browse to this URL to start setup.
 ### Wireless Access Point
 > WAP in alpha version
 Basically, this script's made for linux machines that have got a wireless card or chipset and an ethernet interface connected to the internet.
