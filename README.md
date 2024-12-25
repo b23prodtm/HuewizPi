@@ -11,7 +11,7 @@ A dashboard appears and it can manage your home devices as if you had installed 
 Buy a [Zigbee gateway](https://phoscon.de/en/raspbee2/) from Phoscon and other manufacturers to support individual Lights and devices.
 Generally uses the UART port as AMA0 in RPi but the [Deconz dongle](https://phoscon.de/en/conbee2/) uses USB0.
 
-Credits to [Home-Assistant.io integrations](https://www.home-assistant.io/integrations/)
+Add to [Zigbee Home Automation](https://www.home-assistant.io/integrations/zha)
 
 ## Deploy to balena
 Browse to balena hub of apps [Huewiz-pi at balenaHub]([www/balena.io](https://hub.balena.io/apps/1951536/huewiz-pi)) or one-click
