@@ -6,6 +6,10 @@ services:
     volumes:
       - config:/config
       - localtime:/etc/localtime:ro
+    environment:
+      - 'DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket'
+    labels:
+      io.balena.features.dbus: "1"
     restart: unless-stopped
     privileged: true
     network_mode: host
@@ -23,6 +27,8 @@ services:
       - common.env
       - .env
     privileged: true
+    environment:
+      - 'DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket'
     labels:
       io.balena.features.dbus: "1"
       io.balena.features.kernel-modules: "1"
@@ -43,7 +49,6 @@ services:
       MYSQL_PASSWORD: "P4ssb0lt"
     volumes:
       - database_volume:/var/lib/mysql
-
   passbolt:
     image: passbolt/passbolt:latest-ce
     #Alternatively you can use rootless:
