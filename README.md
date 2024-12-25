@@ -11,7 +11,7 @@ A dashboard appears and it can manage your home devices as if you had installed 
 Buy a [Zigbee gateway](https://phoscon.de/en/raspbee2/) from Phoscon and other manufacturers to support individual Lights and devices.
 Generally uses the UART port as AMA0 in RPi but the [Deconz dongle](https://phoscon.de/en/conbee2/) uses USB0.
 
-Credits to [Home-Assistant.io integrations](https://www.home-assistant.io/integrations/)
+Add to [Zigbee Home Automation](https://www.home-assistant.io/integrations/zha)
 
 ## Deploy to balena
 Browse to balena hub of apps [Huewiz-pi at balenaHub]([www/balena.io](https://hub.balena.io/apps/1951536/huewiz-pi)) or one-click
@@ -34,13 +34,13 @@ You must configure also SMTP settings to be able to receive notifications and re
 
 Variable name	Description	Default value
 ```
-EMAIL_DEFAULT_FROM_NAME	From email username	'Passbolt'
-EMAIL_DEFAULT_FROM	From email address	'you@localhost'
+EMAIL_DEFAULT_FROM_NAME	 From email username	'Passbolt'
+EMAIL_DEFAULT_FROM	From email address as server account	'user@mailersend.net'
 EMAIL_TRANSPORT_DEFAULT_HOST	Server hostname	'localhost'
 EMAIL_TRANSPORT_DEFAULT_PORT	Server port	25
-EMAIL_TRANSPORT_DEFAULT_USERNAME	Username for email server auth	'user@server'
+EMAIL_TRANSPORT_DEFAULT_USERNAME	Username for email server auth	'user@mailersend.net'
 EMAIL_TRANSPORT_DEFAULT_PASSWORD	Password for email server auth	'password'
-EMAIL_TRANSPORT_DEFAULT_TLS	Set tls	STARTTLS
+EMAIL_TRANSPORT_DEFAULT_TLS	Set true for	STARTTLS
 ```
 For more information on which environment variables are available on passbolt, please check the passbolt environment variable reference.
 
