@@ -1,20 +1,18 @@
 version: '2'
 services:
-  homeassistant:
-    image: "ghcr.io/home-assistant/home-assistant:stable"
-    container_name: hass
-    volumes:
-      - config:/config
-      - localtime:/etc/localtime:ro
-    environment:
-      DBUS_SYSTEM_BUS_ADDRESS: "unix:path=/host/run/dbus/system_bus_socket"
-    labels:
-      io.balena.features.dbus: "1"
-    restart: unless-stopped
-    privileged: true
+  homebridge:
+    image: homebridge/homebridge:latest
+    restart: always
     network_mode: host
+    volumes:
+      - homebridge:/homebridge
+    logging:
+      driver: json-file
+      options:
+        max-size: "10mb"
+        max-file: "1"
     devices:
-      - /dev/ttyAMA0
+      - /dev/video0
   wifi-spot:
     container_name: hwzpi
     network_mode: host
@@ -40,40 +38,20 @@ services:
     cap_add:
       - ALL
   db:
-    build:
-      context: deployment/images/mysqldb
-      dockerfile: Dockerfile.aarch64
-      args:
-        PUID: 0
-        PGID: 0
-        TZ: Europe/Paris
-        MYSQL_ROOT_PASSWORD: mariadb
-        MYSQL_HOST: localhost
-        MYSQL_DATABASE: "passbolt"
-        MYSQL_USER: "passbolt"
-        MYSQL_PASSWORD: "P4ssb0lt"
-    image: betothreeprod/mariadb:latest-aarch64
-    volumes:
-      - localtime:/etc/localtime:ro
-      - db-data:/config
-      - db-socket:/var/run/mysqld
-    ports:
-      - "3306:3306"
-    restart: unless-stopped
-    networks:
-      - cake
-    env_file:
-      - common.env
-      - .env
-    labels:
-      io.balena.features.dbus: "1"
+    image: linuxserver/mariadb:10.11
+    restart: always
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: "true"
+      MYSQL_DATABASE: "passbolt"
+      MYSQL_USER: "passbolt"
+      MYSQL_PASSWORD: "P4ssb0lt"
+    volumes:
+      - database_volume:/var/lib/mysql
   passbolt:
     image: passbolt/passbolt:latest-ce
     #Alternatively you can use rootless:
     #image: passbolt/passbolt:latest-ce-non-root
-    restart: unless-stopped
+    restart: always
     depends_on:
       - db
     environment:
@@ -102,12 +80,12 @@ services:
     #  - 80:8080
     #  - 443:4433
 volumes:
-  localtime:
-  db-data:
-  db-socket:
+  database_volume:
   gpg_volume:
   jwt_volume:
   hostapd:
   hapwizard:
   netplan:
   config:
+  homebridge:
+
