@@ -1,20 +1,20 @@
 version: '2'
 services:
-  homeassistant:
-    image: "ghcr.io/home-assistant/home-assistant:stable"
-    container_name: hass
-    volumes:
-      - config:/config
-      - localtime:/etc/localtime:ro
-    environment:
-      DBUS_SYSTEM_BUS_ADDRESS: "unix:path=/host/run/dbus/system_bus_socket"
-    labels:
-      io.balena.features.dbus: "1"
-    restart: unless-stopped
-    privileged: true
+  homebridge:
+    image: homebridge/homebridge:latest
+    restart: always
     network_mode: host
+    volumes:
+      - volumes/homebridge:/homebridge
+    logging:
+      driver: json-file
+      options:
+        max-size: "10mb"
+        max-file: "1"
+    restart: unless-stopped
     devices:
       - /dev/ttyAMA0
+      - /dev/video0
   wifi-spot:
     container_name: hwzpi
     network_mode: host
@@ -40,7 +40,7 @@ services:
     cap_add:
       - ALL
   db:
-    image: linuxserver/mariadb:10.6.13
+    image: linuxserver/mariadb:10.11
     restart: unless-stopped
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: "true"
@@ -90,3 +90,5 @@ volumes:
   hapwizard:
   netplan:
   config:
+  volumes/homebridge:
+
