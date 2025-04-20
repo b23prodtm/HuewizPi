@@ -11,8 +11,6 @@ services:
       options:
         max-size: "10mb"
         max-file: "1"
-    devices:
-      - /dev/video0
   wifi-spot:
     container_name: hwzpi
     network_mode: host
