@@ -11,16 +11,14 @@ services:
       options:
         max-size: "10mb"
         max-file: "1"
-    devices:
-      - /dev/video0
   wifi-spot:
     container_name: hwzpi
     network_mode: host
     restart: unless-stopped
     build:
       context: .
-      dockerfile: Dockerfile.armhf
-    image: betothreeprod/huewizpi-raspberrypi3
+      dockerfile: Dockerfile.aarch64
+    image: betothreeprod/huewizpi-raspberrypi3-64
     env_file:
       - common.env
       - .env
@@ -38,7 +36,7 @@ services:
     cap_add:
       - ALL
   db:
-    image: linuxserver/mariadb:arm32v7-10.6.13
+    image: linuxserver/mariadb:arm64v8-10.6.13
     restart: always
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: "true"
