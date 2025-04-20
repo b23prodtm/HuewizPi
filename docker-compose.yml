@@ -17,7 +17,7 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: Dockerfile.armhf
+      dockerfile: Dockerfile.x86_64
     env_file:
       - common.env
       - .env
@@ -35,7 +35,7 @@ services:
     cap_add:
       - ALL
   db:
-    image: linuxserver/mariadb:arm32v7-10.6.13
+    image: linuxserver/mariadb:amd64-10.6.13
     restart: always
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: "true"
