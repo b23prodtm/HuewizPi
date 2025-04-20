@@ -13,7 +13,6 @@ services:
         max-file: "1"
     restart: unless-stopped
     devices:
-      - /dev/ttyAMA0
       - /dev/video0
   wifi-spot:
     container_name: hwzpi
