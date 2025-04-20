@@ -18,7 +18,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.armhf
-    image: betothreeprod/huewizpi-raspberrypi3
     env_file:
       - common.env
       - .env
