@@ -5,7 +5,7 @@ services:
     restart: always
     network_mode: host
     volumes:
-      - volumes/homebridge:/homebridge
+      - homebridge:/homebridge
     logging:
       driver: json-file
       options:
@@ -87,5 +87,5 @@ volumes:
   hapwizard:
   netplan:
   config:
-  volumes/homebridge:
+  homebridge:
 
