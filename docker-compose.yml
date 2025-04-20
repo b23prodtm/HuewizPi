@@ -20,8 +20,8 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: Dockerfile.aarch64
-    image: betothreeprod/huewizpi-raspberrypi3-64
+      dockerfile: Dockerfile.armhf
+    image: betothreeprod/huewizpi-raspberrypi3
     env_file:
       - common.env
       - .env
