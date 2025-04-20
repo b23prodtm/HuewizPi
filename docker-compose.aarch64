@@ -11,7 +11,6 @@ services:
       options:
         max-size: "10mb"
         max-file: "1"
-    restart: unless-stopped
     devices:
       - /dev/video0
   wifi-spot:
@@ -40,7 +39,7 @@ services:
       - ALL
   db:
     image: linuxserver/mariadb:10.11
-    restart: unless-stopped
+    restart: always
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: "true"
       MYSQL_DATABASE: "passbolt"
@@ -52,7 +51,7 @@ services:
     image: passbolt/passbolt:latest-ce
     #Alternatively you can use rootless:
     #image: passbolt/passbolt:latest-ce-non-root
-    restart: unless-stopped
+    restart: always
     depends_on:
       - db
     environment:
@@ -81,7 +80,6 @@ services:
     #  - 80:8080
     #  - 443:4433
 volumes:
-  localtime:
   database_volume:
   gpg_volume:
   jwt_volume:
