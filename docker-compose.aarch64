@@ -45,9 +45,12 @@ services:
     volumes:
       - database_volume:/var/lib/mysql
   passbolt:
-    image: passbolt/passbolt:latest-ce
+    #image: passbolt/passbolt:latest-ce
     #Alternatively you can use rootless:
     #image: passbolt/passbolt:latest-ce-non-root
+    build:
+      context: passbolt/
+      dockerfile: Dockerfile.aarch64
     restart: always
     depends_on:
       - db
