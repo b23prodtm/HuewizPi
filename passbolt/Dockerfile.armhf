@@ -11,5 +11,5 @@ RUN php composer-setup.php
 RUN php -r "unlink('composer-setup.php');"
 RUN mv composer.phar /usr/local/bin/composer
 
-RUN composer require robmorgan/phinx
+RUN composer require robmorgan/phinx && rm composer.json composer.lock
 
