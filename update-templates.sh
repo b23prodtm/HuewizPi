@@ -4,7 +4,7 @@ ARC=(armhf x86_64 aarch64)
 # Loop through the array and echo each value
 for arch in "${ARC[@]}"; do
   printf "Updating templates, %s \n" "$arch"
-  echo "0" | ./deploy.sh "$arch" 2 2> /dev/null > /dev/null	
+  echo "0" | ./deploy.sh "$arch" 2> /dev/null > /dev/null
 done
 
 git add docker-compose.yml
