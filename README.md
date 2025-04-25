@@ -4,14 +4,12 @@
 (IoT) over home network (wifi-box)
 
 # Quickstart (easy)
-After deployment, it's available at https://'''Machine-IP-or-URL''':8123 as the local Home Assistant access point.
+After deployment, it's available at https://'''Machine-IP-or-URL''':8581 as the local access point.
 
 A dashboard appears and it can manage your home devices as if you had installed a real home nest or the homekit.
 
 Buy a [Zigbee gateway](https://phoscon.de/en/raspbee2/) from Phoscon and other manufacturers to support individual Lights and devices.
 Generally uses the UART port as AMA0 in RPi but the [Deconz dongle](https://phoscon.de/en/conbee2/) uses USB0.
-
-Add to [Zigbee Home Automation](https://www.home-assistant.io/integrations/zha)
 
 ## Deploy to balena
 Browse to balena hub of apps [Huewiz-pi at balenaHub]([www/balena.io](https://hub.balena.io/apps/1951536/huewiz-pi)) or one-click
