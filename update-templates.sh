@@ -7,5 +7,5 @@ for arch in "${ARC[@]}"; do
   echo "0" | ./deploy.sh "$arch" 1 2> /dev/null > /dev/null	
 done
 
-#git add docker-compose.yml
-#git commit -m "Updated Templates"
+git add docker-compose.yml
+git commit -m "Updated Templates"
