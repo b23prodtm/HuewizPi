@@ -46,11 +46,11 @@ For more information on which environment variables are available on passbolt, p
 ### Step 2. Create first admin user
 
 ```
-$ balena ssh <device-uuid> passbolt
+ssh -p 22222 <balena-host> "balena exec -it \$(balena ps | grep passbolt | awk '{print $1}') /bin/bash
 ```
 for instance, whithin SSH web terminal, must be run by the user www-data:
 ```
-$ su -s /bin/bash -c "bin/cake \
+su -s /bin/bash -c "bin/cake \
                                 passbolt register_user \
                                 -u <your@email.com> \
                                 -f <yourname> \
@@ -60,8 +60,7 @@ $ su -s /bin/bash -c "bin/cake \
 If it's an update, the cake's migration command create or update the database tables:
 
 ```
-$ balena ssh <device-uuid> passbolt /usr/share/php/passbolt/bin/cake \
-                                                                passbolt migrate
+su -s bash -c \"bin/cake passbolt migrate\" www-data"
 ```
 
 Set ***APP_FULL_BASE_URL*** to https://your-devices-hostname/ and browse to this URL to start setup.
@@ -74,24 +73,16 @@ The host must have access to the Internet in order to share its connection to th
 ### Node Package Manager
 
   This project depends on npmjs [balena-cloud-apps](https://www.npmjs.com/package/balena-cloud-apps). Please call
-  `npm link balena-cloud-apps && npm update`
-  whenever the system complains about `balena_deploy` not found.
-After npm install succeeded, HuewizPi can be dbuilt and optionally deployed to the device
+  `yarn` to install the node modules (NodeJS v13 at least).
 
 ### Update BALENA_ARCH dependent files
 
 When you make changes to `docker*.template` files and environment `*.env` files, you can apply changes that the CPU architecture depends on. To do so, run deployment scripts `balena_deploy --nobuild` before to push packages:
-``` Updates armhf files (ARM v7 32 bits kernel)
-./deploy.sh 1 --local [CTRL+C]
-```
-``` Updates aarch64 files (ARM v8 64 bits kernel
-./deploy.sh 2 --local [CTRL+C]
-```
-``` Updates x86_64 files (AMD/Intel 64 bits Cores)
-./deploy.sh 3 --local [CTRL+C]
-```
 
-### Copyright 2018 www.b23prodtm.info - https://github.com/b23prodtm/HuewizPi
+  `update_templates`
+  `./deploy.sh`
+
+### Copyright 2018-2025 www.b23prodtm.info - https://github.com/b23prodtm/HuewizPi
 
 Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
