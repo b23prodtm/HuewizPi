@@ -12,7 +12,7 @@ RUN php -r "unlink('composer-setup.php');"
 RUN mv composer.phar /usr/local/bin/composer
 
 RUN composer require \
+	passbolt/passbolt_api:^5 \
 	robmorgan/phinx \
-	passbolt/passbolt_api \
 	&& rm composer.json composer.lock
 
