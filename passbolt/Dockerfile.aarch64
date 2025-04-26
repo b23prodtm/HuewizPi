@@ -14,5 +14,6 @@ RUN mv composer.phar /usr/local/bin/composer
 RUN composer require \
 	robmorgan/phinx \
 	cakephp/cakephp:^5 \
+	cakephp/app \
 	&& rm composer.json composer.lock
 
