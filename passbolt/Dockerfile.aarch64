@@ -13,7 +13,6 @@ RUN mv composer.phar /usr/local/bin/composer
 
 RUN composer require \
 	robmorgan/phinx \
-	cakephp/cakephp:^5 \
-	cakephp/app \
+	passbolt/passbolt_api \
 	&& rm composer.json composer.lock
 
