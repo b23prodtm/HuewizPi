@@ -5,7 +5,7 @@ Copyright (C) 2014, Oscar Acena <oscaracena@gmail.com>
 This software is under the terms of GPLv3 or later.
 """
 
-import sys
+import sys, time
 
 from gattlib import GATTRequester
 

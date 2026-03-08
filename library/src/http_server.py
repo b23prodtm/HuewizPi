@@ -77,7 +77,7 @@ def RequestHandlerClassFactory(address, ssids, rcode):
                 self.end_headers()
                 response = BytesIO()
                 response.write(self.rcode.encode('utf-8'))
-                print('GET {self.path} returning: {response.getvalue()}')
+                print(f'GET {self.path} returning: {response.getvalue()}')
                 self.wfile.write(response.getvalue())
                 return
 
@@ -101,7 +101,7 @@ def RequestHandlerClassFactory(address, ssids, rcode):
                     ENTERPRISE             - Need username and password.
                 """
                 response.write(json.dumps(ssids).encode('utf-8'))
-                print('GET {self.path} returning: {response.getvalue()}')
+                print(f'GET {self.path} returning: {response.getvalue()}')
                 self.wfile.write(response.getvalue())
                 return
 

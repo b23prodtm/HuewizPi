@@ -293,7 +293,7 @@ def connect_to_AP(conn_type=None, conn_name=GENERIC_CONNECTION_NAME, \
         #print("new connection {conn_dict} type={conn_str}")
 
         NetworkManager.Settings.AddConnection(conn_dict)
-        print("Added connection {conn_name} of type {conn_str}")
+        print(f"Added connection {conn_name} of type {conn_str}")
 
         # Now find this connection and its device
         connections = NetworkManager.Settings.ListConnections()

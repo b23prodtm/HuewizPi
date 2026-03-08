@@ -14,7 +14,7 @@ def parse_argv (myenv, argv):
 '  -s,--uuid <service-name>     Default: {}\n'\
 '  --protocol <proto:port>      Default: {}\n'\
 '  [bt-address]                 Default: {}\n'\
-'  -h,--help Show help.\n'.format(myenv["BT_SCAN_TIMEOUT"],myenv["service"],myenv["proto-port"],'myenv["BTSPEAKER_SINK"]')
+'  -h,--help Show help.\n'.format(myenv["BT_SCAN_TIMEOUT"],myenv["service"],myenv["proto-port"],myenv["BTSPEAKER_SINK"])
     try:
         opts, args = getopt.getopt(argv[1:], "u:d:s:h",["help", "duration=", "uuid=", "protocol="])
     except getopt.GetoptError:
@@ -33,7 +33,7 @@ def parse_argv (myenv, argv):
         elif re.compile("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}").match(arg):
             myenv["BTSPEAKER_SINK"] = arg
         else:
-            print("Wrong argument %s !" % argv[i])
+            print("Wrong argument %s !" % arg)
             print(usage)
 
 def bt_service(addr, proto_port="", serv=""):

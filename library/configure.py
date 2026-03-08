@@ -131,7 +131,7 @@ def panel_wifi(pf="PRIV_"):
         text = "Please set a name for the Wifi Network: "
         myenv["%sSSID" % pf] = input(text)
     while len(myenv["%sPASSWD" % pf]) < 8 or len(myenv["%sPASSWD" % pf]) > 63:
-        text = "%s password (8..63 chars): " % myenv["%sSSID"]
+        text = "%s password (8..63 chars): " % myenv["%sSSID" % pf]
         myenv["%sPASSWD" % pf] = input(text)
     while myenv["%sWIFI_MODE" % pf] not in ['a', 'b', 'g']:
         text = "(a = IEEE 802.11ac, g = IEEE 802.11n; b = IEEE 802.11b) [a]"
