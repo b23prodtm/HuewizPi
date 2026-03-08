@@ -10,8 +10,10 @@ aliases:
             nodejs \
             npm \
         && sudo rm -rf /var/lib/apt/lists/*
-        sudo npm install --global yarn \
-        && yarn
+        if ! command -v yarn >/dev/null 2>&1; then \
+            sudo npm install --global yarn; \
+        fi; \
+        yarn
         sudo npm link balena-cloud-apps
         balena_deploy . $BALENA_ARCH --nobuild --exit
   - &caches
