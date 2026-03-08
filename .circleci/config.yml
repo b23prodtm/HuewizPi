@@ -50,7 +50,7 @@ jobs:
           command: |
             set -u
             TAG=0.1.$CIRCLE_BUILD_NUM
-            docker-compose -f docker-compose.$BALENA_ARCH build
+            docker compose -f docker-compose.$BALENA_ARCH build
 workflows:
   cleanup:
     jobs:
