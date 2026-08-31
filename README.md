@@ -1,97 +1,63 @@
 # HuewizPi
-[![Hue WIZ PI](https://circleci.com/gh/b23prodtm/HuewizPi.svg?style=shield)](https://app.circleci.com/pipelines/github/b23prodtm/HuewizPi)
-  A home access point to figure out how to manage lights -Hue-ZigBee- and bridging internet of things
-(IoT) over home network (wifi-box)
 
-# Quickstart (easy)
-After deployment, it's available at https://'''Machine-IP-or-URL''':8581 as the local access point.
+HuewizPi is a Balena-first Raspberry Pi application that bundles a Wi-Fi access-point service, Passbolt, and Homebridge.
 
-A dashboard appears and it can manage your home devices as if you had installed a real home nest or the homekit.
+[![CI](https://github.com/b23prodtm/HuewizPi/actions/workflows/ci.yml/badge.svg)](https://github.com/b23prodtm/HuewizPi/actions/workflows/ci.yml)
+[![balena deploy button](https://www.balena.io/deploy.svg)](https://dashboard.balena-cloud.com/deploy?repoUrl=https://github.com/b23prodtm/HuewizPi)
 
-Buy a [Zigbee gateway](https://phoscon.de/en/raspbee2/) from Phoscon and other manufacturers to support individual Lights and devices.
-Generally uses the UART port as AMA0 in RPi but the [Deconz dongle](https://phoscon.de/en/conbee2/) uses USB0.
+## Deployment (Balena Cloud)
 
-## Deploy to balena
-Browse to balena hub of apps [Huewiz-pi at balenaHub]([www/balena.io](https://hub.balena.io/apps/1951536/huewiz-pi)) or one-click
+This is the supported end-user deployment method.
 
-  [![balena deploy button](https://www.balena.io/deploy.svg)](https://dashboard.balena-cloud.com/deploy?repoUrl=https://github.com/b23prodtm/HuewizPi)
+1. Create or select a Balena Cloud application/fleet.
+2. Connect this GitHub repository (or click the balena deploy button).
+3. Set required environment variables in Balena Cloud:
+   - `MYSQL_PASSWORD`
+   - `APP_FULL_BASE_URL` (for example `https://<device-or-public-url>`)
+4. Deploy and wait for services to start automatically.
 
-If you forked it and want to be committing changes, use `. deploy.sh` to deploy to your own fleet or build new applications
+No Docker CLI, Docker Compose CLI, balena CLI, or shell installation script is required for end users.
 
-## Passbolt
-Added [Passbolt community edition](https://www.passbolt.com/ce/docker)
-### Step 1. Configure environment variables in docker-compose-ce.yaml file to customize your instance.
+## Development (Docker Compose)
 
-Notice: By default the docker-compose.yaml file is set to latest. We strongly recommend changing that to the tag for the version you want to install.
+Local Docker Compose is for developers/maintainers only.
 
-The APP_FULL_BASE_URL environment variable is set by default to https://passbolt.local, using a self-signed certificate.
-
-Update this variable with the server name you plan to use. You will find at the bottom of this documentation links about how to set your own SSL certificate.
-
-You must configure also SMTP settings to be able to receive notifications and recovery emails. Please find below the most used environment variables for this purpose:
-
-Variable name	Description	Default value
-```
-EMAIL_DEFAULT_FROM_NAME	 From email username	'Passbolt'
-EMAIL_DEFAULT_FROM	From email address as server account	'user@mailersend.net'
-EMAIL_TRANSPORT_DEFAULT_HOST	Server hostname	'localhost'
-EMAIL_TRANSPORT_DEFAULT_PORT	Server port	25
-EMAIL_TRANSPORT_DEFAULT_USERNAME	Username for email server auth	'user@mailersend.net'
-EMAIL_TRANSPORT_DEFAULT_PASSWORD	Password for email server auth	'password'
-EMAIL_TRANSPORT_DEFAULT_TLS	Set true for	STARTTLS
-```
-For more information on which environment variables are available on passbolt, please check the passbolt environment variable reference.
-
-
-### Step 2. Create first admin user
-
-```
-ssh -p 22222 <balena-host> "balena exec -it \$(balena ps | grep passbolt | awk '{print $1}') /bin/bash
-```
-for instance, whithin SSH web terminal, must be run by the user www-data:
-```
-su -s /bin/bash -c "bin/cake \
-                                passbolt register_user \
-                                -u <your@email.com> \
-                                -f <yourname> \
-                                -l <surname> \
-                                -r admin" www-data
-```
-If it's an update, the cake's migration command create or update the database tables:
-
-```
-su -s bash -c \"bin/cake passbolt migrate\" www-data"
+```bash
+docker compose -f docker-compose.x86_64 config
+docker compose -f docker-compose.x86_64 build
+docker compose -f docker-compose.x86_64 up -d db passbolt homebridge
+docker compose -f docker-compose.x86_64 ps
+docker compose -f docker-compose.x86_64 logs
+docker compose -f docker-compose.x86_64 down -v
 ```
 
-Set ***APP_FULL_BASE_URL*** to https://your-devices-hostname/ and browse to this URL to start setup.
-### Wireless Access Point
-> WAP in alpha version
-Basically, this script's made for linux machines that have got a wireless card or chipset and an ethernet interface connected to the internet.
+For ARM devices, use `docker-compose.armhf` or `docker-compose.aarch64`.
 
-The host must have access to the Internet in order to share its connection to the Wireless clients. A reboot is needed to allow system services to restart in the correct order (system-resolved isc-dhcp-server hostapd).
+## CI (GitHub Actions)
 
-### Node Package Manager
+GitHub Actions validates the multi-service Compose stack by:
 
-  This project depends on npmjs [balena-cloud-apps](https://www.npmjs.com/package/balena-cloud-apps). Please call
-  `yarn` to install the node modules (NodeJS v13 at least).
+- checking Compose syntax (`docker compose config`)
+- building services
+- starting the stack for CI-safe services
+- waiting for service healthchecks
+- verifying service availability
+- collecting logs on failure
+- cleaning up containers/volumes
 
-### Update BALENA_ARCH dependent files
+## Troubleshooting
 
-When you make changes to `docker*.template` files and environment `*.env` files, you can apply changes that the CPU architecture depends on. To do so, run deployment scripts `balena_deploy --nobuild` before to push packages:
+- **Passbolt not reachable**: verify `APP_FULL_BASE_URL` and exposed ports.
+- **Database startup issues**: check `MYSQL_PASSWORD` and database logs.
+- **Hardware-specific startup issues (Wi-Fi/deCONZ)**: verify Raspberry Pi device access (`/dev/ttyAMA0`), Balena device type, and fleet host configuration.
 
-  `update_templates`
-  `./deploy.sh`
+## Balena compatibility notes
 
-### Copyright 2018-2025 www.b23prodtm.info - https://github.com/b23prodtm/HuewizPi
+- Compose files use Docker Compose `2.1` syntax for Balena Cloud compatibility.
+- Persistent data uses named volumes.
+- Runtime configuration is environment-variable driven.
+- ARM support is preserved via architecture-specific Dockerfiles and Compose files.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+## License
 
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+Apache License 2.0

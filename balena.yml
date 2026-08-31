@@ -1,8 +1,7 @@
 name: HuewizPi
 description: >-
-  A home access point to figure out how to manage lights -Hue-ZigBee- and bridging internet of things 
-  (IoT) over home network (wifi-box)
-version: 1.0.0
+  Balena-first Raspberry Pi stack for Wi-Fi access-point services, Passbolt, and Homebridge.
+version: 1.1.0
 type: sw.application
 assets:
   repository:
@@ -12,40 +11,16 @@ assets:
   logo:
     type: blob.asset
     data:
-      url: https://github.com/b23prodtm/HuewizPi/blob/master/Home_Assistant_Logo.svg.png?raw=true
+      url: 'https://github.com/b23prodtm/HuewizPi/blob/master/Home_Assistant_Logo.svg.png?raw=true'
 data:
-  applicationEnvironmentVariables:
-    - EMAIL_DEFAULT_FROM_NAME: 'Passbolt'
-    - EMAIL_DEFAULT_FROM: 'me@mailersend.net'
-    - EMAIL_TRANSPORT_DEFAULT_HOST: 'smtp.mailersend.net'
-    - EMAIL_TRANSPORT_DEFAULT_PORT: 587
-    - EMAIL_TRANSPORT_DEFAULT_USERNAME: 'me@mailersend.net'
-    - EMAIL_TRANSPORT_DEFAULT_PASSWORD: 'password'
-    - EMAIL_TRANSPORT_DEFAULT_TLS: 'true'
   defaultDeviceType: raspberrypi3
   supportedDeviceTypes:
     - raspberrypi3
+  applicationEnvironmentVariables:
+    - APP_FULL_BASE_URL: 'https://passbolt.local'
+    - MYSQL_DATABASE: 'passbolt'
+    - MYSQL_USER: 'passbolt'
+    - MYSQL_PASSWORD: 'set-in-balena-cloud'
 post-provisioning: >-
-  
-  First time release of a home access point to figure out how to manage lights -Hue-ZigBee- and bridging internet of things (IoT) over home network (wifi-box) 
-
-  It's full Docker composition (docker-compose.template) deployments setup's compatible with [NodeJS balena-cloud-apps](https://socket.dev/npm/package/balena-cloud-apps) 
-  
-  # At the core: Home Assistant
-
-  Open source home automation that puts local control and privacy first. Powered by a worldwide community of tinkerers and DIY enthusiasts. Perfect to run on a Raspberry Pi or a local server.
-
-  ## Fleet configuration
- 
-  - In devices fleet configuration dashboard, *Define DT overlays "pi3-miniuart-bt"*
-
-  ## The most important features
-
-  - [Home Assistant Client](https://www.home-assistant.io)
-  - [Read dconz community README](https://github.com/deconz-community/deconz-docker#readme) Serial BT UART must be swapped to GPIO.
-  - Host access Point (alpha)
-  - Licensed under the Apache License, Version 2.0
-
-  ### How to run this app
-
-  Simple click on the Deploy button, and create or use an existing fleet. Once done you can download the video-surveillance Balena Cloud base image and flash it to your device.
+  Deploy from Balena Cloud by connecting this repository to your fleet.
+  Set fleet/device environment variables before first startup, then deploy.
