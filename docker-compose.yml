@@ -1,32 +1,40 @@
-version: '2'
+version: '2.1'
+
 services:
   deconz:
     image: deconzcommunity/deconz:stable
     container_name: deconz
-    restart: always
-    privileged: true # This is important! Without it, the deCONZ image won't be able to connect to Conbee II.
+    restart: unless-stopped
+    privileged: true
     ports:
-      - 8080:8080
-      - 4443:4443
+      - "8080:8080"
+      - "4443:4443"
     volumes:
       - deCONZ:/opt/deCONZ
     devices:
-      - /dev/ttyAMA0 # This is the GPIO device that Raspbee II is running on.
+      - /dev/ttyAMA0
     environment:
-      - TZ=Europe/Berlin
-      - DECONZ_WEB_PORT=8080
-      - DECONZ_WS_PORT=4443
-      - DEBUG_INFO=1
-      - DEBUG_APS=0
-      - DEBUG_ZCL=0
-      - DEBUG_ZDP=0
-      - DEBUG_OTA=0
-      - DEBUG_HTTP=0
-      - DECONZ_DEVICE=/dev/ttyAMA0 # This is the GPIO device that Raspbee II is running on.
-      - DECONZ_START_VERBOSE=0
+      TZ: ${TZ:-Europe/Berlin}
+      DECONZ_WEB_PORT: 8080
+      DECONZ_WS_PORT: 4443
+      DEBUG_INFO: 1
+      DEBUG_APS: 0
+      DEBUG_ZCL: 0
+      DEBUG_ZDP: 0
+      DEBUG_OTA: 0
+      DEBUG_HTTP: 0
+      DECONZ_DEVICE: ${DECONZ_DEVICE:-/dev/ttyAMA0}
+      DECONZ_START_VERBOSE: 0
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
   homebridge:
     image: homebridge/homebridge:latest
-    restart: always
+    restart: unless-stopped
     network_mode: host
     volumes:
       - homebridge:/homebridge
@@ -35,6 +43,13 @@ services:
       options:
         max-size: "10mb"
         max-file: "1"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:8581', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1));"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
   wifi-spot:
     container_name: hwzpi
     network_mode: host
@@ -42,12 +57,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.armhf
-    env_file:
-      - common.env
-      - .env
     privileged: true
     environment:
-      DBUS_SYSTEM_BUS_ADDRESS: "unix:path=/host/run/dbus/system_bus_socket"
+      DBUS_SYSTEM_BUS_ADDRESS: ${DBUS_SYSTEM_BUS_ADDRESS:-unix:path=/host/run/dbus/system_bus_socket}
     labels:
       io.balena.features.dbus: "1"
       io.balena.features.kernel-modules: "1"
@@ -58,51 +70,57 @@ services:
       - netplan:/etc/netplan
     cap_add:
       - ALL
+    healthcheck:
+      test: ["CMD-SHELL", "/etc/init.d/hapwizard status"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+
   db:
-    image: linuxserver/mariadb:10.6.13
-    restart: always
+    image: mariadb:10.11
+    restart: unless-stopped
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: "true"
-      MYSQL_DATABASE: "passbolt"
-      MYSQL_USER: "passbolt"
-      MYSQL_PASSWORD: "P4ssb0lt"
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-passbolt}
+      MYSQL_USER: ${MYSQL_USER:-passbolt}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-passbolt_dev_password}
     volumes:
       - database_volume:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 20s
+      timeout: 10s
+      retries: 12
+      start_period: 40s
+
   passbolt:
-    #image: passbolt/passbolt:latest-ce
-    #Alternatively you can use rootless:
-    #image: passbolt/passbolt:latest-ce-non-root
-    build:
-      context: passbolt/
-      dockerfile: Dockerfile.armhf
-    restart: always
+    image: passbolt/passbolt:latest-ce
+    restart: unless-stopped
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
-      APP_FULL_BASE_URL: https://passbolt.local
-      DATASOURCES_DEFAULT_HOST: "db"
-      DATASOURCES_DEFAULT_USERNAME: "passbolt"
-      DATASOURCES_DEFAULT_PASSWORD: "P4ssb0lt"
-      DATASOURCES_DEFAULT_DATABASE: "passbolt"
+      APP_FULL_BASE_URL: ${APP_FULL_BASE_URL:-https://passbolt.local}
+      DATASOURCES_DEFAULT_HOST: db
+      DATASOURCES_DEFAULT_USERNAME: ${MYSQL_USER:-passbolt}
+      DATASOURCES_DEFAULT_PASSWORD: ${MYSQL_PASSWORD:-passbolt_dev_password}
+      DATASOURCES_DEFAULT_DATABASE: ${MYSQL_DATABASE:-passbolt}
     volumes:
       - gpg_volume:/etc/passbolt/gpg
       - jwt_volume:/etc/passbolt/jwt
-    command:
-      [
-        "/usr/bin/wait-for.sh",
-        "-t",
-        "0",
-        "db:3306",
-        "--",
-        "/docker-entrypoint.sh",
-      ]
+    command: ["/usr/bin/wait-for.sh", "-t", "0", "db:3306", "--", "/docker-entrypoint.sh"]
     ports:
-      - 587:587
-      - 80:80
-      - 443:443
-    #Alternatively for non-root images:
-    #  - 80:8080
-    #  - 443:4433
+      - "${PASSBOLT_SMTP_PORT:-587}:587"
+      - "${PASSBOLT_HTTP_PORT:-8088}:80"
+      - "${PASSBOLT_HTTPS_PORT:-8443}:443"
+    healthcheck:
+      test: ["CMD", "php", "-r", "$$s=@fsockopen('127.0.0.1',80); if($$s){fclose($$s);exit(0);} exit(1);"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+
 volumes:
   database_volume:
   gpg_volume:
@@ -113,4 +131,3 @@ volumes:
   config:
   homebridge:
   deCONZ:
-
