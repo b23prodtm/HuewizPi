@@ -1,6 +1,15 @@
 #!/usr/bin/with-contenv bash
 # shellcheck shell=bash
 cd /usr/src/ || exit 1
+# shellcheck source=/dev/null
+source scripts/secrets.sh
+export_secrets
+# HOTSPOT_MODE=portal (default): temporary configuration hotspot only (see services.d/portal).
+# HOTSPOT_MODE=permanent: legacy always-on hostapd access point.
+if [ "${HOTSPOT_MODE:-portal}" != "permanent" ]; then
+  echo "HOTSPOT_MODE=portal: skipping permanent access point"
+  exit 0
+fi
 /etc/init.d/hapwizard install
 # shellcheck disable=SC2154
 exec scripts/start.sh "$PRIV_INT" \

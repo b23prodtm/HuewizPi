@@ -18,6 +18,13 @@ Browse to balena hub of apps [Huewiz-pi at balenaHub]([www/balena.io](https://hu
 
 If you forked it and want to be committing changes, use `. deploy.sh` to deploy to your own fleet or build new applications
 
+## Wi-Fi setup portal and secrets
+By default (`HOTSPOT_MODE=portal`) no permanent access point runs. When the device has no connection, a temporary open hotspot `Raspibox-<device name>` serves a Wi-Fi configuration page on port 80 (`PORTAL_PORT`); it closes once connected. Set `HOTSPOT_MODE=permanent` to keep the legacy always-on hostapd access point (e.g. places without Wi-Fi).
+
+Redundancy without the web page: set the Balena variable `WIFI_SSID` and the secret `WIFI_PASSWORD`.
+
+Secrets (`AP_PASSWORD`, `WIFI_PASSWORD`) are never stored in images. They are read from the environment, a `<NAME>_FILE` path, `/run/secrets/<NAME>`, or the `/etc/hapwizard/secrets` volume; `AP_PASSWORD` is generated and persisted there if missing. Hotspot port 80 conflicts with any service already bound to it; change `PORTAL_PORT` in that case.
+
 ## Passbolt
 Added [Passbolt community edition](https://www.passbolt.com/ce/docker)
 ### Step 1. Configure environment variables in docker-compose-ce.yaml file to customize your instance.

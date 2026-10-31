@@ -20,7 +20,7 @@ data:
     - EMAIL_TRANSPORT_DEFAULT_HOST: 'smtp.mailersend.net'
     - EMAIL_TRANSPORT_DEFAULT_PORT: 587
     - EMAIL_TRANSPORT_DEFAULT_USERNAME: 'me@mailersend.net'
-    - EMAIL_TRANSPORT_DEFAULT_PASSWORD: 'password'
+    - EMAIL_TRANSPORT_DEFAULT_PASSWORD: ''
     - EMAIL_TRANSPORT_DEFAULT_TLS: 'true'
   defaultDeviceType: raspberrypi3
   supportedDeviceTypes:
