@@ -9,16 +9,29 @@ HuewizPi is a Balena-first Raspberry Pi application that bundles a Wi-Fi access-
 
 This is the supported end-user deployment method.
 
-1. Create or select a Balena Cloud application/fleet.
+1. Create or select a Balena Cloud application/fleet (`raspberrypi3`).
 2. Connect this GitHub repository (or click the balena deploy button).
-3. Set required environment variables in Balena Cloud:
+3. Set required fleet/device environment variables in Balena Cloud:
    - `MYSQL_PASSWORD`
    - `APP_FULL_BASE_URL` (for example `https://<device-or-public-url>`)
-4. Deploy and wait for services to start automatically.
+4. Deploy and wait for services (`wifi-spot`, `db`, `passbolt`, `homebridge`) to start automatically.
+5. Open:
+   - Passbolt: `https://<device-or-public-url>:8443` (or your mapped HTTP/HTTPS ports)
+   - Homebridge: `http://<device-ip>:8581`
 
 No Docker CLI, Docker Compose CLI, balena CLI, or shell installation script is required for end users.
 
-## Development (Docker Compose)
+## Quick install checklist (Raspberry Pi / Linux users)
+
+- Raspberry Pi 3+ with BalenaOS already flashed
+- Balena Cloud account
+- This repository connected to your fleet
+- Required env vars set (`MYSQL_PASSWORD`, `APP_FULL_BASE_URL`)
+- Public Device URL enabled if remote access is needed
+
+If you can deploy Home Assistant on Raspberry Pi, this flow should be similarly straightforward.
+
+## Development and CI parity (Docker Compose)
 
 Local Docker Compose is for developers/maintainers only.
 
@@ -32,12 +45,14 @@ docker compose -f docker-compose.x86_64 down -v
 ```
 
 For ARM devices, use `docker-compose.armhf` or `docker-compose.aarch64`.
+The optional `balena-cloud-apps` convenience dependency is not required for CI validation.
 
 ## CI (GitHub Actions)
 
 GitHub Actions validates the multi-service Compose stack by:
 
 - checking Compose syntax (`docker compose config`)
+- validating Balena-compatible Compose `2.1` definitions
 - building services
 - starting the stack for CI-safe services
 - waiting for service healthchecks

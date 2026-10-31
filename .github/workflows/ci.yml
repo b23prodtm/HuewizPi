@@ -12,6 +12,12 @@ jobs:
   compose-integration:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - compose_file: docker-compose.x86_64
+            startup_services: "db passbolt homebridge"
     permissions:
       contents: read
 
@@ -23,27 +29,34 @@ jobs:
         run: |
           cp .env.example .env
 
-      - name: Validate Docker Compose
+      - name: Validate Balena-compatible Compose files
         run: docker compose -f docker-compose.x86_64 config
+      - name: Validate all compose definitions
+        run: |
+          set -eu
+          for compose_file in docker-compose.yml docker-compose.x86_64 docker-compose.armhf docker-compose.aarch64; do
+            echo "Validating ${compose_file}"
+            docker compose -f "${compose_file}" config >/dev/null
+          done
 
-      - name: Build all services
-        run: docker compose -f docker-compose.x86_64 build --pull
+      - name: Build all services for CI stack
+        run: docker compose -f "${{ matrix.compose_file }}" build --pull
 
       - name: Start compose stack
         run: |
-          docker compose -f docker-compose.x86_64 up -d db passbolt homebridge
-          docker compose -f docker-compose.x86_64 ps
+          docker compose -f "${{ matrix.compose_file }}" up -d ${{ matrix.startup_services }}
+          docker compose -f "${{ matrix.compose_file }}" ps
 
       - name: Wait for healthy services
         run: |
           set -eu
-          services="db passbolt homebridge"
+          services="${{ matrix.startup_services }}"
           deadline=$((SECONDS + 600))
 
           while [ "$SECONDS" -lt "$deadline" ]; do
             all_healthy=1
             for service in $services; do
-              cid=$(docker compose -f docker-compose.x86_64 ps -q "$service")
+              cid=$(docker compose -f "${{ matrix.compose_file }}" ps -q "$service")
               if [ -z "$cid" ]; then
                 echo "$service container not found"
                 all_healthy=0
@@ -71,24 +84,24 @@ jobs:
       - name: Verify service availability
         run: |
           set -eu
-          docker compose -f docker-compose.x86_64 exec -T db sh -lc 'mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent'
+          docker compose -f "${{ matrix.compose_file }}" exec -T db sh -lc 'mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent'
           curl -kfsS https://127.0.0.1:8443/ >/dev/null || curl -fsS http://127.0.0.1:8088/ >/dev/null
           curl -fsS http://127.0.0.1:8581/ >/dev/null
 
       - name: Run integration checks
         run: |
           set -eu
-          docker compose -f docker-compose.x86_64 ps
+          docker compose -f "${{ matrix.compose_file }}" ps
 
       - name: Diagnostics on failure
         if: failure()
         run: |
-          docker compose -f docker-compose.x86_64 ps || true
-          docker compose -f docker-compose.x86_64 logs db || true
-          docker compose -f docker-compose.x86_64 logs passbolt || true
-          docker compose -f docker-compose.x86_64 logs homebridge || true
+          docker compose -f "${{ matrix.compose_file }}" ps || true
+          docker compose -f "${{ matrix.compose_file }}" logs db || true
+          docker compose -f "${{ matrix.compose_file }}" logs passbolt || true
+          docker compose -f "${{ matrix.compose_file }}" logs homebridge || true
 
       - name: Cleanup
         if: always()
         run: |
-          docker compose -f docker-compose.x86_64 down -v --remove-orphans || true
+          docker compose -f "${{ matrix.compose_file }}" down -v --remove-orphans || true
