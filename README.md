@@ -17,18 +17,32 @@ This is the supported end-user deployment method.
    - `APP_FULL_BASE_URL` (for example `https://<device-or-public-url>`)
 4. Deploy and wait for services (`wifi-spot`, `db`, `passbolt`, `homebridge`) to start automatically.
 5. Open:
-   - Passbolt: `https://<device-or-public-url>:8443` (or your mapped HTTP/HTTPS ports)
-   - Homebridge: `http://<device-ip>:8581`
+   - Homebridge: `http://<device-ip>:8581` from a device connected to the network.
+
+### Compose port exposure
+
+| Service | Ports and exposure |
+| --- | --- |
+| `wifi-spot` | Uses host networking for Wi-Fi, DNS (TCP/UDP 53), and DHCP (UDP 67/68); no Compose port mapping is declared. |
+| `homebridge` | Uses host networking and listens on TCP 8581; no Compose port mapping is declared. |
+| `deconz` | Publishes TCP 8080 and 4443 in `docker-compose.yml` and `docker-compose.template`; it is not included in the architecture-specific Compose files. |
+| `db` | TCP 3306 is internal to the Compose network; it is not published. |
+| `passbolt` | Container ports 80, 443, and 587 are not published to the host. Passbolt is not directly reachable from the public network through these Compose files. |
+
+Host port 80 is not mapped by Compose. The Wi-Fi service uses host networking, but this repository does not configure an HTTP landing page on port 80. Homebridge is reached directly on port 8581. Host-network services may still listen on host interfaces independently of Compose port mappings; restrict access with the device/network firewall as appropriate.
 
 ### Create the first Passbolt administrator
 
-Open a terminal for the running `passbolt` service in Balena Cloud and run the following command, replacing the email and name placeholders:
+Open a terminal for the running `passbolt` service in Balena Cloud. These commands create an administrator, import the server private key into Passbolt's GPG home, send a test email, and run the health check. Replace the email and name placeholders with your own values:
 
 ```bash
-su -m -c "/usr/share/php/passbolt/bin/cake passbolt register_user -u admin@example.com -f First -l Last -r admin" -s /bin/sh www-data
+su -s /bin/bash -c '/usr/share/php/passbolt/bin/cake passbolt register_user -u "YOUR_EMAIL" -f "YOUR_FIRST_NAME" -l "YOUR_LAST_NAME" -r admin' www-data
+su -s /bin/bash -c 'gpg --home /var/lib/passbolt/.gnupg --import /etc/passbolt/gpg/serverkey_private.asc' www-data
+su -s /bin/bash -c '/usr/share/php/passbolt/bin/cake passbolt send_test_email --recipient="YOUR_EMAIL"' www-data
+su -s /bin/bash -c '/usr/share/php/passbolt/bin/cake passbolt healthcheck' www-data
 ```
 
-Open the activation link printed by the command and complete the account setup.
+Open the activation link printed by the registration command and complete the account setup. Keep the server private key and database password private; do not add them to this repository.
 
 No Docker CLI, Docker Compose CLI, balena CLI, or shell installation script is required for end users.
 

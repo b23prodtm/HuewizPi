@@ -110,10 +110,6 @@ services:
       - gpg_volume:/etc/passbolt/gpg
       - jwt_volume:/etc/passbolt/jwt
     command: ["/usr/bin/wait-for.sh", "-t", "0", "db:3306", "--", "/docker-entrypoint.sh"]
-    ports:
-      - "587:587"
-      - "8088:80"
-      - "8443:443"
     healthcheck:
       test: ["CMD", "php", "-r", "$$s=@fsockopen('127.0.0.1',80); if($$s){fclose($$s);exit(0);} exit(1);"]
       interval: 30s
