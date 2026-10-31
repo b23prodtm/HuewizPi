@@ -20,6 +20,16 @@ This is the supported end-user deployment method.
    - Passbolt: `https://<device-or-public-url>:8443` (or your mapped HTTP/HTTPS ports)
    - Homebridge: `http://<device-ip>:8581`
 
+### Create the first Passbolt administrator
+
+Open a terminal for the running `passbolt` service in Balena Cloud and run the following command, replacing the email and name placeholders:
+
+```bash
+su -m -c "/usr/share/php/passbolt/bin/cake passbolt register_user -u admin@example.com -f First -l Last -r admin" -s /bin/sh www-data
+```
+
+Open the activation link printed by the command and complete the account setup.
+
 No Docker CLI, Docker Compose CLI, balena CLI, or shell installation script is required for end users.
 
 ## Quick install checklist (Raspberry Pi / Linux users)
