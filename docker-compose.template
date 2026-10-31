@@ -82,9 +82,9 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: "true"
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-passbolt}
-      MYSQL_USER: ${MYSQL_USER:-passbolt}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-passbolt_dev_password}
+      MYSQL_DATABASE: passbolt
+      MYSQL_USER: passbolt
+      MYSQL_PASSWORD: set-in-balena-cloud
     volumes:
       - database_volume:/var/lib/mysql
     healthcheck:
@@ -101,19 +101,19 @@ services:
       db:
         condition: service_healthy
     environment:
-      APP_FULL_BASE_URL: ${APP_FULL_BASE_URL:-https://passbolt.local}
+      APP_FULL_BASE_URL: https://passbolt.local
       DATASOURCES_DEFAULT_HOST: db
-      DATASOURCES_DEFAULT_USERNAME: ${MYSQL_USER:-passbolt}
-      DATASOURCES_DEFAULT_PASSWORD: ${MYSQL_PASSWORD:-passbolt_dev_password}
-      DATASOURCES_DEFAULT_DATABASE: ${MYSQL_DATABASE:-passbolt}
+      DATASOURCES_DEFAULT_USERNAME: passbolt
+      DATASOURCES_DEFAULT_PASSWORD: set-in-balena-cloud
+      DATASOURCES_DEFAULT_DATABASE: passbolt
     volumes:
       - gpg_volume:/etc/passbolt/gpg
       - jwt_volume:/etc/passbolt/jwt
     command: ["/usr/bin/wait-for.sh", "-t", "0", "db:3306", "--", "/docker-entrypoint.sh"]
     ports:
-      - "${PASSBOLT_SMTP_PORT:-587}:587"
-      - "${PASSBOLT_HTTP_PORT:-8088}:80"
-      - "${PASSBOLT_HTTPS_PORT:-8443}:443"
+      - "587:587"
+      - "8088:80"
+      - "8443:443"
     healthcheck:
       test: ["CMD", "php", "-r", "$$s=@fsockopen('127.0.0.1',80); if($$s){fclose($$s);exit(0);} exit(1);"]
       interval: 30s
