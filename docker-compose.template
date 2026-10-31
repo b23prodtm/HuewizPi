@@ -81,14 +81,14 @@ services:
     image: %%PRIMARY_HUB%%:%%PRIMARY_TAG%%
     restart: unless-stopped
     environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: "true"
+      MYSQL_ROOT_PASSWORD: set-in-balena-cloud
       MYSQL_DATABASE: passbolt
       MYSQL_USER: passbolt
       MYSQL_PASSWORD: set-in-balena-cloud
     volumes:
       - database_volume:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u\"$$MYSQL_USER\" -p\"$$MYSQL_PASSWORD\" --silent"]
       interval: 20s
       timeout: 10s
       retries: 12

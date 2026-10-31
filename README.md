@@ -12,6 +12,7 @@ This is the supported end-user deployment method.
 1. Create or select a Balena Cloud application/fleet (`raspberrypi3`).
 2. Connect this GitHub repository (or click the balena deploy button).
 3. Set required fleet/device environment variables in Balena Cloud:
+   - `MYSQL_ROOT_PASSWORD` (use a private, unique value)
    - `MYSQL_PASSWORD`
    - `DATASOURCES_DEFAULT_PASSWORD` (set to the same value as `MYSQL_PASSWORD`)
    - `APP_FULL_BASE_URL` (for example `https://<device-or-public-url>`)
@@ -51,7 +52,7 @@ No Docker CLI, Docker Compose CLI, balena CLI, or shell installation script is r
 - Raspberry Pi 3+ with BalenaOS already flashed
 - Balena Cloud account
 - This repository connected to your fleet
-- Required env vars set (`MYSQL_PASSWORD`, `DATASOURCES_DEFAULT_PASSWORD`, `APP_FULL_BASE_URL`)
+- Required env vars set (`MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD`, `DATASOURCES_DEFAULT_PASSWORD`, `APP_FULL_BASE_URL`)
 - Public Device URL enabled if remote access is needed
 
 If you can deploy Home Assistant on Raspberry Pi, this flow should be similarly straightforward.

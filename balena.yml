@@ -20,6 +20,7 @@ data:
     - APP_FULL_BASE_URL: 'https://passbolt.local'
     - MYSQL_DATABASE: 'passbolt'
     - MYSQL_USER: 'passbolt'
+    - MYSQL_ROOT_PASSWORD: 'set-in-balena-cloud'
     - MYSQL_PASSWORD: 'set-in-balena-cloud'
     - DATASOURCES_DEFAULT_HOST: 'db'
     - DATASOURCES_DEFAULT_DATABASE: 'passbolt'

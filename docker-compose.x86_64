@@ -50,7 +50,7 @@ services:
     image: mariadb:10.11
     restart: unless-stopped
     environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: "true"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-passbolt_dev_root_password}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-passbolt}
       MYSQL_USER: ${MYSQL_USER:-passbolt}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-passbolt_dev_password}
