@@ -1,97 +1,104 @@
 # HuewizPi
-[![Hue WIZ PI](https://circleci.com/gh/b23prodtm/HuewizPi.svg?style=shield)](https://app.circleci.com/pipelines/github/b23prodtm/HuewizPi)
-  A home access point to figure out how to manage lights -Hue-ZigBee- and bridging internet of things
-(IoT) over home network (wifi-box)
 
-# Quickstart (easy)
-After deployment, it's available at https://'''Machine-IP-or-URL''':8581 as the local access point.
+HuewizPi is a Balena-first Raspberry Pi application that bundles a Wi-Fi access-point service, Passbolt, and Homebridge.
 
-A dashboard appears and it can manage your home devices as if you had installed a real home nest or the homekit.
+[![CI](https://github.com/b23prodtm/HuewizPi/actions/workflows/ci.yml/badge.svg)](https://github.com/b23prodtm/HuewizPi/actions/workflows/ci.yml)
+[![balena deploy button](https://www.balena.io/deploy.svg)](https://dashboard.balena-cloud.com/deploy?repoUrl=https://github.com/b23prodtm/HuewizPi)
 
-Buy a [Zigbee gateway](https://phoscon.de/en/raspbee2/) from Phoscon and other manufacturers to support individual Lights and devices.
-Generally uses the UART port as AMA0 in RPi but the [Deconz dongle](https://phoscon.de/en/conbee2/) uses USB0.
+## Deployment (Balena Cloud)
 
-## Deploy to balena
-Browse to balena hub of apps [Huewiz-pi at balenaHub]([www/balena.io](https://hub.balena.io/apps/1951536/huewiz-pi)) or one-click
+This is the supported end-user deployment method.
 
-  [![balena deploy button](https://www.balena.io/deploy.svg)](https://dashboard.balena-cloud.com/deploy?repoUrl=https://github.com/b23prodtm/HuewizPi)
+1. Create or select a Balena Cloud application/fleet (`raspberrypi3`).
+2. Connect this GitHub repository (or click the balena deploy button).
+3. Set required fleet/device environment variables in Balena Cloud:
+   - `MYSQL_ROOT_PASSWORD` (use a private, unique value)
+   - `MYSQL_PASSWORD`
+   - `DATASOURCES_DEFAULT_PASSWORD` (set to the same value as `MYSQL_PASSWORD`)
+   - `APP_FULL_BASE_URL` (for example `https://<device-or-public-url>`)
+4. Deploy and wait for services (`wifi-spot`, `db`, `passbolt`, `homebridge`) to start automatically.
+5. Open:
+   - Homebridge: `http://<device-ip>:8581` from a device connected to the network.
 
-If you forked it and want to be committing changes, use `. deploy.sh` to deploy to your own fleet or build new applications
+### Compose port exposure
 
-## Passbolt
-Added [Passbolt community edition](https://www.passbolt.com/ce/docker)
-### Step 1. Configure environment variables in docker-compose-ce.yaml file to customize your instance.
+| Service | Ports and exposure |
+| --- | --- |
+| `wifi-spot` | Uses host networking for Wi-Fi, DNS (TCP/UDP 53), and DHCP (UDP 67/68); no Compose port mapping is declared. |
+| `homebridge` | Uses host networking and listens on TCP 8581; no Compose port mapping is declared. |
+| `deconz` | Publishes TCP 8080 and 4443 in `docker-compose.yml` and `docker-compose.template`; it is not included in the architecture-specific Compose files. |
+| `db` | TCP 3306 is internal to the Compose network; it is not published. |
+| `passbolt` | Container ports 80, 443, and 587 are not published to the host. Passbolt is not directly reachable from the public network through these Compose files. |
 
-Notice: By default the docker-compose.yaml file is set to latest. We strongly recommend changing that to the tag for the version you want to install.
+Host port 80 is not mapped by Compose. The Wi-Fi service uses host networking, but this repository does not configure an HTTP landing page on port 80. Homebridge is reached directly on port 8581. Host-network services may still listen on host interfaces independently of Compose port mappings; restrict access with the device/network firewall as appropriate.
 
-The APP_FULL_BASE_URL environment variable is set by default to https://passbolt.local, using a self-signed certificate.
+### Create the first Passbolt administrator
 
-Update this variable with the server name you plan to use. You will find at the bottom of this documentation links about how to set your own SSL certificate.
+Open a terminal for the running `passbolt` service in Balena Cloud. These commands create an administrator, import the server private key into Passbolt's GPG home, send a test email, and run the health check. Replace the email and name placeholders with your own values:
 
-You must configure also SMTP settings to be able to receive notifications and recovery emails. Please find below the most used environment variables for this purpose:
-
-Variable name	Description	Default value
-```
-EMAIL_DEFAULT_FROM_NAME	 From email username	'Passbolt'
-EMAIL_DEFAULT_FROM	From email address as server account	'user@mailersend.net'
-EMAIL_TRANSPORT_DEFAULT_HOST	Server hostname	'localhost'
-EMAIL_TRANSPORT_DEFAULT_PORT	Server port	25
-EMAIL_TRANSPORT_DEFAULT_USERNAME	Username for email server auth	'user@mailersend.net'
-EMAIL_TRANSPORT_DEFAULT_PASSWORD	Password for email server auth	'password'
-EMAIL_TRANSPORT_DEFAULT_TLS	Set true for	STARTTLS
-```
-For more information on which environment variables are available on passbolt, please check the passbolt environment variable reference.
-
-
-### Step 2. Create first admin user
-
-```
-ssh -p 22222 <balena-host> "balena exec -it \$(balena ps | grep passbolt | awk '{print $1}') /bin/bash
-```
-for instance, whithin SSH web terminal, must be run by the user www-data:
-```
-su -s /bin/bash -c "bin/cake \
-                                passbolt register_user \
-                                -u <your@email.com> \
-                                -f <yourname> \
-                                -l <surname> \
-                                -r admin" www-data
-```
-If it's an update, the cake's migration command create or update the database tables:
-
-```
-su -s bash -c \"bin/cake passbolt migrate\" www-data"
+```bash
+su -s /bin/bash -c '/usr/share/php/passbolt/bin/cake passbolt register_user -u "YOUR_EMAIL" -f "YOUR_FIRST_NAME" -l "YOUR_LAST_NAME" -r admin' www-data
+su -s /bin/bash -c 'gpg --home /var/lib/passbolt/.gnupg --import /etc/passbolt/gpg/serverkey_private.asc' www-data
+su -s /bin/bash -c '/usr/share/php/passbolt/bin/cake passbolt send_test_email --recipient="YOUR_EMAIL"' www-data
+su -s /bin/bash -c '/usr/share/php/passbolt/bin/cake passbolt healthcheck' www-data
 ```
 
-Set ***APP_FULL_BASE_URL*** to https://your-devices-hostname/ and browse to this URL to start setup.
-### Wireless Access Point
-> WAP in alpha version
-Basically, this script's made for linux machines that have got a wireless card or chipset and an ethernet interface connected to the internet.
+Open the activation link printed by the registration command and complete the account setup. Keep the server private key and database password private; do not add them to this repository.
 
-The host must have access to the Internet in order to share its connection to the Wireless clients. A reboot is needed to allow system services to restart in the correct order (system-resolved isc-dhcp-server hostapd).
+No Docker CLI, Docker Compose CLI, balena CLI, or shell installation script is required for end users.
 
-### Node Package Manager
+## Quick install checklist (Raspberry Pi / Linux users)
 
-  This project depends on npmjs [balena-cloud-apps](https://www.npmjs.com/package/balena-cloud-apps). Please call
-  `yarn` to install the node modules (NodeJS v13 at least).
+- Raspberry Pi 3+ with BalenaOS already flashed
+- Balena Cloud account
+- This repository connected to your fleet
+- Required env vars set (`MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD`, `DATASOURCES_DEFAULT_PASSWORD`, `APP_FULL_BASE_URL`)
+- Public Device URL enabled if remote access is needed
 
-### Update BALENA_ARCH dependent files
+If you can deploy Home Assistant on Raspberry Pi, this flow should be similarly straightforward.
 
-When you make changes to `docker*.template` files and environment `*.env` files, you can apply changes that the CPU architecture depends on. To do so, run deployment scripts `balena_deploy --nobuild` before to push packages:
+## Development and CI parity (Docker Compose)
 
-  `update_templates`
-  `./deploy.sh`
+Local Docker Compose is for developers/maintainers only.
 
-### Copyright 2018-2025 www.b23prodtm.info - https://github.com/b23prodtm/HuewizPi
+```bash
+docker compose -f docker-compose.x86_64 config
+docker compose -f docker-compose.x86_64 build
+docker compose -f docker-compose.x86_64 up -d db passbolt homebridge
+docker compose -f docker-compose.x86_64 ps
+docker compose -f docker-compose.x86_64 logs
+docker compose -f docker-compose.x86_64 down -v
+```
 
-Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+For ARM devices, use `docker-compose.armhf` or `docker-compose.aarch64`.
+The optional `balena-cloud-apps` convenience dependency is not required for CI validation.
 
-       http://www.apache.org/licenses/LICENSE-2.0
+## CI (GitHub Actions)
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+GitHub Actions validates the multi-service Compose stack by:
+
+- checking Compose syntax (`docker compose config`)
+- validating Balena-compatible Compose `2.1` definitions
+- building services
+- starting the stack for CI-safe services
+- waiting for service healthchecks
+- verifying service availability
+- collecting logs on failure
+- cleaning up containers/volumes
+
+## Troubleshooting
+
+- **Passbolt not reachable**: verify `APP_FULL_BASE_URL` and exposed ports.
+- **Database startup issues**: check `MYSQL_PASSWORD` and database logs.
+- **Hardware-specific startup issues (Wi-Fi/deCONZ)**: verify Raspberry Pi device access (`/dev/ttyAMA0`), Balena device type, and fleet host configuration.
+
+## Balena compatibility notes
+
+- Compose files use Docker Compose `2.1` syntax for Balena Cloud compatibility.
+- Persistent data uses named volumes.
+- Runtime configuration is environment-variable driven.
+- ARM support is preserved via architecture-specific Dockerfiles and Compose files.
+
+## License
+
+Apache License 2.0
