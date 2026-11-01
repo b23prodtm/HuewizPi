@@ -3,7 +3,6 @@ version: '2.1'
 services:
   deconz:
     image: deconzcommunity/deconz:stable
-    container_name: deconz
     restart: unless-stopped
     privileged: true
     ports:
@@ -51,7 +50,6 @@ services:
       start_period: 60s
 
   wifi-spot:
-    container_name: hwzpi
     network_mode: host
     restart: unless-stopped
     build:
@@ -98,8 +96,7 @@ services:
     image: passbolt/passbolt:latest-ce
     restart: unless-stopped
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     environment:
       APP_FULL_BASE_URL: https://passbolt.local
       DATASOURCES_DEFAULT_HOST: db
