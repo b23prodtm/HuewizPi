@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+jobs:
+  compose-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - compose_file: docker-compose.x86_64
+            startup_services: "db passbolt homebridge"
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare test environment
+        run: |
+          cp .env.example .env
+
+      - name: Validate Balena-compatible Compose files
+        run: docker compose -f docker-compose.x86_64 config
+      - name: Validate all compose definitions
+        run: |
+          set -eu
+          for compose_file in docker-compose.yml docker-compose.x86_64 docker-compose.armhf docker-compose.aarch64; do
+            echo "Validating ${compose_file}"
+            docker compose -f "${compose_file}" config >/dev/null
+          done
+
+      - name: Build all services for CI stack
+        run: docker compose -f "${{ matrix.compose_file }}" build --pull
+
+      - name: Start compose stack
+        run: |
+          docker compose -f "${{ matrix.compose_file }}" up -d ${{ matrix.startup_services }}
+          docker compose -f "${{ matrix.compose_file }}" ps
+
+      - name: Wait for healthy services
+        run: |
+          set -eu
+          services="${{ matrix.startup_services }}"
+          deadline=$((SECONDS + 600))
+
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            all_healthy=1
+            for service in $services; do
+              cid=$(docker compose -f "${{ matrix.compose_file }}" ps -q "$service")
+              if [ -z "$cid" ]; then
+                echo "$service container not found"
+                all_healthy=0
+                continue
+              fi
+
+              status=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$cid")
+              echo "$service status: $status"
+              if [ "$status" != "healthy" ]; then
+                all_healthy=0
+              fi
+            done
+
+            if [ "$all_healthy" -eq 1 ]; then
+              echo "All required services are healthy"
+              exit 0
+            fi
+
+            sleep 10
+          done
+
+          echo "Timed out waiting for services"
+          exit 1
+
+      - name: Verify service availability
+        run: |
+          set -eu
+          docker compose -f "${{ matrix.compose_file }}" exec -T db sh -lc 'mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent'
+          docker compose -f "${{ matrix.compose_file }}" exec -T passbolt php -r '$context=stream_context_create(["http"=>["follow_location"=>0]]); $headers=@get_headers("http://127.0.0.1/", false, $context); if ($headers === false || !preg_match("/^HTTP\/\S+ [23]\d\d/", $headers[0])) exit(1);'
+          curl -fsS http://127.0.0.1:8581/ >/dev/null
+
+      - name: Run integration checks
+        run: |
+          set -eu
+          docker compose -f "${{ matrix.compose_file }}" ps
+
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          docker compose -f "${{ matrix.compose_file }}" ps || true
+          docker compose -f "${{ matrix.compose_file }}" logs db || true
+          docker compose -f "${{ matrix.compose_file }}" logs passbolt || true
+          docker compose -f "${{ matrix.compose_file }}" logs homebridge || true
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose -f "${{ matrix.compose_file }}" down -v --remove-orphans || true
