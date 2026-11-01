@@ -30,7 +30,7 @@ This is the supported end-user deployment method.
 | `db` | TCP 3306 is internal to the Compose network; it is not published. |
 | `passbolt` | Container ports 80, 443, and 587 are not published to the host. Passbolt is not directly reachable from the public network through these Compose files. |
 
-Host port 80 is not mapped by Compose. The Wi-Fi service uses host networking, but this repository does not configure an HTTP landing page on port 80. Homebridge is reached directly on port 8581. Host-network services may still listen on host interfaces independently of Compose port mappings; restrict access with the device/network firewall as appropriate.
+Compose does not publish host port 80. During Wi-Fi onboarding, the portal listens on `PORTAL_PORT` over the device's host network; Homebridge is reached directly on port 8581. Host-network services may listen on host interfaces independently of Compose port mappings; restrict access with the device/network firewall as appropriate.
 
 ### Create the first Passbolt administrator
 
