@@ -1,15 +1,36 @@
 #!/usr/bin/with-contenv bash
 # shellcheck shell=bash
 cd /usr/src/ || exit 1
+# shellcheck source=/dev/null
+source scripts/secrets.sh
+export_secrets
+# HOTSPOT_MODE=portal (default): temporary configuration hotspot only (see services.d/portal).
+# HOTSPOT_MODE=permanent: legacy always-on hostapd access point.
+if [ "${HOTSPOT_MODE:-portal}" != "permanent" ]; then
+  for service in hostapd isc-dhcp-server isc-dhcp-server6 dnsmasq; do
+    systemctl stop "$service" >/dev/null 2>&1 || true
+    systemctl disable "$service" >/dev/null 2>&1 || true
+  done
+  rm -f /etc/netplan/02-hostap.yaml /etc/netplan/01-cliwpa-*.yaml
+  if [ -f /usr/share/netplan/50-cloud-init.yaml ]; then
+    cp /usr/share/netplan/50-cloud-init.yaml /etc/netplan/50-cloud-init.yaml
+  elif ! find /etc/netplan -maxdepth 1 -name '*.yaml' -print -quit | grep -q .; then
+    printf '%s\n' 'network:' '  version: 2' '  renderer: NetworkManager' \
+      > /etc/netplan/99-huewizpi-networkmanager.yaml
+  fi
+  netplan apply >/dev/null 2>&1 || true
+  echo "HOTSPOT_MODE=portal: skipping permanent access point"
+  exit 0
+fi
 /etc/init.d/hapwizard install
 # shellcheck disable=SC2154
 exec scripts/start.sh "$PRIV_INT" \
 "$PRIV_NETWORK.0/$PRIV_NETWORK_MASKb" \
 "${WAN_NETWORK}.0/${WAN_NETWORK_MASKb}" "$WAN_INT" \
-"$PRIV_SSID" "$PRIV_PASSWD" \
+"$PRIV_SSID" "" \
 "$PRIV_WIFI_MODE" "$PRIV_WIFI_CTY" "$PRIV_WIFI_CHANNEL" \
 "$DNS1" "$DNS2" \
-"$WAN_SSID" "$WAN_PASSWD" \
+"$WAN_SSID" "" \
 "$PRIV_RANGE_START" "$PRIV_RANGE_END" \
 "${PRIV_NETWORK_IPV6}0/${PRIV_NETWORK_MASKb6}" \
 "${WAN_NETWORK_IPV6}0/${WAN_NETWORK_MASKb6}" \

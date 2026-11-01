@@ -30,7 +30,7 @@ This is the supported end-user deployment method.
 | `db` | TCP 3306 is internal to the Compose network; it is not published. |
 | `passbolt` | Container ports 80, 443, and 587 are not published to the host. Passbolt is not directly reachable from the public network through these Compose files. |
 
-Host port 80 is not mapped by Compose. The Wi-Fi service uses host networking, but this repository does not configure an HTTP landing page on port 80. Homebridge is reached directly on port 8581. Host-network services may still listen on host interfaces independently of Compose port mappings; restrict access with the device/network firewall as appropriate.
+Compose does not publish host port 80. During Wi-Fi onboarding, the portal listens on `PORTAL_PORT` over the device's host network; Homebridge is reached directly on port 8581. Host-network services may listen on host interfaces independently of Compose port mappings; restrict access with the device/network firewall as appropriate.
 
 ### Create the first Passbolt administrator
 
@@ -46,6 +46,15 @@ su -s /bin/bash -c '/usr/share/php/passbolt/bin/cake passbolt healthcheck' www-d
 Open the activation link printed by the registration command and complete the account setup. Keep the server private key and database password private; do not add them to this repository.
 
 No Docker CLI, Docker Compose CLI, balena CLI, or shell installation script is required for end users.
+
+## Wi-Fi setup portal and secrets
+By default (`HOTSPOT_MODE=portal`) no permanent access point runs. When the device has no connection, a temporary WPA-protected hotspot `Raspibox-<device name>` serves a Wi-Fi configuration page at `http://192.168.42.1:8081/` (default `PORTAL_PORT`); it closes once connected. Set `HOTSPOT_MODE=permanent` to keep the legacy always-on hostapd access point (e.g. places without Wi-Fi).
+
+Redundancy without the web page: set the Balena variable `WIFI_SSID` and the secret `WIFI_PASSWORD`.
+
+Set the `AP_PASSWORD` secret to a value of 8–63 characters before deployment if you want to choose the setup hotspot password. Otherwise, a unique password is generated per device and stored in the persistent `/etc/hapwizard/secrets/AP_PASSWORD` file; retrieve it through an authenticated Balena device terminal with `cat /etc/hapwizard/secrets/AP_PASSWORD`. Share it only with people allowed to configure the device.
+
+`AP_PASSWORD` and `WIFI_PASSWORD` are never stored in images or generated shell configuration. They are read from the environment, a `<NAME>_FILE` path, `/run/secrets/<NAME>`, or the `/etc/hapwizard/secrets` volume. Change `PORTAL_PORT` if port 8081 is already in use. The connectivity probe uses `CONNECTIVITY_CHECK_URL` (default `https://connectivitycheck.gstatic.com/generate_204`) and expects HTTP 204.
 
 ## Quick install checklist (Raspberry Pi / Linux users)
 

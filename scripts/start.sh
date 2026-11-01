@@ -14,15 +14,11 @@ then
     exit 1
 fi
 # shellcheck  disable=SC1091
-if [ ! -f "${scriptsd}/../configure" ]; then
-  #This script arguments were edited in python file. To add more, modify there.
-  echo "(+$# arguments) python ${scriptsd}/../library/configure.py $*"
-  if python3 "${scriptsd}/../library/configure.py" "$@"; then
-     echo "success"
-  else
-     echo "Failed $?"
-     exit $?
-  fi
+if python3 "${scriptsd}/../library/configure.py" "$@"; then
+  echo "Generated runtime configuration"
+else
+  echo "Failed to generate runtime configuration"
+  exit 1
 fi
 # shellcheck  disable=SC1090
 source "${scriptsd}/../configure"
@@ -115,7 +111,11 @@ rts_threshold=2347
 fragm_threshold=2346
 " > /etc/hostapd/hostapd.conf
 [ -z "$CLIENT" ] && touch /etc/hostapd/hostapd.deny
-[ -z "$CLIENT" ] && echo -e "00:00:00:00:00:00 $(wpa_passphrase "${PRIV_SSID}" "${PRIV_PASSWD}" | grep 'psk' | awk -F= 'FNR == 2 { print $2 }')" > "${PSK_FILE}"
+if [ -z "$CLIENT" ]; then
+  psk="$(printf '%s' "$PRIV_PASSWD" | python3 -c 'import hashlib,sys; print(hashlib.pbkdf2_hmac("sha1", sys.stdin.buffer.read(), sys.argv[1].encode(), 4096, 32).hex())' "$PRIV_SSID")"
+  ( umask 077; printf '00:00:00:00:00:00 %s\n' "$psk" > "${PSK_FILE}" )
+  unset psk
+fi
 [ -z "$CLIENT" ] && log_progress_msg "configure Access Point as a Service"
 [ -z "$CLIENT" ] && sed -i -e /DAEMON_CONF=/s/^\#// -e /DAEMON_CONF=/s/=\".*\"/=\"\\/etc\\/hostapd\\/hostapd.conf\"/ /etc/default/hostapd 2> /dev/null || exit 1
 [ -z "$CLIENT" ] && sed -i -e /DAEMON_OPTS=/s/^\#// -e "/DAEMON_OPTS=/s/=\".*\"/=\"-i ${PRIV_INT}\"/" /etc/default/hostapd 2> /dev/null || exit 1
@@ -132,11 +132,15 @@ function init_net_if() {
     case "$WAN_INT" in
       'eth'*)
           # shellcheck source=init.d/init_net_if.sh
-          "${scriptsd}/init.d/init_net_if.sh" --wifi "$PRIV_INT" "$PRIV_SSID" "$PRIV_PASSWD" "$@"
+          "${scriptsd}/init.d/init_net_if.sh" --wifi "$PRIV_INT" "$PRIV_SSID" "" "$@"
         ;;
       'wl'*)
+          wifi_args=(--wifi "$PRIV_INT" "$PRIV_SSID" "")
+          if [ -n "$WAN_SSID" ]; then
+            wifi_args+=(--wifi "$WAN_INT" "$WAN_SSID" "")
+          fi
           # shellcheck source=init.d/init_net_if.sh
-          "${scriptsd}/init.d/init_net_if.sh" --wifi "$PRIV_INT" "$PRIV_SSID" "$PRIV_PASSWD" --wifi "$WAN_INT" "$WAN_SSID" "$WAN_PASSWD" "$@"
+          "${scriptsd}/init.d/init_net_if.sh" "${wifi_args[@]}" "$@"
         ;;
       *)
         slogger -st "${FUNCNAME[0]}" "Unknown wan interface ${WAN_INT}"
@@ -196,7 +200,7 @@ if [ -z "$CLIENT" ]; then systemctl unmask hostapd; case "$MYNET_SHARING" in
 esac;
 else
   # shellcheck source=init.d/init_net_if.sh
-  "${scriptsd}/init.d/init_net_if.sh" --wifi "$PRIV_INT" "$PRIV_SSID" "$PRIV_PASSWD"
+  "${scriptsd}/init.d/init_net_if.sh" --wifi "$PRIV_INT" "$PRIV_SSID" ""
 fi
 systemctl daemon-reload
 systemctl enable --now hapwizard

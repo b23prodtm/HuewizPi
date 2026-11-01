@@ -10,8 +10,8 @@ import netman
 import dnsmasq
 
 # Defaults
-ADDRESS = os.getenv('DEFAULT_GATEWAY', netman.bln_device_fetch())
-PORT = 80
+ADDRESS = os.getenv('DEFAULT_GATEWAY') or netman.DEFAULT_GATEWAY
+PORT = int(os.getenv('PORTAL_PORT', '8081'))
 UI_PATH = '../ui'
 
 
@@ -37,7 +37,7 @@ class MyHTTPServer(HTTPServer):
 # A custom http request handler class factory.
 # Handle the GET and POST requests from the UI form and JS.
 # The class factory allows us to pass custom arguments to the handler.
-def RequestHandlerClassFactory(address, ssids, rcode):
+def RequestHandlerClassFactory(address, port, ssids, rcode):
 
     class MyHTTPReqHandler(SimpleHTTPRequestHandler):
 
@@ -45,6 +45,7 @@ def RequestHandlerClassFactory(address, ssids, rcode):
             # We must set our custom class properties first, since __init__() of
             # our super class will call do_GET().
             self.address = address
+            self.port = port
             self.ssids = ssids
             self.rcode = rcode
             super(MyHTTPReqHandler, self).__init__(*args, **kwargs)
@@ -59,17 +60,19 @@ def RequestHandlerClassFactory(address, ssids, rcode):
             # captured portal to show up.
             if '/hotspot-detect.html' == self.path:
                 self.send_response(301) # redirect
-                new_path = 'http://{}/'.format(self.address)
+                new_path = 'http://{}:{}/'.format(self.address, self.port)
                 print('redirecting to {}'.format(new_path))
                 self.send_header('Location', new_path)
                 self.end_headers()
+                return
 
             if '/generate_204' == self.path:
                 self.send_response(301) # redirect
-                new_path = f'http://{self.address}/'
+                new_path = f'http://{self.address}:{self.port}/'
                 print(f'redirecting to {new_path}')
                 self.send_header('Location', new_path)
                 self.end_headers()
+                return
 
             # Handle a REST API request to return the device registration code
             if '/regcode' == self.path:
@@ -131,11 +134,11 @@ def RequestHandlerClassFactory(address, ssids, rcode):
             FORM_USERNAME = 'identity'
             FORM_PASSWORD = 'passphrase'
 
-            if FORM_SSID not in fields:
+            if FORM_SSID not in fields and FORM_HIDDEN_SSID not in fields:
                 print('Error: POST is missing {} field.'.format(FORM_SSID))
                 return
 
-            ssid = fields[FORM_SSID][0]
+            ssid = fields.get(FORM_SSID, [''])[0]
             password = None
             username = None
             if FORM_HIDDEN_SSID in fields:
@@ -180,7 +183,7 @@ def RequestHandlerClassFactory(address, ssids, rcode):
             # Handle success or failure of the new connection
             if success:
                 print('Connected!  Exiting app.')
-                sys.exit()
+                self.server.portal_connected = True
             else:
                 print('Connection failed, restarting the hotspot.')
                 # Update the list of SSIDs since we are not connected
@@ -231,17 +234,22 @@ def main(address, port, ui_path, rcode, delete_connections):
     server_address = (address, port)
 
     # Custom request handler class (so we can pass in our own args)
-    MyRequestHandlerClass = RequestHandlerClassFactory(address, ssids, rcode)
+    MyRequestHandlerClass = RequestHandlerClassFactory(
+        address, port, ssids, rcode)
 
     # Start an HTTP server to serve the content in the ui dir and handle the
     # POST request in the handler class.
     print('Waiting for a connection to our hotspot {} ...'.format(netman.get_hotspot_SSID()))
     httpd = MyHTTPServer(web_dir, server_address, MyRequestHandlerClass)
+    httpd.timeout = 1
     try:
-        httpd.serve_forever()
+        while not netman.have_active_internet_connection():
+            httpd.handle_request()
+            if getattr(httpd, 'portal_connected', False):
+                break
     except KeyboardInterrupt:
-        dnsmasq.stop()
-        netman.stop_hotspot()
+        pass
+    finally:
         httpd.server_close()
 
 

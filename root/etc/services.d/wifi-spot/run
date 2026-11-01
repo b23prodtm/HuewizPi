@@ -7,6 +7,11 @@ _term() {
 
 trap _term SIGTERM
 
+if [ "${HOTSPOT_MODE:-portal}" != "permanent" ]; then
+  echo "HOTSPOT_MODE=portal: skipping legacy wifi-spot service"
+  exec sleep infinity
+fi
+
 # shellcheck disable=SC1091
 /etc/init.d/hapwizard start
 

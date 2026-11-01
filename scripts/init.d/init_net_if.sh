@@ -18,6 +18,7 @@ usage=("" \
 "                                         --dns6 2001:4860:4860::8844)" \
 "")
 [ -z "${scriptsd:-}" ] && scriptsd="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
+umask 077
 banner=("" "[$0] BUILD RUNNING ${BASH_SOURCE[0]}" ""); printf "%s\n" "${banner[@]}"
 [ ! -f "${scriptsd}/../configure" ] && bash -c "python ${scriptsd}/../library/configure.py $*"
 # shellcheck disable=SC1090
@@ -53,6 +54,9 @@ function print_hwaddr() {
   done
 }
 print_hwaddr "$WAN_INT" "$PRIV_INT"
+yaml_quote() {
+  printf '%s' "$1" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))'
+}
 slogger -st netplan "disable cloud-init"
 [ -f "/etc/netplan/$NP_INIT" ] && mv -fv "/etc/netplan/$NP_INIT" "$NP_ORIG"
 echo -e "network: { config: disabled }" > "${NP_CLOUD}"
@@ -99,7 +103,18 @@ ${MARKER_END}" > "/etc/netplan/$NP_INIT"
     shift
       clientyaml="$(echo ${clientyaml} | cut -d. -f1)-${1}.yaml"
       slogger -st netplan "/etc/netplan/$clientyaml was created"
-        echo -e "${MARKER_BEGIN}
+        ssid_yaml="$(yaml_quote "$2")"
+        wifi_password="$3"
+        if [ -z "$wifi_password" ]; then
+          if [ "$1" = "$PRIV_INT" ]; then
+            wifi_password="${PRIV_PASSWD:-}"
+          elif [ "$1" = "$WAN_INT" ]; then
+            wifi_password="${WAN_PASSWD:-}"
+          fi
+        fi
+        password_yaml="$(yaml_quote "$wifi_password")"
+        unset wifi_password
+        printf '%s\n' "${MARKER_BEGIN}
 network:
   version: 2
   renderer: ${renderer}
@@ -109,9 +124,10 @@ network:
       dhcp4: yes
       dhcp6: yes
       access-points:
-        \"${2}\":
-          password: \"${3}\"
+        ${ssid_yaml}:
+          password: ${password_yaml}
 ${MARKER_END}" > "/etc/netplan/${clientyaml}"
+      chmod 600 "/etc/netplan/${clientyaml}"
       mkdir -p "/usr/lib/systemd/system/netplan-wpa-${1}.service.d"
       printf '%s\n' "[Install]" "WantedBy=multi-user.target" > "/usr/lib/systemd/system/netplan-wpa-${1}.service.d/10-multi-user.conf"
     shift 2
@@ -151,5 +167,5 @@ if [ "${RETURN}" = 0 ]; then
         addresses: [${nameservers},${nameservers6}]" "/etc/netplan/$clientyaml"
   # shellcheck disable=SC2154
   [ -z "$CLIENT" ] && sed -i.old "/${PRIV_INT}:/,/${MARKER_END}/s/yes/no/g" "/etc/netplan/$clientyaml"
-  grep -A8 "${PRIV_INT}" < "/etc/netplan/$clientyaml"
+  chmod 600 "/etc/netplan/$clientyaml"
 fi

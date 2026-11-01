@@ -26,6 +26,8 @@ data:
     - DATASOURCES_DEFAULT_DATABASE: 'passbolt'
     - DATASOURCES_DEFAULT_USERNAME: 'passbolt'
     - DATASOURCES_DEFAULT_PASSWORD: 'set-in-balena-cloud'
+    - HOTSPOT_MODE: 'portal'
+    - WIFI_SSID: ''
 post-provisioning: >-
   Deploy from Balena Cloud by connecting this repository to your fleet.
   Set fleet/device environment variables before first startup, then deploy.
