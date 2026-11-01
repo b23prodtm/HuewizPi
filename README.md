@@ -48,11 +48,13 @@ Open the activation link printed by the registration command and complete the ac
 No Docker CLI, Docker Compose CLI, balena CLI, or shell installation script is required for end users.
 
 ## Wi-Fi setup portal and secrets
-By default (`HOTSPOT_MODE=portal`) no permanent access point runs. When the device has no connection, a temporary hotspot `Raspibox-<device name>` serves a Wi-Fi configuration page on port 80 (`PORTAL_PORT`); it closes once connected. Set `HOTSPOT_MODE=permanent` to keep the legacy always-on hostapd access point (e.g. places without Wi-Fi).
+By default (`HOTSPOT_MODE=portal`) no permanent access point runs. When the device has no connection, a temporary WPA-protected hotspot `Raspibox-<device name>` serves a Wi-Fi configuration page at `http://192.168.42.1:8081/` (default `PORTAL_PORT`); it closes once connected. Set `HOTSPOT_MODE=permanent` to keep the legacy always-on hostapd access point (e.g. places without Wi-Fi).
 
 Redundancy without the web page: set the Balena variable `WIFI_SSID` and the secret `WIFI_PASSWORD`.
 
-`AP_PASSWORD` and `WIFI_PASSWORD` are never stored in images. They are read from the environment, a `<NAME>_FILE` path, `/run/secrets/<NAME>`, or the `/etc/hapwizard/secrets` volume; `AP_PASSWORD` is generated and persisted there if missing. Change `PORTAL_PORT` if port 80 is already in use.
+Set the `AP_PASSWORD` secret to a value of 8–63 characters before deployment if you want to choose the setup hotspot password. Otherwise, a unique password is generated per device and stored in the persistent `/etc/hapwizard/secrets/AP_PASSWORD` file; retrieve it through an authenticated Balena device terminal with `cat /etc/hapwizard/secrets/AP_PASSWORD`. Share it only with people allowed to configure the device.
+
+`AP_PASSWORD` and `WIFI_PASSWORD` are never stored in images or generated shell configuration. They are read from the environment, a `<NAME>_FILE` path, `/run/secrets/<NAME>`, or the `/etc/hapwizard/secrets` volume. Change `PORTAL_PORT` if port 8081 is already in use. The connectivity probe uses `CONNECTIVITY_CHECK_URL` (default `https://connectivitycheck.gstatic.com/generate_204`) and expects HTTP 204.
 
 ## Quick install checklist (Raspberry Pi / Linux users)
 

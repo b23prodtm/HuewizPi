@@ -1,44 +1,74 @@
 # start / stop the dnsmasq process
 
-import subprocess, time, os
+import subprocess
+import time
+import os
+import ipaddress
 
-DEFAULT_GATEWAY=os.getenv("DEFAULT_GATEWAY", "192.168.42.1")
-DEFAULT_DHCP_RANGE=os.getenv("DEFAULT_DHCP_RANGE","192.168.42.2,192.168.42.254")
-DEFAULT_INTERFACE=os.getenv('DEFAULT_INTERFACE',"wlan0") # use 'ip link show' to see list of interfaces
+DEFAULT_GATEWAY = "192.168.42.1"
+DEFAULT_INTERFACE = "wlan0"
+PROCESS = None
+
+
+def get_dhcp_range(gateway, configured_range=None):
+    router = ipaddress.ip_address(gateway)
+    if router.version != 4:
+        raise ValueError("The portal gateway must be an IPv4 address")
+    network = ipaddress.ip_network("{}/24".format(router), strict=False)
+    hosts = list(network.hosts())
+    if router not in hosts:
+        raise ValueError("The portal gateway must be a usable IPv4 address")
+    if configured_range:
+        start, end = [ipaddress.ip_address(value) for value in configured_range.split(",")]
+        if start not in hosts or end not in hosts or start > end:
+            raise ValueError("The DHCP range must be within the portal gateway subnet")
+        if start <= router <= end:
+            raise ValueError("The DHCP range must not include the portal gateway")
+        return "{},{}".format(start, end)
+    pool = [host for host in hosts if host != router]
+    return "{},{}".format(pool[0], pool[-1])
+
 
 def stop():
-    ps = subprocess.Popen("ps -e | grep ' dnsmasq' | cut -c 1-6", shell=True, stdout=subprocess.PIPE)
-    pid = ps.stdout.read()
-    ps.stdout.close()
-    ps.wait()
-    pid = pid.decode('utf-8')
-    pid = pid.strip()
-    if 0 < len(pid):
-        print("Killing dnsmasq, PID='{}'".format(pid))
-        ps = subprocess.Popen("kill -9 {pid}", shell=True)
-        ps.wait()
+    global PROCESS
+    if PROCESS is None:
+        return
+    if PROCESS.poll() is None:
+        PROCESS.terminate()
+        try:
+            PROCESS.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            PROCESS.kill()
+            PROCESS.wait()
+    PROCESS = None
 
 
 def start():
+    global PROCESS
     # first kill any existing dnsmasq
     stop()
 
-    # build the list of args
-    args = ["dnsmasq"]
-    args.append("--listen-address=/#/{DEFAULT_GATEWAY}")
-    args.append("--dhcp-range={DEFAULT_DHCP_RANGE}")
-    args.append("--dhcp-option=option:router,{DEFAULT_GATEWAY}")
-    args.append("--interface={DEFAULT_INTERFACE}")
-    args.append("--keep-in-foreground")
-    args.append("--bind-interfaces")
-    args.append("--except-interface=lo")
-    args.append("--dhcp-authoritative")
-    args.append("--no-hosts" )
-
-    # run dnsmasq in the background and save a reference to the object
-    ps = subprocess.Popen(args)
-    # don't wait here, proc runs in background until we kill it.
-
-    # give a few seconds for the proc to start
-    time.sleep(2)
-    print('Started dnsmasq, PID={}'.format(ps.pid))
+    gateway = os.getenv("DEFAULT_GATEWAY", DEFAULT_GATEWAY)
+    dhcp_range = get_dhcp_range(gateway, os.getenv("DEFAULT_DHCP_RANGE"))
+    interface = os.getenv("DEFAULT_INTERFACE", DEFAULT_INTERFACE)
+    args = [
+        "dnsmasq",
+        "--listen-address={}".format(gateway),
+        "--address=/#/{}".format(gateway),
+        "--dhcp-range={}".format(dhcp_range),
+        "--dhcp-option=option:router,{}".format(gateway),
+        "--interface={}".format(interface),
+        "--keep-in-foreground",
+        "--bind-interfaces",
+        "--except-interface=lo",
+        "--dhcp-authoritative",
+        "--no-hosts",
+    ]
+    PROCESS = subprocess.Popen(
+        args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    time.sleep(0.2)
+    if PROCESS.poll() is not None:
+        status = PROCESS.returncode
+        PROCESS = None
+        raise RuntimeError("dnsmasq exited during startup (status {})".format(status))
+    print("Started dnsmasq, PID={}".format(PROCESS.pid))

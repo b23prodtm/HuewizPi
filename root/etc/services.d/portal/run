@@ -1,18 +1,26 @@
 #!/usr/bin/with-contenv bash
 # shellcheck shell=bash
-# Wi-Fi configuration portal (python wifi-connect) served on PORTAL_PORT (default 80).
+# Wi-Fi configuration portal (python wifi-connect) served on PORTAL_PORT (default 8081).
 # Redundancy: WIFI_SSID / WIFI_PASSWORD (Balena variables or secrets) are tried first.
 # shellcheck source=/dev/null
 source /usr/src/scripts/secrets.sh
-PORTAL_PORT="${PORTAL_PORT:-80}"
-WAN_PASSWD="$(secret_get WIFI_PASSWORD)"
+if [ "${HOTSPOT_MODE:-portal}" = "permanent" ]; then
+  exec sleep infinity
+fi
+PORTAL_PORT="${PORTAL_PORT:-8081}"
+WIFI_PASSWORD="$(secret_get WIFI_PASSWORD)"
+WIFI_PASSWORD="${WIFI_PASSWORD:-${WAN_PASSWD:-}}"
+DEFAULT_GATEWAY="${PORTAL_GATEWAY:-192.168.42.1}"
+DEFAULT_DHCP_RANGE="${PORTAL_DHCP_RANGE:-}"
+DEFAULT_INTERFACE="${PORTAL_INTERFACE:-wlan0}"
+export DEFAULT_GATEWAY DEFAULT_DHCP_RANGE DEFAULT_INTERFACE
 function online() { python3 -c 'import sys; sys.path.insert(0, "/usr/src/library/src"); import netman; sys.exit(0 if netman.have_active_internet_connection() else 1)'; }
 sleep 10
 while true; do
   if online; then sleep 30; continue; fi
-  if [ -n "${WIFI_SSID:-}" ] && [ -n "${WAN_PASSWD}" ] && command -v nmcli > /dev/null; then
+  if [ -n "${WIFI_SSID:-}" ] && [ -n "${WIFI_PASSWORD}" ] && command -v nmcli > /dev/null; then
     echo "[portal] trying WIFI_SSID from Balena configuration"
-    nmcli device wifi connect "${WIFI_SSID}" password "${WAN_PASSWD}" && sleep 10 && online && continue
+    nmcli device wifi connect "${WIFI_SSID}" password "${WIFI_PASSWORD}" && sleep 10 && online && continue
   fi
   echo "[portal] no connection: starting configuration portal on port ${PORTAL_PORT}"
   python3 /usr/src/library/src/http_server.py -p "${PORTAL_PORT}" -u ../ui

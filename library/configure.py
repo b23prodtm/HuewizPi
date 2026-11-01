@@ -4,6 +4,7 @@ import os
 import re
 import ipaddress as ip
 import locale as lc
+import shlex
 if int(sys.version.partition('.')[0]) < 3:
     print("This script needs python 3 or later. Try python3.")
     exit(1)
@@ -90,6 +91,8 @@ def r_parse_argv(defaults, argv, i, options, usage):
     for k in defaults.keys():
         if n == i:
             var = [k, argv[i] if len(argv) > i else defaults[k]]
+            if k in ("PRIV_PASSWD", "WAN_PASSWD") and not var[1]:
+                var[1] = myenv.get(k, defaults[k])
             var = format_argv(var)
             myenv[var[0]] = var[1]
             break
@@ -173,6 +176,8 @@ def panel_dns():
 def panel_wan(pf="WAN_"):
     wl = re.compile("wl.*")
     if wl.match(myenv["%sINT" % pf]):
+        if not myenv["%sSSID" % pf] and not myenv["%sPASSWD" % pf]:
+            return
         while myenv["%sSSID" % pf] == "":
             myenv["%sSSID" % pf] = input("%s SSID: " % myenv["%sINT" % pf])
         plen = len(myenv["%sPASSWD" % pf])
@@ -184,19 +189,22 @@ def panel_wan(pf="WAN_"):
 def write_exports(envdict):
     print("Current working dir : %s" % os.getcwd())
     path = "configure"
-    f = open(path, "w")
-    f.write("#!/usr/bin/env bash\nexport ")
-    for k, v in myenv.items():
-        var = '='.join([k, '"%s"' % v])
-        f.write(' \\\n%s' % var)
-    f.write("\n. init_functions \"${BASH_SOURCE[0]}\" \"$@\"\n")
-    f.write("\nfunction slogger() {\n")
-    f.write("  [ -f /dev/log ] && logger \"$@\" && return\n")
-    f.write("  [ \"$#\" -gt 1 ] && shift\n")
-    f.write("  log_daemon_msg \"$@\"\n")
-    f.write("}\n")
-    f.close()
-    os.chmod(path, 0o755)
+    sensitive = {"PRIV_PASSWD", "WAN_PASSWD", "AP_PASSWORD", "WIFI_PASSWORD"}
+    with open(path, "w") as f:
+        f.write("#!/usr/bin/env bash\n")
+        for k, v in envdict.items():
+            if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", k):
+                continue
+            if k in sensitive or k.endswith(("_PASSWORD", "_PASSWD")):
+                continue
+            f.write("export {}={}\n".format(k, shlex.quote(str(v))))
+        f.write("\n. init_functions \"${BASH_SOURCE[0]}\" \"$@\"\n")
+        f.write("\nfunction slogger() {\n")
+        f.write("  [ -f /dev/log ] && logger \"$@\" && return\n")
+        f.write("  [ \"$#\" -gt 1 ] && shift\n")
+        f.write("  log_daemon_msg \"$@\"\n")
+        f.write("}\n")
+    os.chmod(path, 0o600)
 
 
 def main(argv):

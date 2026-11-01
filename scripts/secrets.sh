@@ -29,9 +29,16 @@ function secret_get() {
 
 # export_secrets: resolve the secrets used by this project into the environment.
 function export_secrets() {
-  PRIV_PASSWD="$(secret_get AP_PASSWORD generate)"
+  local legacy_ap_password="${PRIV_PASSWD:-}"
+  local legacy_wifi_password="${WAN_PASSWD:-}"
+  PRIV_PASSWD="$(secret_get AP_PASSWORD)"
+  PRIV_PASSWD="${PRIV_PASSWD:-${legacy_ap_password}}"
+  if [ -z "${PRIV_PASSWD}" ]; then
+    PRIV_PASSWD="$(secret_get AP_PASSWORD generate)"
+  fi
   [ -n "${PRIV_PASSWD}" ] && export PRIV_PASSWD
   WAN_PASSWD="$(secret_get WIFI_PASSWORD)"
+  WAN_PASSWD="${WAN_PASSWD:-${legacy_wifi_password}}"
   export WAN_PASSWD
   PRIV_SSID="${AP_SSID:-${PRIV_SSID:-HuewizPi}}"
   WAN_SSID="${WIFI_SSID:-${WAN_SSID:-}}"

@@ -15,7 +15,11 @@ input,button{padding:.6rem;font-size:1rem}
 <p>Enter the Wi-Fi network this device should join. The setup hotspot closes once it is connected.</p>
 <form method="POST" action="/">
   <label for="ssid">Network name (SSID)</label>
-  <input id="ssid" name="ssid" required autocapitalize="none">
+  <input id="ssid" name="ssid" autocapitalize="none">
+  <label for="hidden-ssid">Hidden network name (optional)</label>
+  <input id="hidden-ssid" name="hidden-ssid" autocapitalize="none">
+  <label for="identity">Enterprise network identity (if required)</label>
+  <input id="identity" name="identity" autocomplete="username">
   <label for="passphrase">Password (leave empty for an open network)</label>
   <input id="passphrase" name="passphrase" type="password" autocomplete="off">
   <button type="submit">Connect</button>

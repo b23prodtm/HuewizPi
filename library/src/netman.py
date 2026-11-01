@@ -10,6 +10,7 @@ import os
 import time
 import socket
 import json
+import urllib.request
 
 
 def bln_device_fetch(attribute='ip_address', idx=0):
@@ -29,24 +30,20 @@ HOTSPOT_CONNECTION_NAME = 'hotspot'
 GENERIC_CONNECTION_NAME = 'python-wifi-connect'
 # use 'ip link show | grep qlen' to see list of interfaces
 DEFAULT_INTERFACE = os.getenv('DEFAULT_INTERFACE', 'wlan0')
-DEFAULT_GATEWAY = os.getenv('DEFAULT_GATEWAY', bln_device_fetch())
 
 
 #------------------------------------------------------------------------------
 # Returns True if we are connected to the internet, False otherwise.
-def have_active_internet_connection(host="8.8.8.8", port=53, timeout=2):
-   """
-   Host: 8.8.8.8 (google-public-dns-a.google.com)
-   OpenPort: 53/tcp
-   Service: domain (DNS/TCP)
-   """
-   try:
-     socket.setdefaulttimeout(timeout)
-     socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
-     return True
-   except Exception as e:
-     #print("Exception: {}".format(e))
-     return False
+def have_active_internet_connection(url=None, timeout=3):
+    check_url = url or os.getenv(
+        'CONNECTIVITY_CHECK_URL',
+        'https://connectivitycheck.gstatic.com/generate_204')
+    try:
+        request = urllib.request.Request(check_url, method='GET')
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return response.status == 204
+    except Exception:
+        return False
 
 
 #------------------------------------------------------------------------------
@@ -179,8 +176,8 @@ def get_hotspot_SSID():
 # Start a local hotspot on the wifi interface.
 # Returns True for success, False for error.
 def start_hotspot():
-    return connect_to_AP(CONN_TYPE_HOTSPOT, HOTSPOT_CONNECTION_NAME, \
-            get_hotspot_SSID())
+    return connect_to_AP(CONN_TYPE_HOTSPOT, HOTSPOT_CONNECTION_NAME,
+            get_hotspot_SSID(), None, os.getenv('PRIV_PASSWD', ''))
 
 
 #------------------------------------------------------------------------------
@@ -202,6 +199,10 @@ def connect_to_AP(conn_type=None, conn_name=GENERIC_CONNECTION_NAME, \
     if conn_type is None or ssid is None:
         print('connect_to_AP() Error: Missing args conn_type or ssid')
         return False
+    if conn_type == CONN_TYPE_HOTSPOT and (
+            password is None or not 8 <= len(password) <= 63):
+        print('connect_to_AP() Error: Hotspot passphrase must be 8 to 63 characters')
+        return False
 
     try:
         # This is the hotspot that we turn on, on the RPI so we can show our
@@ -209,7 +210,11 @@ def connect_to_AP(conn_type=None, conn_name=GENERIC_CONNECTION_NAME, \
         hotspot_dict = {
             '802-11-wireless': {'band': 'bg',
                                 'mode': 'ap',
-                                'ssid': ssid},
+                                'ssid': ssid,
+                                'security': '802-11-wireless-security'},
+            '802-11-wireless-security': {
+                'key-mgmt': 'wpa-psk',
+                'psk': password},
             'connection': {'autoconnect': False,
                            'id': conn_name,
                            'interface-name': DEFAULT_INTERFACE,
@@ -351,3 +356,8 @@ def get_Host_name_IP():
         print("Unable to get Hostname and IP : \n", e)
 
     return False
+
+
+DEFAULT_GATEWAY = os.getenv('DEFAULT_GATEWAY') or \
+    (bln_device_fetch() if os.getenv('BALENA_SUPERVISOR_DEVICE') else None) or \
+    '192.168.42.1'
