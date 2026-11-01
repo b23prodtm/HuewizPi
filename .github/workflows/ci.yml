@@ -85,7 +85,7 @@ jobs:
         run: |
           set -eu
           docker compose -f "${{ matrix.compose_file }}" exec -T db sh -lc 'mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent'
-          docker compose -f "${{ matrix.compose_file }}" exec -T passbolt php -r '$headers=@get_headers("http://127.0.0.1/"); if ($headers === false || !preg_match("/^HTTP\/\S+ [23]\d\d/", $headers[0])) exit(1);'
+          docker compose -f "${{ matrix.compose_file }}" exec -T passbolt php -r '$context=stream_context_create(["http"=>["follow_location"=>0]]); $headers=@get_headers("http://127.0.0.1/", false, $context); if ($headers === false || !preg_match("/^HTTP\/\S+ [23]\d\d/", $headers[0])) exit(1);'
           curl -fsS http://127.0.0.1:8581/ >/dev/null
 
       - name: Run integration checks
