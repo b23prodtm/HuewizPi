@@ -20,7 +20,6 @@ services:
       start_period: 60s
 
   wifi-spot:
-    container_name: hwzpi
     network_mode: host
     restart: unless-stopped
     build:
@@ -67,8 +66,7 @@ services:
     image: passbolt/passbolt:latest-ce
     restart: unless-stopped
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     environment:
       APP_FULL_BASE_URL: ${APP_FULL_BASE_URL:-https://passbolt.local}
       DATASOURCES_DEFAULT_HOST: db
