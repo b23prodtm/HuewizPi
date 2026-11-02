@@ -93,7 +93,7 @@ services:
       start_period: 40s
 
   passbolt:
-    image: passbolt/passbolt:latest-ce
+    image: passbolt/passbolt:5.17.0-1-ce
     restart: unless-stopped
     depends_on:
       - db
