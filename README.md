@@ -1,10 +1,11 @@
-[![Deploy with balena](https://balena.io/deploy.svg)](https://dashboard.balena-cloud.com/deploy?repoUrl=https://github.com/b23prodtm/HuewizPi)
-[![CI](https://github.com/b23prodtm/HuewizPi/actions/workflows/balena.yml/badge.svg)](https://github.com/b23prodtm/HuewizPi/actions)
+
 
 # HuewizPi — Your Containerized Universal Smart Home Hub on Raspberry Pi
 
 **HuewizPi** turns a Raspberry Pi into an all-in-one, containerized **smart home gateway** and **IoT access point** powered by **balenaOS**. It unifies your smart lighting (**Philips Hue / Zigbee**), audio/media gear, and connected devices (**IoT**) into a single local hub, making them effortlessly controllable from the **Apple Home** app through seamless **Homebridge** orchestration.
 
+[![CI](https://github.com/b23prodtm/HuewizPi/actions/workflows/ci.yml/badge.svg)](https://github.com/b23prodtm/HuewizPi/actions/workflows/ci.yml)
+[![balena deploy button](https://www.balena.io/deploy.svg)](https://dashboard.balena-cloud.com/deploy?repoUrl=https://github.com/b23prodtm/HuewizPi)
 ---
 
 ## What is HuewizPi? (Beginner-Friendly)
