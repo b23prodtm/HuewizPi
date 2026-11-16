@@ -1,113 +1,60 @@
-# HuewizPi
+[![Deploy with balena](https://balena.io/deploy.svg)](https://dashboard.balena-cloud.com/deploy?repoUrl=https://github.com/b23prodtm/HuewizPi)
+[![CI](https://github.com/b23prodtm/HuewizPi/actions/workflows/balena.yml/badge.svg)](https://github.com/b23prodtm/HuewizPi/actions)
 
-HuewizPi is a Balena-first Raspberry Pi application that bundles a Wi-Fi access-point service, Passbolt, and Homebridge.
+# HuewizPi — Your Containerized Universal Smart Home Hub on Raspberry Pi
 
-[![CI](https://github.com/b23prodtm/HuewizPi/actions/workflows/ci.yml/badge.svg)](https://github.com/b23prodtm/HuewizPi/actions/workflows/ci.yml)
-[![balena deploy button](https://www.balena.io/deploy.svg)](https://dashboard.balena-cloud.com/deploy?repoUrl=https://github.com/b23prodtm/HuewizPi)
+**HuewizPi** turns a Raspberry Pi into an all-in-one, containerized **smart home gateway** and **IoT access point** powered by **balenaOS**. It unifies your smart lighting (**Philips Hue / Zigbee**), audio/media gear, and connected devices (**IoT**) into a single local hub, making them effortlessly controllable from the **Apple Home** app through seamless **Homebridge** orchestration.
 
-## Deployment (Balena Cloud)
+---
 
-This is the supported end-user deployment method.
+## What is HuewizPi? (Beginner-Friendly)
 
-1. Create or select a Balena Cloud application/fleet (`raspberrypi3`).
-2. Connect this GitHub repository (or click the balena deploy button).
-3. Set required fleet/device environment variables in Balena Cloud:
-   - `MYSQL_ROOT_PASSWORD` (use a private, unique value)
-   - `MYSQL_PASSWORD`
-   - `DATASOURCES_DEFAULT_PASSWORD` (set to the same value as `MYSQL_PASSWORD`)
-   - `APP_FULL_BASE_URL` (for example `https://<device-or-public-url>`)
-4. Deploy and wait for services (`wifi-spot`, `db`, `passbolt`, `homebridge`) to start automatically.
-5. Open:
-   - Homebridge: `http://<device-ip>:8581` from a device connected to the network.
+When adding smart bulbs, plugs, sensors, or speakers from different brands, you quickly end up juggling multiple mobile apps and proprietary bridges.
 
-### Compose port exposure
+**HuewizPi acts as your home's central conductor and universal translator—deployed in one click:**
+* **Zero-Config Container Stack:** Powered by **balena**, every service runs inside isolated Docker containers. No Linux command-line headaches or broken dependencies—just flash your SD card and power on.
+* **Works with Apple HomeKit:** Even if an accessory isn't officially certified for Apple Home, HuewizPi uses **Homebridge** to expose it to your iPhone, iPad, Mac, and **Siri** voice control.
+* **Dedicated IoT Gateway:** Manages local network routing and acts as a clean access point for your smart home traffic.
 
-| Service | Ports and exposure |
-| --- | --- |
-| `wifi-spot` | Uses host networking for Wi-Fi, DNS (TCP/UDP 53), and DHCP (UDP 67/68); no Compose port mapping is declared. |
-| `homebridge` | Uses host networking and listens on TCP 8581; no Compose port mapping is declared. |
-| `deconz` | Publishes TCP 8080 and 4443 in `docker-compose.yml` and `docker-compose.template`; it is not included in the architecture-specific Compose files. |
-| `db` | TCP 3306 is internal to the Compose network; it is not published. |
-| `passbolt` | Container ports 80, 443, and 587 are not published to the host. Passbolt is not directly reachable from the public network through these Compose files. |
+---
 
-Compose does not publish host port 80. During Wi-Fi onboarding, the portal listens on `PORTAL_PORT` over the device's host network; Homebridge is reached directly on port 8581. Host-network services may listen on host interfaces independently of Compose port mappings; restrict access with the device/network firewall as appropriate.
+## Key Features
 
-### Create the first Passbolt administrator
+* **One-Click Deployment with balena:** Automated over-the-air (OTA) updates, fleet management, and self-healing containers via balenaCloud.
+* **Zigbee & Philips Hue Lighting Control:** Manage bulbs, switches, dimmers, and custom lighting scenes.
+* **Universal Bridge via Homebridge:** Support for thousands of smart home accessories (outlets, blinds, sensors, multiroom audio/media devices) and the entire Homebridge plugin ecosystem.
+* **Apple HomeKit Integration:** Quick pairing with the Apple Home app via QR code.
+* **Containerized Network & Access Point:** Pre-configured container networking to isolate and route your IoT devices cleanly.
 
-Open a terminal for the running `passbolt` service in Balena Cloud. These commands create an administrator, import the server private key into Passbolt's GPG home, send a test email, and run the health check. Replace the email and name placeholders with your own values:
+---
 
-```bash
-su -s /bin/bash -c '/usr/share/php/passbolt/bin/cake passbolt register_user -u "YOUR_EMAIL" -f "YOUR_FIRST_NAME" -l "YOUR_LAST_NAME" -r admin' www-data
-su -s /bin/bash -c 'gpg --home /var/lib/passbolt/.gnupg --import /etc/passbolt/gpg/serverkey_private.asc' www-data
-su -s /bin/bash -c '/usr/share/php/passbolt/bin/cake passbolt send_test_email --recipient="YOUR_EMAIL"' www-data
-su -s /bin/bash -c '/usr/share/php/passbolt/bin/cake passbolt healthcheck' www-data
-```
+## Hardware Requirements
 
-Open the activation link printed by the registration command and complete the account setup. Keep the server private key and database password private; do not add them to this repository.
+* **Raspberry Pi** (Pi 3B+, Pi 4, or Pi 5 recommended) with a microSD card (16 GB+ Class 10 / A1) and official power supply.
+* **Network Connection:** Ethernet cable (recommended for stability) or Wi-Fi.
+* *(Optional)* A USB Zigbee coordinator dongle (e.g., ConBee II, Sonoff Zigbee 3.0) or an existing Philips Hue Bridge, depending on your setup.
 
-No Docker CLI, Docker Compose CLI, balena CLI, or shell installation script is required for end users.
+---
 
-## Wi-Fi setup portal and secrets
-By default (`HOTSPOT_MODE=portal`) no permanent access point runs. When the device has no connection, a temporary WPA-protected hotspot `Raspibox-<device name>` serves a Wi-Fi configuration page at `http://192.168.42.1:8081/` (default `PORTAL_PORT`); it closes once connected. Set `HOTSPOT_MODE=permanent` to keep the legacy always-on hostapd access point (e.g. places without Wi-Fi).
+## Quick Start (One-Click Deploy)
 
-Redundancy without the web page: set the Balena variable `WIFI_SSID` and the secret `WIFI_PASSWORD`.
+1. Click the **"Deploy with balena"** button at the very top of this page.
+2. Create or select a **balenaCloud** fleet for your Raspberry Pi model.
+3. Download the pre-configured **balenaOS** image and flash it onto your microSD card (using [balenaEtcher](https://etcher.balena.io/)).
+4. Insert the SD card into your Raspberry Pi and power it on—HuewizPi will automatically download and start all containers.
 
-Set the `AP_PASSWORD` secret to a value of 8–63 characters before deployment if you want to choose the setup hotspot password. Otherwise, a unique password is generated per device and stored in the persistent `/etc/hapwizard/secrets/AP_PASSWORD` file; retrieve it through an authenticated Balena device terminal with `cat /etc/hapwizard/secrets/AP_PASSWORD`. Share it only with people allowed to configure the device.
+For detailed configuration, environment variables, and local CLI deployment, see **[INSTALL.md](INSTALL.md)**.
 
-`AP_PASSWORD` and `WIFI_PASSWORD` are never stored in images or generated shell configuration. They are read from the environment, a `<NAME>_FILE` path, `/run/secrets/<NAME>`, or the `/etc/hapwizard/secrets` volume. Change `PORTAL_PORT` if port 8081 is already in use. The connectivity probe uses `CONNECTIVITY_CHECK_URL` (default `https://connectivitycheck.gstatic.com/generate_204`) and expects HTTP 204.
+---
 
-## Quick install checklist (Raspberry Pi / Linux users)
+## GitHub Topics & Keywords
 
-- Raspberry Pi 3+ with BalenaOS already flashed
-- Balena Cloud account
-- This repository connected to your fleet
-- Required env vars set (`MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD`, `DATASOURCES_DEFAULT_PASSWORD`, `APP_FULL_BASE_URL`)
-- Public Device URL enabled if remote access is needed
+Recommended repository topics to improve discoverability:
+`raspberry-pi` `balena` `balena-cloud` `docker-compose` `homebridge` `homekit` `smart-home` `home-automation` `philips-hue` `zigbee` `iot-gateway` `iot-hub` `apple-home`
 
-If you can deploy Home Assistant on Raspberry Pi, this flow should be similarly straightforward.
+---
 
-## Development and CI parity (Docker Compose)
+## Disclaimer & Trademarks
 
-Local Docker Compose is for developers/maintainers only.
-
-```bash
-docker compose -f docker-compose.x86_64 config
-docker compose -f docker-compose.x86_64 build
-docker compose -f docker-compose.x86_64 up -d db passbolt homebridge
-docker compose -f docker-compose.x86_64 ps
-docker compose -f docker-compose.x86_64 logs
-docker compose -f docker-compose.x86_64 down -v
-```
-
-For ARM devices, use `docker-compose.armhf` or `docker-compose.aarch64`.
-The optional `balena-cloud-apps` convenience dependency is not required for CI validation.
-
-## CI (GitHub Actions)
-
-GitHub Actions validates the multi-service Compose stack by:
-
-- checking Compose syntax (`docker compose config`)
-- validating Balena-compatible Compose `2.1` definitions
-- building services
-- starting the stack for CI-safe services
-- waiting for service healthchecks
-- verifying service availability
-- collecting logs on failure
-- cleaning up containers/volumes
-
-## Troubleshooting
-
-- **Passbolt not reachable**: verify `APP_FULL_BASE_URL` and exposed ports.
-- **Database startup issues**: check `MYSQL_PASSWORD` and database logs.
-- **Hardware-specific startup issues (Wi-Fi/deCONZ)**: verify Raspberry Pi device access (`/dev/ttyAMA0`), Balena device type, and fleet host configuration.
-
-## Balena compatibility notes
-
-- Compose files use Docker Compose `2.1` syntax for Balena Cloud compatibility.
-- Persistent data uses named volumes.
-- Runtime configuration is environment-variable driven.
-- ARM support is preserved via architecture-specific Dockerfiles and Compose files.
-
-## License
-
-Apache License 2.0
+HuewizPi is an independent open-source project and is not affiliated with, endorsed, or sponsored by Apple Inc., Signify, or balena Ltd.  
+*Apple*, *HomeKit*, *iPhone*, *iPad*, *Mac*, and *Siri* are registered trademarks of Apple Inc. *Philips Hue* is a registered trademark of Signify Holding. *Zigbee* is a registered trademark of the Connectivity Standards Alliance. *balena* and *balenaOS* are trademarks of balena Ltd.
